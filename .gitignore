@@ -1,6 +1,13 @@
 
 # some intermediate generated files
-exp
+data/
+exp/
+.nfs*
+note
+egs/*/*/*/data/
+egs/*/*/*/exp/
+
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

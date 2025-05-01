@@ -6,7 +6,8 @@ exp/
 note
 egs/*/*/*/data/
 egs/*/*/*/exp/
-egs/*/*/*/logs/
+egs/*/*/*/slurm-*
+egs/*/*/*/logs*/
 
 
 

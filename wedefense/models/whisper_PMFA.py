@@ -15,7 +15,7 @@
 import torch
 from torch import nn
 
-import wespeaker.models.pooling_layers as pooling_layers
+import wedefense.models.pooling_layers as pooling_layers
 
 
 class BatchNorm1d(nn.Module):

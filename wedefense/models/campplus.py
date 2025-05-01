@@ -17,7 +17,7 @@ This implementation is adapted from github repo:
 https://github.com/alibaba-damo-academy/3D-Speaker
 
 Some modifications:
-1. Reuse the pooling layers in wespeaker
+1. Reuse the pooling layers in wedefense
 2. Remove the memory_efficient mechanism to meet the torch.jit.script
    export requirements
 
@@ -32,7 +32,7 @@ from collections import OrderedDict
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import wespeaker.models.pooling_layers as pooling_layers
+import wedefense.models.pooling_layers as pooling_layers
 
 
 def get_nonlinear(config_str, channels):

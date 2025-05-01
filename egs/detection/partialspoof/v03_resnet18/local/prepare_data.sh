@@ -3,17 +3,16 @@
 #
 # 1. download data
 # 2. wav.scp
-PS_dir=/mnt/matylda4/qzhang/workspace/PUBLIC/PartialSpoof/database/
-data=data/partialspoof
+PS_dir=$1
+data=$2
 
 for dset in train dev eval; do
- if [ ! -d ${data}/${dset} ]; then
+  if [ ! -d ${data}/${dset} ]; then
      mkdir -p ${data}/${dset}
- fi
+  fi
 
-
-#  find ${PS_dir}/${dset}/con_wav -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort >${data}/${dset}/wav.scp
-#  sed -i 's/\.wav / /g' ${data}/${dset}/wav.scp
+  find ${PS_dir}/${dset}/con_wav -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort >${data}/${dset}/wav.scp
+  sed -i 's/\.wav / /g' ${data}/${dset}/wav.scp
   # check row number.
 
   # produce utt2cls from protocols

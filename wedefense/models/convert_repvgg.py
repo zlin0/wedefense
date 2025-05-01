@@ -17,9 +17,9 @@ import torch
 import fire
 import yaml
 
-from wespeaker.models.speaker_model import get_speaker_model
-from wespeaker.models.repvgg import repvgg_model_convert
-from wespeaker.utils.utils import parse_config_or_kwargs
+from wedefense.models.speaker_model import get_speaker_model
+from wedefense.models.repvgg import repvgg_model_convert
+from wedefense.utils.utils import parse_config_or_kwargs
 
 
 def convert(config='conf/config.yaml', **kwargs):

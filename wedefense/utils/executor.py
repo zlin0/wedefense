@@ -17,7 +17,7 @@ import tableprint as tp
 
 import torch
 import torchnet as tnt
-from wespeaker.dataset.dataset_utils import apply_cmvn, spec_aug
+from wedefense.dataset.dataset_utils import apply_cmvn, spec_aug
 
 
 def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,

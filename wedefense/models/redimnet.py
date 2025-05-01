@@ -37,7 +37,7 @@ import functools
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import wespeaker.models.pooling_layers as pooling_layers
+import wedefense.models.pooling_layers as pooling_layers
 
 MaxPoolNd = {1: nn.MaxPool1d, 2: nn.MaxPool2d}
 ConvNd = {1: nn.Conv1d, 2: nn.Conv2d}

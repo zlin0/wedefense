@@ -22,8 +22,8 @@ from scipy import signal
 from scipy.io import wavfile
 import torchaudio.compliance.kaldi as kaldi
 
-from wespeaker.utils.file_utils import read_scp
-from wespeaker.dataset.dataset_utils_deprecated import (get_random_chunk,
+from wedefense.utils.file_utils import read_scp
+from wedefense.dataset.dataset_utils_deprecated import (get_random_chunk,
                                                         speed_perturb,
                                                         spec_augmentation)
 

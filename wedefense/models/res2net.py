@@ -17,7 +17,7 @@ This implementation is adapted from github repo:
 https://github.com/alibaba-damo-academy/3D-Speaker
 
 Some modifications:
-1. Reuse the pooling layers (small update) in wespeaker
+1. Reuse the pooling layers (small update) in wedefense
 2. Refine BasicBlockRes2Net to meet the torch.jit.script
    export requirements
 
@@ -27,8 +27,8 @@ import torch
 import math
 import torch.nn as nn
 import torch.nn.functional as F
-import wespeaker.models.pooling_layers as pooling_layers
-from wespeaker.models.eres2net import ReLU, conv1x1, conv3x3
+import wedefense.models.pooling_layers as pooling_layers
+from wedefense.models.eres2net import ReLU, conv1x1, conv3x3
 
 
 class BasicBlockRes2Net(nn.Module):

@@ -16,6 +16,7 @@ import argparse
 import math
 import pickle
 
+import os
 import lmdb
 from tqdm import tqdm
 
@@ -30,7 +31,18 @@ def get_args():
 
 def main():
     args = get_args()
-    db = lmdb.open(args.out_lmdb, map_size=int(math.pow(1024, 4)))  # 1TB
+    try:
+        # Attempt to open LMDB environment
+        print("Opening LMDB at:", args.out_lmdb)
+        os.makedirs(os.path.dirname(args.out_lmdb), exist_ok=True)
+        db = lmdb.open(args.out_lmdb, map_size=int(math.pow(1024, 4)))  # 1TB, 
+        print("LMDB opened successfully.")
+    except Exception as e:
+        # Use a local path such as /tmp or $HOME for LMDB storage.
+        print("Failed to open LMDB.")
+        print("If the program hangs or freezes here, please check if the path is located on an NFS-mounted filesystem.")
+        print("LMDB may not work properly on NFS due to mmap and file lock issues.")
+        print(f"Error message: {e}")
     # txn is for Transaciton
     txn = db.begin(write=True)
     keys = []

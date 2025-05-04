@@ -36,28 +36,30 @@ fi
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Covert train and test data to ${data_type}..."
   # We don't use VAD here but I think the VAD above anyway covers the full utterances
- # for dset in train dev eval;do
- #     if [ $data_type == "shard" ]; then
- #         python tools/make_shard_list.py --num_utts_per_shard 1000 \
- #             --num_threads 8 \
- #             --prefix shards \
- #             --shuffle \
- #             ${data}/$dset/wav.scp ${data}/$dset/utt2cls \
- #             ${data}/$dset/shards ${data}/$dset/shard.list
- #     else
- #         python tools/make_raw_list.py --vad_file ${data}/$dset/vad ${data}/$dset/wav.scp \
- #             ${data}/$dset/utt2cls ${data}/$dset/raw.list
- #     fi
- # done
+#  for dset in train dev eval;do
+#      if [ $data_type == "shard" ]; then
+#          python tools/make_shard_list.py --num_utts_per_shard 1000 \
+#              --num_threads 8 \
+#              --prefix shards \
+#              --shuffle \
+#              ${data}/$dset/wav.scp ${data}/$dset/utt2cls \
+#              ${data}/$dset/shards ${data}/$dset/shard.list
+#      else
+#          python tools/make_raw_list.py --vad_file ${data}/$dset/vad ${data}/$dset/wav.scp \
+#              ${data}/$dset/utt2cls ${data}/$dset/raw.list
+#      fi
+#  done
 
   #MUSAN_dir=/export/fs05/arts/dataset/musan
   #find ${MUSAN_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/musan/wav.scp
   #RIRs_dir=/export/fs05/arts/dataset/RIRS_NOISES/RIRS_NOISES
   #find ${RIRs_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
-  # Convert all musan data to LMDB
-  python tools/make_lmdb.py data/musan/wav.scp data/musan/lmdb
+  # Convert all musan data to LMDB. But note that lmdb does not work on NFS!
+  python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb 
+  mv ${HOME}/local_lmdb/musan/lmdb data/musan/
   # Convert all rirs data to LMDB
-  python tools/make_lmdb.py data/rirs/wav.scp data/rirs/lmdb
+  python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
+  mv ${HOME}/local_lmdb/rirs/lmdb data/rirs/
 fi
 
 if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then

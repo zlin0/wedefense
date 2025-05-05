@@ -1,8 +1,9 @@
 #!/bin/bash 
 
-#SBATCH --job-name=data_prep #job name
+#SBATCH --job-name=train #job name
 #SBATCH --nodes=1  #number of nodes requested
-#SBATCH --partition=cpu   #queue
+#SBATCH --gpus=1
+#SBATCH --partition=gpu   #queue
 #SBATCH --mail-user="lzhan268@jh.edu"  #email for reporting
 #SBATCH --mail-type=END,FAIL  #report types
 #SBATCH --output=./logs/slurm-%A_%a.out
@@ -11,8 +12,9 @@
 #unset PYTHONPATH
 #unset PYTHONHOME
 #
-#source ~/.bashrc
+source ~/.bashrc
+conda activate wedefense_new
 #conda activate /homes/kazi/isilnova/.conda/envs/wespeaker
 #which python
 
-./run.sh --stage 2 --stop_stage 2 > logs/run.sh.stage2.log.1 2>&1
+./run.sh --stage 3 --stop_stage 3 >> logs/run.sh.stage3.log.1 2>&1

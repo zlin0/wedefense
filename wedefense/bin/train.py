@@ -1,5 +1,6 @@
 # Copyright (c) 2021 Hongji Wang (jijijiang77@gmail.com)
 #               2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
+#               2025 Lin Zhang (partialspoof@gmail.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,7 +57,7 @@ def train(config='conf/config.yaml', **kwargs):
     model_dir = os.path.join(configs['exp_dir'], "models")
     if rank == 0:
         try:
-            os.makedirs(model_dir)
+            os.makedirs(model_dir, exist_ok=True)
         except IOError:
             print("[warning] " + model_dir + " already exists !!!")
             if checkpoint is None:
@@ -221,7 +222,7 @@ def train(config='conf/config.yaml', **kwargs):
             logger.info(line)
     dist.barrier(device_ids=[gpu])  # synchronize here
 
-    scaler = torch.cuda.amp.GradScaler(enabled=configs['enable_amp'])
+    scaler = torch.amp.GradScaler('cuda', enabled=configs['enable_amp'])
     for epoch in range(start_epoch, configs['num_epochs'] + 1):
         train_dataset.set_epoch(epoch)
 

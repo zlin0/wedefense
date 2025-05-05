@@ -15,7 +15,7 @@ data=data/partialspoof # data folder
 data_type="shard"  # shard/raw
 
 config=conf/resnet.yaml
-exp_dir=exp/ResNet18
+exp_dir=exp/ResNet18_AugNonoise_F200
 gpus="[0]"
 num_avg=10 # how many models you want to average
 checkpoint=
@@ -56,10 +56,10 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   #find ${RIRs_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
   # Convert all musan data to LMDB. But note that lmdb does not work on NFS!
   python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb 
-  mv ${HOME}/local_lmdb/musan/lmdb data/musan/
+  rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
   # Convert all rirs data to LMDB
   python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
-  mv ${HOME}/local_lmdb/rirs/lmdb data/rirs/
+  rsync -av ${HOME}/local_lmdb/rirs/lmdb data/rirs/lmdb
 fi
 
 if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
@@ -71,7 +71,6 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
     ##num_gpus=$(echo $gpus | awk -F ',' '{print NF}')
     #python -m pdb \
     torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((RANDOM)) --nnodes=1 --nproc_per_node=$num_gpus \
-    -m pdb \
       wedefense/bin/train.py --config $config \
         --exp_dir ${exp_dir} \
         --gpus $gpus \
@@ -79,18 +78,18 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         --data_type "${data_type}" \
         --train_data ${data}/train/${data_type}.list \
         --train_label ${data}/train/utt2cls \
-        --reverb_data ${data}/rirs/lmdb \
-        --noise_data ${data}/musan/lmdb \
         ${checkpoint:+--checkpoint $checkpoint}
+        #--reverb_data data/rirs/lmdb \
+        #--noise_data data/musan/lmdb \
 fi
 
 if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
   echo "Do model average ..."
   avg_model=$exp_dir/models/avg_model.pt
-  #python wespeaker/bin/average_model.py \
-  #  --dst_model $avg_model \
-  #  --src_path $exp_dir/models \
-  #  --num ${num_avg}
+  python wespeaker/bin/average_model.py \
+    --dst_model $avg_model \
+    --src_path $exp_dir/models \
+    --num ${num_avg}
 
   model_path=$avg_model
   #if [[ $config == *repvgg*.yaml ]]; then

@@ -429,6 +429,7 @@ def add_reverb_noise(data,
                         rir_audio,
                         int(len(rir_audio) / rir_sr * resample_rate))
                 rir_audio = rir_audio / np.sqrt(np.sum(rir_audio**2))
+                print(sample['key'], audio.shape, rir_audio.shape, audio_len)
                 out_audio = signal.convolve(audio, rir_audio,
                                             mode='full')[:audio_len]
             else:
@@ -489,7 +490,7 @@ def compute_fbank(data,
         assert 'label' in sample
         sample_rate = sample['sample_rate']
         waveform = sample['wav']
-        waveform = waveform * (1 << 15)
+        waveform = waveform * (1 << 15) ## Convert from float [-1.0, 1.0] to int16 [-32767, 32767]
         # Only keep key, feat, label
         mat = kaldi.fbank(waveform,
                           num_mel_bins=num_mel_bins,

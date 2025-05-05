@@ -1,4 +1,5 @@
 # Copyright (c) 2022 Xin Wang (wangxin@nii.ac.jp)
+#               original from https://github.com/nii-yamagishilab/project-NN-Pytorch-scripts/blob/master/core_scripts/data_io/customize_collate_fn.py
 #               2025 Lin Zhang (lzhang.as@gmail.com)
 #
 # Licensed under the BSD 3-Clause License

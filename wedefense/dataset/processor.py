@@ -2,6 +2,7 @@
 #               2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
 #               2022 Hongji Wang (jijijiang77@gmail.com)
 #               2023 Zhengyang Chen (chenzhengyang117@gmail.com)
+#               2025 Lin Zhang (partialspoof@gmail.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,6 +31,8 @@ from scipy.io import wavfile
 import torch
 import torchaudio
 import torchaudio.compliance.kaldi as kaldi
+
+import rawboost_util
 
 AUDIO_FORMAT_SETS = set(['flac', 'mp3', 'm4a', 'ogg', 'opus', 'wav', 'wma'])
 
@@ -562,3 +565,32 @@ def spec_aug(data, num_t_mask=1, num_f_mask=1, max_t=10, max_f=8, prob=0.6):
                 y[:, start:end] = 0
             sample['feat'] = y
         yield sample
+
+def rawboost(data, 
+             argo = 5):
+    """ Process Rawboost
+
+        Args:
+            data: Iterable[{key, wav, label, sample_rate}]
+            resample_rate: resample rate for data
+            argo: argo. tag for rawboost, default value is 5.
+
+        Returns:
+            Iterable[{key, wav, label, sample_rate}]
+    """
+    for sample in data:
+        assert 'sample_rate' in sample
+        assert 'wav' in sample
+        assert 'key' in sample
+        sample_rate = sample['sample_rate']
+        audio = sample['wav'].numpy()[0]
+        audio_len = audio.shape[0]
+
+        sample['wav'] = rawboost_util.process_Rawboost_feature(audio, sample_rate, algo)
+        yield sample
+
+#TODO
+# codec
+# Rawboost
+
+

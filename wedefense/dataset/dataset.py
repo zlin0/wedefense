@@ -28,6 +28,7 @@ import wedefense.dataset.processor as processor
 
 
 class Processor(IterableDataset):
+    # https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.IterableDataset
 
     def __init__(self, source, f, *args, **kw):
         assert callable(f)
@@ -164,6 +165,7 @@ def Dataset(data_type,
 
     lists = read_lists(data_list_file)
     shuffle = configs.get('shuffle', False)
+    # whole_utt = configs.get('whole_utt', False) # keep consistent with wespeaker.
     # Global shuffle
     dataset = DataList(lists, shuffle=shuffle, repeat_dataset=repeat_dataset)
     if data_type == 'shard':
@@ -216,6 +218,11 @@ def Dataset(data_type,
                          frame_length) * resample_rate // 1000
             dataset = Processor(dataset, processor.random_chunk, chunk_len,
                                 data_type)
+            
+        # process Rawboost:
+        rawboost_flag = configs.get('rawboost', False)
+        if (rawboost_flag):
+            dataset = Processor(dataset, processor.rawboost, algo = 5)
         # add reverb & noise
         aug_prob = configs.get('aug_prob', 0.6)
         if (reverb_lmdb_file and noise_lmdb_file) and (aug_prob > 0.0):

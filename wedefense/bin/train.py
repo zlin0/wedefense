@@ -93,6 +93,7 @@ def train(config='conf/config.yaml', **kwargs):
                             configs['train_data'],
                             configs['dataset_args'],
                             spk2id_dict,
+                            whole_utt = configs.get('dataset_args')['whole_utt'],
                             reverb_lmdb_file=configs.get('reverb_data', None),
                             noise_lmdb_file=configs.get('noise_data', None))
     train_dataloader = DataLoader(train_dataset, **configs['dataloader_args'])

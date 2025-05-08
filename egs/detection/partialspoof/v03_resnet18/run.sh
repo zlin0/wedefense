@@ -110,15 +110,17 @@ fi
 
 
 #TODO 1. move out from score_cm.sh 2. check saving folder, clean code.
-if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
+if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 5 ]; then
   echo "Score ..."
   ./local/score_cm.sh \
+	  --stage ${stage} \
+	  --stop_stage ${stop_stage} \
 	  --exp_dir ${exp_dir} \
 	  --model_path ${model_path} \
 	  --num_classes 2 
 fi
 
-if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
+if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
     #conda activate /mnt/matylda6/rohdin/conda/asv_spoof_5_evaluation_package
   for dset in dev eval; do
     # Preparing trails

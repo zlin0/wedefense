@@ -14,16 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -e
+set -x
+
 exp_dir=''
 model_path=''
 nj=4
 gpus="[0,1]"
 data_type="shard"  # shard/raw/feat
-data=data
+data=''
+
 
 . tools/parse_options.sh
-set -e
-set -x
 
 data_name_array=("dev" "eval")
 data_list_path_array=("${data}/dev/${data_type}.list" "${data}/eval/${data_type}.list")

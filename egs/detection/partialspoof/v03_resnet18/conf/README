@@ -1,0 +1,4 @@
+* conf/resnet.yml: Johan's wespeaker version
+* conf/resnet_noaug_nosample.yaml: w/o aug, using the whole utt for training. but don't consider similar duration to build minibatch 
+
+

@@ -36,6 +36,7 @@ from wedefense.utils.file_utils import read_table
 from wedefense.utils.utils import get_logger, parse_config_or_kwargs, set_seed, \
     spk2id
 
+import wedefense.dataset.customize_collate_fn as nii_collate_fn
 
 def train(config='conf/config.yaml', **kwargs):
     """Trains a model on the given features and spk labels.
@@ -85,18 +86,39 @@ def train(config='conf/config.yaml', **kwargs):
     spk2id_dict = spk2id(train_utt_spk_list)
     if rank == 0:
         logger.info("<== Data statistics ==>")
-        logger.info("train data num: {}, spk num: {}".format(
+        logger.info("train data num: {}, class num: {}".format(
             len(train_utt_spk_list), len(spk2id_dict)))
+
+    batch_size = configs['dataloader_args']['batch_size']
+    whole_utt = configs['dataset_args'].get('whole_utt', False) #set as True after debugging.
+    sampler = configs['dataset_args'].get('sampler', None)
+
+    # collate function
+    if whole_utt and batch_size > 1:
+        # for batch-size > 1, use customize_collate to handle
+        # data with different length
+        collate_fn = nii_collate_fn.customize_collate
+    else:
+        collate_fn = None
+
+    #TODO# sampler
+    #if sampler=='duration' and batch_size >1:
+    #    tmp_sampler = nii_sampler_fn.SamplerBlockShuffleByLen(
+    #            self.m_concate_set.f_get_seq_len_list(), 
+    #            batch_size)
+    #    tmp_params['shuffle'] = False
+    #else:
+    #    tmp_sampler = None
 
     # dataset and dataloader
     train_dataset = Dataset(configs['data_type'],
                             configs['train_data'],
                             configs['dataset_args'],
                             spk2id_dict,
-                            reverb_lmdb_file=configs.get('reverb_data', None),
-                            noise_lmdb_file=configs.get('noise_data', None))
-    train_dataloader = DataLoader(train_dataset, **configs['dataloader_args'])
-    batch_size = configs['dataloader_args']['batch_size']
+                            whole_utt = configs['dataset_args'].get('whole_utt'),
+                            reverb_lmdb_file = configs.get('reverb_data', None),
+                            noise_lmdb_file = configs.get('noise_data', None))
+    train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, **configs['dataloader_args'])
     if configs['dataset_args'].get('sample_num_per_epoch', 0) > 0:
         sample_num_per_epoch = configs['dataset_args']['sample_num_per_epoch']
     else:

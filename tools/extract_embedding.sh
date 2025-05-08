@@ -48,7 +48,7 @@ for suffix in $(seq 0 $(($nj - 1))); do
   idx=$[$suffix % $num_gpus]
   suffix=$(printf '%03d' $suffix)
   data_list_subfile=${log_dir}/split_${suffix}
-  embed_ark=${embed_dir}/xvector_${suffix}.ark
+  embed_ark=${embed_dir}/embedding_${suffix}.ark
   CUDA_VISIBLE_DEVICES=${gpus[$idx]} python -u wedefense/bin/extract.py \
     --config ${exp_dir}/config.yaml \
     --model_path ${model_path} \
@@ -65,8 +65,8 @@ done
 
 wait
 
-cat ${embed_dir}/xvector_*.scp >${embed_dir}/xvector.scp
-embed_num=$(wc -l ${embed_dir}/xvector.scp | awk '{print $1}')
+cat ${embed_dir}/embedding_*.scp >${embed_dir}/embedding.scp
+embed_num=$(wc -l ${embed_dir}/embedding.scp | awk '{print $1}')
 if [ $embed_num -eq $wavs_num ]; then
   echo "Successfully extract embedding for ${store_dir}" | tee ${embed_dir}/extract.result
 else

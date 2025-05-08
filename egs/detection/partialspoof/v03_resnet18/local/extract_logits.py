@@ -19,17 +19,18 @@ import fire
 import kaldiio
 import numpy as np
 import torch
-from wespeaker.utils.utils import parse_config_or_kwargs
-from wespeaker.models.projections import get_projection
+from wedefense.utils.utils import parse_config_or_kwargs
+from wedefense.models.projections import get_projection
 import os.path
 from scipy.special import softmax
 
-def main(model_path, config, num_classes, embedding_scp_path, data_type="raw"):
+def main(model_path, config, num_classes, embedding_scp_path, out_path, data_type="raw"):
     # data_type is just used for seting up the projection properly.
     
     print("model_path {}".format( model_path  ) )
     print("config {}".format( config ) )
     print("embedding_scp_path {}".format( embedding_scp_path ) )
+    print("out_path {}".format( out_path ) )
 
     
     utt  = []
@@ -40,7 +41,7 @@ def main(model_path, config, num_classes, embedding_scp_path, data_type="raw"):
     embd = np.vstack( embd )    
     print(embd.shape)    
 
-    checkpoint = torch.load(model_path, map_location='cpu')
+    checkpoint = torch.load(model_path, map_location='cpu', weights_only=True)
     
 
     configs = parse_config_or_kwargs(config)
@@ -85,7 +86,7 @@ def main(model_path, config, num_classes, embedding_scp_path, data_type="raw"):
     print(output.shape)
     #print(output)
 
-    out_path = os.path.dirname(embedding_scp_path)
+    # out_path = os.path.dirname(embedding_scp_path)
     print(out_path)
     with kaldiio.WriteHelper('ark,scp:' + out_path + "/logits.ark," + out_path + "/logits.scp") as writer:
         for i, utt in enumerate(utt):

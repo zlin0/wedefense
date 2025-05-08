@@ -87,34 +87,33 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
 	#TODO, also move from local/extract_emb.sh
 fi
 
-if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
-  echo "Do model average ..."
+if [ ${stage} -ge 4 ] && [ ${stop_stage} -le 6 ]; then
+#  echo "Do model average ..."
   avg_model=$exp_dir/models/avg_model.pt
-  python wedefense/bin/average_model.py \
-    --dst_model $avg_model \
-    --src_path $exp_dir/models \
-    --num ${num_avg}
-
+#  python wedefense/bin/average_model.py \
+#    --dst_model $avg_model \
+#    --src_path $exp_dir/models \
+#    --num ${num_avg}
+#
   model_path=$avg_model
+#
+#  echo "Extract embeddings ..."
+#  num_gpus=1
+#  if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then
+#     gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
+#  fi
+#
+#  local/extract_emb.sh \
+#     --exp_dir $exp_dir --model_path $model_path \
+#     --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}
 
-  echo "Extract embeddings ..."
-  num_gpus=1
-  if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then
-     gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
-  fi
-
-  local/extract_emb.sh \
-     --exp_dir $exp_dir --model_path $model_path \
-     --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}
-fi
-
-
-#TODO 1. move out from score_cm.sh 2. check saving folder, clean code.
-if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 5 ]; then
+  # Stage 5 & 6
+  #TODO 1. move out from score_cm.sh 2. check saving folder, clean code.
   echo "Score ..."
   ./local/score_cm.sh \
 	  --stage ${stage} \
 	  --stop_stage ${stop_stage} \
+	  --data ${data}
 	  --exp_dir ${exp_dir} \
 	  --model_path ${model_path} \
 	  --num_classes 2 

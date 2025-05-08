@@ -14,7 +14,9 @@ PS_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database
 data=data/partialspoof # data folder
 data_type="shard"  # shard/raw
 
-config=conf/resnet.yaml
+#config=conf/resnet_noaug_nosample.yaml
+#exp_dir=exp/exp/ResNet18-TSTP-emb256-fbank80-wholeutt_nosample-aug0-spFalse-saFalse-Softmax-SGD-epoch100
+config=conf/resnet.yaml #wespeaker version 
 exp_dir=exp/ResNet18_AugNonoise_F200
 gpus="[0]"
 num_avg=10 # how many models you want to average
@@ -36,20 +38,21 @@ fi
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Covert train and test data to ${data_type}..."
   # We don't use VAD here but I think the VAD above anyway covers the full utterances
-#  for dset in train dev eval;do
-#      if [ $data_type == "shard" ]; then
-#          python tools/make_shard_list.py --num_utts_per_shard 1000 \
-#              --num_threads 8 \
-#              --prefix shards \
-#              --shuffle \
-#              ${data}/$dset/wav.scp ${data}/$dset/utt2cls \
-#              ${data}/$dset/shards ${data}/$dset/shard.list
-#      else
-#          python tools/make_raw_list.py --vad_file ${data}/$dset/vad ${data}/$dset/wav.scp \
-#              ${data}/$dset/utt2cls ${data}/$dset/raw.list
-#      fi
-#  done
+  for dset in train dev eval;do
+      if [ $data_type == "shard" ]; then
+          python tools/make_shard_list.py --num_utts_per_shard 1000 \
+              --num_threads 8 \
+              --prefix shards \
+              --shuffle \
+              ${data}/$dset/wav.scp ${data}/$dset/utt2cls \
+              ${data}/$dset/shards ${data}/$dset/shard.list
+      else
+          python tools/make_raw_list.py --vad_file ${data}/$dset/vad ${data}/$dset/wav.scp \
+              ${data}/$dset/utt2cls ${data}/$dset/raw.list
+      fi
+  done
 
+  #TODO: wespeaker doesn't support multi-channel wavs.
   #MUSAN_dir=/export/fs05/arts/dataset/musan
   #find ${MUSAN_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/musan/wav.scp
   #RIRs_dir=/export/fs05/arts/dataset/RIRS_NOISES/RIRS_NOISES
@@ -81,108 +84,57 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         ${checkpoint:+--checkpoint $checkpoint}
         #--reverb_data data/rirs/lmdb \
         #--noise_data data/musan/lmdb \
+	#TODO, also move from local/extract_emb.sh
 fi
 
 if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
   echo "Do model average ..."
   avg_model=$exp_dir/models/avg_model.pt
-  python wespeaker/bin/average_model.py \
+  python wedefense/bin/average_model.py \
     --dst_model $avg_model \
     --src_path $exp_dir/models \
     --num ${num_avg}
 
   model_path=$avg_model
-  #if [[ $config == *repvgg*.yaml ]]; then
-  #  echo "convert repvgg model ..."
-  #  python wespeaker/models/convert_repvgg.py \
-  #    --config $exp_dir/config.yaml \
-  #    --load $avg_model \
-  #    --save $exp_dir/models/convert_model.pt
-  #  model_path=$exp_dir/models/convert_model.pt
-  #fi
 
   echo "Extract embeddings ..."
-  #num_gpus=2
-  #gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
-  #local/extract_vox.sh \
-  #  --exp_dir $exp_dir --model_path $model_path \
-  #  --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}
+  num_gpus=1
+  if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then
+     gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
+  fi
 
-  echo "Extract embeddings ..."
-  num_gpus=2
-  gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
-  #local/extract_vox_eval.sh \
-  #  --exp_dir $exp_dir --model_path $model_path \
-  #  --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}
-
-  #local/extract_vox.sh \
-  #  --exp_dir $exp_dir --model_path $model_path \
-  #  --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}
-
-  local/extract_vox_eval_extra.sh \
-    --exp_dir $exp_dir --model_path $model_path \
-    --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}
-
-
+  local/extract_emb.sh \
+     --exp_dir $exp_dir --model_path $model_path \
+     --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}
 fi
 
+
+#TODO 1. move out from score_cm.sh 2. check saving folder, clean code.
 if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   echo "Score ..."
-  local/score.sh \
-    --stage 1 --stop-stage 2 \
-    --data ${data} \
-    --exp_dir $exp_dir \
-    --trials "$trials"
+  ./local/score_cm.sh \
+	  --exp_dir ${exp_dir} \
+	  --model_path ${model_path} \
+	  --num_classes 2 
 fi
 
 if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
-  echo "Score norm ..."
-  local/score_norm.sh \
-    --stage 1 --stop-stage 3 \
-    --score_norm_method $score_norm_method \
-    --cohort_set vox2_dev \
-    --top_n $top_n \
-    --data ${data} \
-    --exp_dir $exp_dir \
-    --trials "$trials"
+    #conda activate /mnt/matylda6/rohdin/conda/asv_spoof_5_evaluation_package
+  for dset in dev eval; do
+    # Preparing trails
+    # filename        cm-label
+    echo "filename cm-label" > ${data}/${dset}/cm_key_file.txt	  
+    cat ${data}/${dset}/utt2cls >> ${data}/${dset}/cm_key_file.txt
+    sed -i "s/ /\t/g" ${data}/${dset}/cm_key_file.txt
+
+    echo "Measuring " $dset
+    python ../../metrics_asvspoof5/evaluation.py  \
+	--m t1 \
+	--cm ${exp_dir}/embeddings/${dset}/llr.txt \
+	--cm_key ${data}/${dset}/cm_key_file.txt
+  done
+    #conda deactivate
 fi
 
-if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
-  echo "Score calibration ..."
-  local/score_calibration.sh \
-    --stage 1 --stop-stage 5 \
-    --score_norm_method $score_norm_method \
-    --calibration_trial "vox2_cali.kaldi" \
-    --cohort_set vox2_dev \
-    --top_n $top_n \
-    --data ${data} \
-    --exp_dir $exp_dir \
-    --trials "$trials"
-fi
+exit 1
 
-if [ ${stage} -le 8 ] && [ ${stop_stage} -ge 8 ]; then
-  echo "Export the best model ..."
-  python wespeaker/bin/export_jit.py \
-    --config $exp_dir/config.yaml \
-    --checkpoint $exp_dir/models/avg_model.pt \
-    --output_file $exp_dir/models/final.zip
-fi
-
-if [ ${stage} -le 9 ] && [ ${stop_stage} -ge 9 ]; then
-  echo "Large margin fine-tuning ..."
-  lm_exp_dir=${exp_dir}-LM
-  mkdir -p ${lm_exp_dir}/models
-  # Use the pre-trained average model to initialize the LM training
-  cp ${exp_dir}/models/avg_model.pt ${lm_exp_dir}/models/model_0.pt
-  bash run.sh --stage 3 --stop_stage 8 \
-      --data ${data} \
-      --data_type ${data_type} \
-      --config ${lm_config} \
-      --exp_dir ${lm_exp_dir} \
-      --gpus $gpus \
-      --num_avg 1 \
-      --checkpoint ${lm_exp_dir}/models/model_0.pt \
-      --trials "$trials" \
-      --score_norm_method ${score_norm_method} \
-      --top_n ${top_n}
-fi

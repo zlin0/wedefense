@@ -31,6 +31,7 @@ gpus="[0,1]"
 
 . tools/parse_options.sh
 set -e
+set -x
 
 embed_dir=${exp_dir}/embeddings/${store_dir}
 log_dir=${embed_dir}/log
@@ -48,7 +49,7 @@ for suffix in $(seq 0 $(($nj - 1))); do
   suffix=$(printf '%03d' $suffix)
   data_list_subfile=${log_dir}/split_${suffix}
   embed_ark=${embed_dir}/xvector_${suffix}.ark
-  CUDA_VISIBLE_DEVICES=${gpus[$idx]} python -u wespeaker/bin/extract.py \
+  CUDA_VISIBLE_DEVICES=${gpus[$idx]} python -u wedefense/bin/extract.py \
     --config ${exp_dir}/config.yaml \
     --model_path ${model_path} \
     --data_type ${data_type} \
@@ -56,10 +57,10 @@ for suffix in $(seq 0 $(($nj - 1))); do
     --embed_ark ${embed_ark} \
     --batch-size ${batch_size} \
     --num-workers ${num_workers} \
-    --reverb_data ${reverb_data} \
-    --noise_data ${noise_data} \
     --aug-prob ${aug_prob} \
     >${log_dir}/split_${suffix}.log 2>&1 &
+    # --reverb_data ${reverb_data} \
+    # --noise_data ${noise_data} \
 done
 
 wait

@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-#SBATCH --job-name=train #job name
+#SBATCH --job-name=train_whole_utt #job name
 #SBATCH --nodes=1  #number of nodes requested
 #SBATCH --gpus=1
 #SBATCH --partition=gpu   #queue

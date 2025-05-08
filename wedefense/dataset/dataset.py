@@ -165,7 +165,7 @@ def Dataset(data_type,
 
     lists = read_lists(data_list_file)
     shuffle = configs.get('shuffle', False)
-    # whole_utt = configs.get('whole_utt', False) # keep consistent with wespeaker.
+    # whole_utt = configs.get('whole_utt', False) # set in train.py to keep consistent with wespeaker.
     # Global shuffle
     dataset = DataList(lists, shuffle=shuffle, repeat_dataset=repeat_dataset)
     if data_type == 'shard':

@@ -1,8 +1,7 @@
 #!/bin/bash
-
-# Copyright 2022 Hongji Wang (jijijiang77@gmail.com)
-#           2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
-#           2025 Johan Rohdin, Lin Zhang (rohdin@fit.vut.cz, partialspoof@gmail.com)
+#
+# Copyright 2025 Johan Rohdin, Lin Zhang (rohdin@fit.vut.cz, partialspoof@gmail.com)
+#
 
 set -x
 . ./path.sh || exit 1
@@ -29,12 +28,17 @@ lm_config=conf/campplus_lm.yaml
 
 . tools/parse_options.sh || exit 1
 
-# 1. preparing data folder for partialspoof: wav.scp, utt2cls, cls2utt, reco2dur
+#######################################################################################
+# Stage 1. Preparing data folder for partialspoof: wav.scp, utt2cls, cls2utt, reco2dur
+#######################################################################################
 if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
   echo "Prepare datasets ..."
   ./local/prepare_data.sh ${PS_dir} ${data}
 fi
 
+#######################################################################################
+# Stage 2. Preapring shard data for partialspoof and musan/rirs 
+#######################################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Covert train and test data to ${data_type}..."
   # We don't use VAD here but I think the VAD above anyway covers the full utterances
@@ -65,6 +69,9 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   rsync -av ${HOME}/local_lmdb/rirs/lmdb data/rirs/lmdb
 fi
 
+#######################################################################################
+# Stage 3. Training
+#######################################################################################
 if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
   echo "Start training ..."
   num_gpus=1
@@ -84,11 +91,14 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         ${checkpoint:+--checkpoint $checkpoint}
         #--reverb_data data/rirs/lmdb \
         #--noise_data data/musan/lmdb \
-	#TODO, also move from local/extract_emb.sh
+	#TODO, currentlyalso moved from local/extract_emb.sh, flexible to control musan/rirs.
 fi
 
 avg_model=$exp_dir/models/avg_model.pt
 model_path=$avg_model
+#######################################################################################
+# Stage 4. Averaging the model, and extract embeddings
+#######################################################################################
 if [ ${stage} -ge 4 ] && [ ${stop_stage} -le 6 ]; then
   echo "Do model average ..."
   python wedefense/bin/average_model.py \
@@ -108,6 +118,9 @@ if [ ${stage} -ge 4 ] && [ ${stop_stage} -le 6 ]; then
      --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}
 fi
 
+#######################################################################################
+# Stage 5. Extract logits and posterior 
+#######################################################################################
 if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   echo "Extract logits and posteriors ..."
   for dset in dev eval;do
@@ -121,7 +134,9 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   done
 fi
 
-
+#######################################################################################
+# Stage 6. Convery logits to llr 
+#######################################################################################
 if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
   echo "Convert logits to llr ..."
   cut -f2 -d" " ${data}/train/utt2cls | sort | uniq -c | awk '{print $2 " " $1}' > ${data}/train/cls2num_utts
@@ -136,8 +151,11 @@ if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
   done
 fi
 
+#######################################################################################
+# Stage 7. Measuring performance 
+#######################################################################################
 if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
-    #conda activate /mnt/matylda6/rohdin/conda/asv_spoof_5_evaluation_package
+  echo "Measuring Performance ..."
   for dset in dev eval; do
     # Preparing trails
     # filename        cm-label
@@ -151,7 +169,6 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
 	--cm ${exp_dir}/posteriors/${dset}/llr.txt \
 	--cm_key ${data}/${dset}/cm_key_file.txt
   done
-    #conda deactivate
 fi
 
 exit 1

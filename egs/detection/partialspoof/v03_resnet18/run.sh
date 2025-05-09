@@ -87,36 +87,53 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
 	#TODO, also move from local/extract_emb.sh
 fi
 
+avg_model=$exp_dir/models/avg_model.pt
+model_path=$avg_model
 if [ ${stage} -ge 4 ] && [ ${stop_stage} -le 6 ]; then
-#  echo "Do model average ..."
-  avg_model=$exp_dir/models/avg_model.pt
-#  python wedefense/bin/average_model.py \
-#    --dst_model $avg_model \
-#    --src_path $exp_dir/models \
-#    --num ${num_avg}
-#
-  model_path=$avg_model
-#
-#  echo "Extract embeddings ..."
-#  num_gpus=1
-#  if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then
-#     gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
-#  fi
-#
-#  local/extract_emb.sh \
-#     --exp_dir $exp_dir --model_path $model_path \
-#     --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}
+  echo "Do model average ..."
+  python wedefense/bin/average_model.py \
+    --dst_model $avg_model \
+    --src_path $exp_dir/models \
+    --num ${num_avg}
 
-  # Stage 5 & 6
-  #TODO 1. move out from score_cm.sh 2. check saving folder, clean code.
-  echo "Score ..."
-  ./local/score_cm.sh \
-	  --stage ${stage} \
-	  --stop_stage ${stop_stage} \
-	  --data ${data}
-	  --exp_dir ${exp_dir} \
-	  --model_path ${model_path} \
-	  --num_classes 2 
+
+  echo "Extract embeddings ..."
+  num_gpus=1
+  if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then
+     gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
+  fi
+
+  local/extract_emb.sh \
+     --exp_dir $exp_dir --model_path $model_path \
+     --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}
+fi
+
+if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
+  echo "Extract logits and posteriors ..."
+  for dset in dev eval;do
+      mkdir -p ${exp_dir}/posteriors/$dset 
+      echo $dset
+      python ./local/extract_logits.py --model_path $model_path \
+	  --config ${exp_dir}/config.yaml \
+	  --num_classes 2 \
+	  --embedding_scp_path ${exp_dir}/embeddings/$dset/embedding.scp \
+	  --out_path ${exp_dir}/posteriors/$dset
+  done
+fi
+
+
+if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
+  echo "Convert logits to llr ..."
+  cut -f2 -d" " ${data}/train/utt2cls | sort | uniq -c | awk '{print $2 " " $1}' > ${data}/train/cls2num_utts
+  for dset in dev eval; do
+      echo $dset
+      python ./local/logits_to_llr.py \
+	  --logits_scp_path ${exp_dir}/posteriors/$dset/logits.scp \
+	  --training_counts ${data}/train/cls2num_utts \
+	  --train_label ${data}/train/utt2cls \
+	  --pi_spoof 0.05
+
+  done
 fi
 
 if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
@@ -131,7 +148,7 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
     echo "Measuring " $dset
     python ../../metrics_asvspoof5/evaluation.py  \
 	--m t1 \
-	--cm ${exp_dir}/embeddings/${dset}/llr.txt \
+	--cm ${exp_dir}/posteriors/${dset}/llr.txt \
 	--cm_key ${data}/${dset}/cm_key_file.txt
   done
     #conda deactivate

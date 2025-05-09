@@ -18,6 +18,7 @@ pip install safe_gpu
 
 
 ## Updates
+2025-05-08: [Lin] clean code for stage 5-7 of `egs/detection/partialspoof/v03_resnet18/`
 2025-05-07: [Lin] clean code for stage 1-4 of `egs/detection/partialspoof/v03_resnet18/`
 
 

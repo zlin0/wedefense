@@ -1,0 +1,6 @@
+
+CM SYSTEM
+	min DCF 		= 0.1669968795074688 (min DCF for countermeasure)
+	EER		= 6.839811361 % (EER for countermeasure)
+	CLLR		= 0.367512224 bits (CLLR for countermeasure)
+	actDCF		= 0.2515176134890615 (actual DCF)

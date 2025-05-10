@@ -3,6 +3,7 @@
 
 import sys
 
+from tqdm import tqdm
 import torchaudio
 
 torchaudio.set_audio_backend("sox_io")
@@ -13,7 +14,7 @@ dur_scp = sys.argv[2]
 with open(scp, 'r') as f, open(dur_scp, 'w') as fout:
     cnt = 0
     total_duration = 0
-    for l in f:
+    for l in tqdm(f):
         items = l.strip().split()
         wav_id = items[0]
         fname = items[1]

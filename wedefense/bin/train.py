@@ -102,13 +102,15 @@ def train(config='conf/config.yaml', **kwargs):
         collate_fn = None
 
     #TODO# sampler
-    #if sampler=='duration' and batch_size >1:
-    #    tmp_sampler = nii_sampler_fn.SamplerBlockShuffleByLen(
-    #            self.m_concate_set.f_get_seq_len_list(), 
-    #            batch_size)
-    #    tmp_params['shuffle'] = False
-    #else:
-    #    tmp_sampler = None
+    if sampler=='block_shuffle_by_length' and batch_size >1:
+        ## 1. get duration
+        ## 2. set the new sampler 
+        #tmp_sampler = nii_sampler_fn.SamplerBlockShuffleByLen(
+        #        self.m_concate_set.f_get_seq_len_list(), 
+        #        batch_size)
+        tmp_params['shuffle'] = False
+    else:
+        tmp_sampler = None
 
     # dataset and dataloader
     train_dataset = Dataset(configs['data_type'],

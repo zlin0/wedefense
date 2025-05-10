@@ -13,10 +13,11 @@ PS_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database
 data=data/partialspoof # data folder
 data_type="shard"  # shard/raw
 
-#config=conf/resnet_noaug_nosample.yaml
-#exp_dir=exp/exp/ResNet18-TSTP-emb256-fbank80-wholeutt_nosample-aug0-spFalse-saFalse-Softmax-SGD-epoch100
-config=conf/resnet.yaml #wespeaker version 
-exp_dir=exp/ResNet18_AugNonoise_F200
+config=conf/resnet_wholeutt_noaug_nosample.yaml 
+exp_dir=exp/ResNet18-TSTP-emb256-fbank80-wholeutt_nosample-aug0-spFalse-saFalse-Softmax-SGD-epoch100
+#config=conf/resnet.yaml #wespeaker version 
+#exp_dir=exp/ResNet18_AugNonoise_F200
+
 gpus="[0]"
 num_avg=10 # how many models you want to average
 checkpoint=
@@ -41,7 +42,7 @@ fi
 #######################################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Covert train and test data to ${data_type}..."
-  # We don't use VAD here but I think the VAD above anyway covers the full utterances
+  # We don't use VAD here 
   for dset in train dev eval;do
       if [ $data_type == "shard" ]; then
           python tools/make_shard_list.py --num_utts_per_shard 1000 \
@@ -170,6 +171,14 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
 	--cm_key ${data}/${dset}/cm_key_file.txt
   done
 fi
+
+#######################################################################################
+# Stage 8. Analyses 
+#######################################################################################
+# TODO
+# 1. significant test
+# 2. boostrap testing
+# 3. embedding visulization
 
 exit 1
 

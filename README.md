@@ -20,6 +20,7 @@ pip install safe_gpu
 
 ## Updates
 
+* `egs/detection/partialspoof/v03_resnet18` is relatively complete. I'm still working on updating dataset.py, but you can run it to get familiar with the toolkit.
 * 2025-05-08: [Lin] clean code for stage 5-7 of `egs/detection/partialspoof/v03_resnet18/`
 * 2025-05-07: [Lin] clean code for stage 1-4 of `egs/detection/partialspoof/v03_resnet18/`
 
@@ -71,6 +72,8 @@ pip install safe_gpu
 │   ├── wav2dur.py
 │   └── wav_to_duration.sh
 └── wedefense #[main modules]
+    ├── fusion #TODO? folder to implement fusion [Johan]
+		├── calibration # TODO? folder to save calibration related recipts. [Johan]  
     ├── bin
     │   ├── average_model.py
     │   ├── extract.py
@@ -125,10 +128,6 @@ pip install safe_gpu
     └── xai # explainable AI
 
 ```
-
-
-
-
 
 
 

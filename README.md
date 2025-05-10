@@ -26,7 +26,9 @@ pip install safe_gpu
 
 
 
-## Folder
+## Folder 
+
+**Note:** This is **NOT** the same as the repo version. It's for reference and discussion only, intended to guide future restructuring. Final decisions will need to be confirmed with co-authors. (try to decide on May 11)
 
 ```shell
 .

@@ -1,5 +1,32 @@
 # wedefense
 
+## Path and Functions:
+.
+├── LICENSE
+├── README.md
+├── egs
+│   ├── detection
+│   │   ├── asvspoof5
+│   │   └── partialspoof
+│   │       ├── README
+│   │       ├── v03_resnet18
+│   │       ├── v12_ssl_res1d
+│   │       ├── v15_ssl_mhfa
+│   │       └── x12_ssl_res1d
+│   └── localization
+├── requirements.txt
+├── tools
+└── wedefense
+    ├── __init__.py
+    ├── bin
+    ├── dataset
+    ├── diarization
+    ├── frontend
+    ├── localization
+    ├── models
+    └── utils
+
+
 
 ## Enviorment:
 ```shell
@@ -18,8 +45,8 @@ pip install safe_gpu
 
 
 ## Updates
-2025-05-08: [Lin] clean code for stage 5-7 of `egs/detection/partialspoof/v03_resnet18/`
-2025-05-07: [Lin] clean code for stage 1-4 of `egs/detection/partialspoof/v03_resnet18/`
+* 2025-05-08: [Lin] clean code for stage 5-7 of `egs/detection/partialspoof/v03_resnet18/`
+* 2025-05-07: [Lin] clean code for stage 1-4 of `egs/detection/partialspoof/v03_resnet18/`
 
 
 ## TODO:

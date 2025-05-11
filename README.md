@@ -41,6 +41,7 @@ pip install safe_gpu
 │   │       ├── README 	 # which version refer to which model.
 │   │       ├── fusion	 # fusing N models' results. 
 │ 	│  		  │      └──v03_12 # fusion of v03 and v12.
+│   │       ├── significant_testing	 # significant testing given models' 
 │   │       ├── v03_resnet18
 │   │       ├── v12_ssl_res1d
 │   │       ├── v15_ssl_mhfa
@@ -74,7 +75,9 @@ pip install safe_gpu
 │   ├── wav2dur.py
 │   └── wav_to_duration.sh
 └── wedefense #[main modules]
-    ├── fusion #TODO? folder to implement fusion [Johan]
+    ├── fusion # TODO? folder to implement fusion [Johan]
+    │   ├── train_fusion.py # script to call fusion.
+    │   └── xxx.py  # for fusion
 		├── calibration # TODO? folder to save calibration related recipts. [Johan]  
     ├── bin
     │   ├── average_model.py
@@ -88,21 +91,20 @@ pip install safe_gpu
     │   ├── __init__.py
     │   ├── lmdb_data.py
     │   ├── processor.py
-    │   ├── rawboost.py: copy from Hemlata\'s code
-    │   └── rawboost_util.py: copy from Hemlata\'s code
+    │   └── augmentation 
+    │   			├── rawboost.py 			# copy from Hemlata's code
+    │   			└── rawboost_util.py 	# copy from Hemlata's code
     ├── diarization #[Future]
     ├── frontend #[Junyi's SSL?]
     │   ├── __init__.py
     │   ├── s3prl.py
     │   └── whisper_encoder.py
     ├── __init__.py
-    ├── localization
     ├── metrics
     │   ├── significiation_testing #[put to here?]
     │   ├── confidence_intervals #[put to here?]
     │   ├── localization
     │   └── detection
-    │       └── asvspoof5
     │           ├── a_dcf.py
     │           ├── calculate_metrics_full.py
     │           ├── calculate_metrics.py
@@ -113,6 +115,7 @@ pip install safe_gpu
     │           ├── util.py
     │           └── util_table.py
     ├── models #models are added here. (those from wespeaker will be move to pip installed wespeaker)
+    │   ├── localization
     │   ├── campplus.py #wedefense will not consider large-margin finetuning for now?
     │   ├── __init__.py
     │   ├── pooling_layers.py
@@ -121,13 +124,12 @@ pip install safe_gpu
     │   └── speaker_model.py
     ├── utils
     │   ├── checkpoint.py
-    │   ├── executor_deprecated.py
     │   ├── executor.py
     │   ├── file_utils.py
     │   ├── schedulers.py
     │   ├── score_metrics.py
     │   └── utils.py
-    └── xai # explainable AI
+    └── xai # explainable AI [Tianchi]
 
 ```
 

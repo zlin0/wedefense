@@ -31,7 +31,7 @@ dataset_args:
   resample_rate: 16000
   speed_perturb: False
   num_frms: 200
-  aug_prob: 0.6 # prob to add reverb & noise aug per sample
+  aug_prob: 0 # prob to add reverb & noise aug per sample
   fbank_args:
     num_mel_bins: 80
     frame_shift: 10
@@ -44,6 +44,7 @@ dataset_args:
     max_t: 10
     max_f: 8
     prob: 0.6
+  #TODO move rawboost parameters to here.  
 
 model: ResNet18 # ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
 model_init: null

@@ -13,8 +13,8 @@ PS_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database
 data=data/partialspoof # data folder
 data_type="shard"  # shard/raw
 
-config=conf/resnet_wholeutt_noaug_nosample.yaml 
-exp_dir=exp/ResNet18-TSTP-emb256-fbank80-wholeutt_nosample-aug0-spFalse-saFalse-Softmax-SGD-epoch100
+config=conf/resnet_wholeutt_noaug_nosampler.yaml 
+exp_dir=exp/ResNet18-TSTP-emb256-fbank80-wholeutt_nosampler-aug0-spFalse-saFalse-Softmax-SGD-epoch100
 #config=conf/resnet.yaml #wespeaker version 
 #exp_dir=exp/ResNet18_AugNonoise_F200
 
@@ -92,7 +92,7 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         ${checkpoint:+--checkpoint $checkpoint}
         #--reverb_data data/rirs/lmdb \
         #--noise_data data/musan/lmdb \
-	#TODO, currentlyalso moved from local/extract_emb.sh, flexible to control musan/rirs.
+	#TODO, currently also moved from local/extract_emb.sh, flexible to control musan/rirs.
 fi
 
 avg_model=$exp_dir/models/avg_model.pt
@@ -136,7 +136,7 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
 fi
 
 #######################################################################################
-# Stage 6. Convery logits to llr 
+# Stage 6. Convert logits to llr 
 #######################################################################################
 if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
   echo "Convert logits to llr ..."
@@ -165,7 +165,7 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
     sed -i "s/ /\t/g" ${data}/${dset}/cm_key_file.txt
 
     echo "Measuring " $dset
-    python ../../metrics_asvspoof5/evaluation.py  \
+    python wedefense/metrics/detection/evaluation.py  \
 	--m t1 \
 	--cm ${exp_dir}/posteriors/${dset}/llr.txt \
 	--cm_key ${data}/${dset}/cm_key_file.txt

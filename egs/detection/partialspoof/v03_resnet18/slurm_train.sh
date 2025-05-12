@@ -17,4 +17,4 @@ conda activate wedefense_new
 #conda activate /homes/kazi/isilnova/.conda/envs/wespeaker
 #which python
 
-./run.sh --stage 3 --stop_stage 3 >> logs/run.sh.stage3.log.1 2>&1
+./run.sh --stage 3 --stop_stage 3 >> logs/run.sh.stage3.log.$SLURM_JOB_ID 2>&1

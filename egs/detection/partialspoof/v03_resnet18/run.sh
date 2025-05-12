@@ -127,7 +127,7 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   for dset in dev eval;do
       mkdir -p ${exp_dir}/posteriors/$dset 
       echo $dset
-      python ./local/extract_logits.py --model_path $model_path \
+      python wedefense/bin/infer.py --model_path $model_path \
 	  --config ${exp_dir}/config.yaml \
 	  --num_classes 2 \
 	  --embedding_scp_path ${exp_dir}/embeddings/$dset/embedding.scp \
@@ -143,7 +143,7 @@ if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
   cut -f2 -d" " ${data}/train/utt2cls | sort | uniq -c | awk '{print $2 " " $1}' > ${data}/train/cls2num_utts
   for dset in dev eval; do
       echo $dset
-      python ./local/logits_to_llr.py \
+      python wedefense/bin/logits_to_llr.py \
 	  --logits_scp_path ${exp_dir}/posteriors/$dset/logits.scp \
 	  --training_counts ${data}/train/cls2num_utts \
 	  --train_label ${data}/train/utt2cls \

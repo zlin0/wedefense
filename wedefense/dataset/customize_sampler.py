@@ -21,9 +21,7 @@ import torch
 import torch.utils.data
 import torch.utils.data.sampler as torch_sampler
 
-import core_scripts.math_tools.random_tools as nii_rand_tk
-import core_scripts.other_tools.display as nii_warn
-
+import wedefense.dataset.shuffle_random_tools as nii_rand_tk
 __author__ = "Xin Wang"
 __email__ = "wangxin@nii.ac.jp"
 __copyright__ = "Copyright 2021, Xin Wang"
@@ -47,9 +45,8 @@ class SamplerBlockShuffleByLen(torch_sampler.Sampler):
                               length of each data in a dataset
           batch_size: int, batch_size
         """
-        if batch_size == 1:
-            mes = "Sampler block shuffle by length requires batch-size>1"
-            nii_warn.f_die(mes)
+        mes = "Sampler block shuffle by length requires batch-size>1"
+        assert batch_size > 1, mes
 
         # hyper-parameter, just let block_size = batch_size * 3
         self.m_block_size = batch_size * 4

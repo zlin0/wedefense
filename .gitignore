@@ -2,6 +2,7 @@
 # some intermediate generated files
 data/
 exp/
+s3prl_hub/
 .nfs*
 note
 egs/*/*/*/data/
@@ -14,7 +15,7 @@ egs/*/*/*/logs*/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[cod]
+*.py[cod]ß
 *$py.class
 
 # C extensions

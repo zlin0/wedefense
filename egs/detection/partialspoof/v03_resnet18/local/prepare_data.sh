@@ -19,6 +19,9 @@ for dset in train dev eval; do
   cut -d' ' -f2,5 ${PS_dir}/protocols/PartialSpoof_LA_cm_protocols/PartialSpoof.LA.cm.${dset}.trl.txt > ${data}/${dset}/utt2cls
 
   ./tools/utt2spk_to_spk2utt.pl ${data}/${dset}/utt2cls >${data}/${dset}/cls2utt
+
+  #we are using wav2dur.py, but quite slow. 
+  python tools/wav2dur.py ${data}/${dset}/wav.scp ${data}/${dset}/utt2dur
 done
 
 echo "Prepared data folder for partialspoof, including wav.scp, utt2cls, cls2utt"

@@ -8,7 +8,7 @@
 
 import argparse
 import scipy.io.wavfile as sciwav
-from wedefense.dataset.rawboost import ISD_additive_noise,LnL_convolutive_noise,SSI_additive_noise,normWav
+from wedefense.dataset.augmentation.rawboost import ISD_additive_noise,LnL_convolutive_noise,SSI_additive_noise,normWav
 
 
 

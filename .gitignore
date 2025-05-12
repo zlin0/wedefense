@@ -10,6 +10,44 @@ egs/*/*/*/slurm-*
 debug*
 egs/*/*/*/logs*/
 
+tensorboard
+**/*build*
+
+*.onnx
+external_tools
+pretrained_models
+s3prl_hub
+whisper_hub
+
+
+# Visual Studio Code files
+.vscode
+.vs
+
+# PyCharm files
+.idea
+venv
+
+# Eclipse Project settings
+*.*project
+.settings
+
+# Sublime Text settings
+*.sublime-workspace
+*.sublime-project
+
+# Editor temporaries
+*.swn
+*.swo
+*.swp
+*.swm
+*~
+
+# IPython notebook checkpoints
+.ipynb_checkpoints
+
+# macOS dir files
+.DS_Store
 
 
 # Byte-compiled / optimized / DLL files

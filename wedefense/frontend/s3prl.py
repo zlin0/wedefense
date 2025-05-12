@@ -33,6 +33,42 @@ class S3prlFrontend(nn.Module):
                  frame_shift: int = 20,
                  frame_length: int = 20,
                  sample_rate: int = 16000):
+        """
+        Args:
+            upstream_args (dict): 
+                Configuration dictionary for the S3PRL upstream model.
+                Must include the key "name" (e.g., "hubert_base") and can include:
+                - "path_or_url": Optional pretrained model path or URL
+                - "normalize": Whether to apply layer normalization
+                - "extra_conf": Additional config for the model
+
+            download_dir (str): 
+                Directory to download S3PRL models if not cached. Default: "./s3prl_hub"
+
+            multilayer_feature (bool): 
+                If True, extracts and fuses representations (shape: Batch, Time, D) from multiple layers. 
+                Set to False to use only the top layer. Default: True
+
+            layerwise_feature (bool): 
+                If True, returns the full set of layer-wise representations (shape: B, D, T, N).
+                If False, uses featurizer to combine layers. Default: False
+
+            layer (int): 
+                Specific layer index to extract features from. If -1, uses all layers.
+                Must be -1 when multilayer_feature is True. Default: -1
+
+            frozen (bool): 
+                If True, disables gradient updates for the upstream model. Default: False
+
+            frame_shift (int): 
+                Frame shift in milliseconds. Used to verify downsampling alignment. Default: 20
+
+            frame_length (int): 
+                Frame length in milliseconds (unused here but kept for interface consistency). Default: 20
+
+            sample_rate (int): 
+                Input audio sample rate in Hz. Used for compatibility checks. Default: 16000
+        """
         super().__init__()
 
         self.multilayer_feature = multilayer_feature

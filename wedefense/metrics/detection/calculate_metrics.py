@@ -1,3 +1,5 @@
+# original from ASVspoof5 Evaluation Package 
+# (https://github.com/asvspoof-challenge/asvspoof5/tree/main/evaluation-package)
 import os
 import numpy as np
 

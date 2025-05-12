@@ -16,6 +16,9 @@ If you are working on merlin:
 pip install safe_gpu
 ```
 
+Given time limitation, we will follow in future. Before submitting our ASRU paper, you don't need to follow this:
+```shell
+pre-commit install ```
 
 
 ## Updates

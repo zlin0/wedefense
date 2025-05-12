@@ -1,5 +1,6 @@
 # Copyright (c) 2022 Hongji Wang (jijijiang77@gmail.com)
 #               2024 Shuai Wang (wsstriving@gmail.com)
+#               2025 Junyi Peng (pengjy@fit.vut.cz)
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -29,7 +30,7 @@ import wedefense.models.ssl_backend as ssl_backend
 
 
 
-def get_speaker_model(model_name: str):
+def get_model(model_name: str):
     if model_name.startswith("XVEC"):
         return getattr(tdnn, model_name)
     elif model_name.startswith("ECAPA_TDNN"):

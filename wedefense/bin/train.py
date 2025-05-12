@@ -29,7 +29,7 @@ import wedefense.utils.schedulers as schedulers
 from wedefense.dataset.dataset import Dataset
 from wedefense.frontend import *
 from wedefense.models.projections import get_projection
-from wedefense.models.speaker_model import get_speaker_model
+from wedefense.models.get_model import get_model
 from wedefense.utils.checkpoint import load_checkpoint, save_checkpoint
 from wedefense.utils.executor import run_epoch
 from wedefense.utils.file_utils import read_table

@@ -40,7 +40,7 @@ pip install safe_gpu
 │   │   └── partialspoof # [ASRU2025 Foucs]
 │   │       ├── README 	 # which version refer to which model.
 │   │       ├── fusion	 # fusing N models' results. 
-│ 	│  		  │      └──v03_12 # fusion of v03 and v12.
+│   │       │     └──v03_12 # fusion of v03 and v12.
 │   │       ├── significant_testing	 # significant testing given models' 
 │   │       ├── v03_resnet18
 │   │       ├── v12_ssl_res1d
@@ -78,7 +78,7 @@ pip install safe_gpu
     ├── fusion # TODO? folder to implement fusion [Johan]
     │   ├── train_fusion.py # script to call fusion.
     │   └── xxx.py  # for fusion
-		├── calibration # TODO? folder to save calibration related recipts. [Johan]  
+	├── calibration # TODO? folder to save calibration related recipts. [Johan]  
     ├── bin
     │   ├── average_model.py
     │   ├── extract.py
@@ -92,8 +92,8 @@ pip install safe_gpu
     │   ├── lmdb_data.py
     │   ├── processor.py
     │   └── augmentation 
-    │   			├── rawboost.py 			# copy from Hemlata's code
-    │   			└── rawboost_util.py 	# copy from Hemlata's code
+    │ 		├── rawboost.py 			# copy from Hemlata's code
+    │  		└── rawboost_util.py 	# copy from Hemlata's code
     ├── diarization #[Future]
     ├── frontend #[Junyi's SSL?]
     │   ├── __init__.py
@@ -133,21 +133,34 @@ pip install safe_gpu
 
 ```
 
+## Contribute (For coauthors)
+0. Adopted rule from wespeaker (https://wenet.org.cn/wespeaker/contribute.html)
+
+1. Git clone to your local machine [may not need to fork right now?]
+2. Create a new branch for your changes:
+    * `feature/xxx` for new features
+    * `database_name/model_name/xxx` changes for specific model under a database
+    * `bugfix/xxx` for bug fixes
+    * etc.
+3. Make your changes and ensure the code runs successfully on your local environment.
+4. Commit your changes with a meaningful message:
+   `git commit -am '[type] Brief description of your update` 
+5. Push your changes to your remote branch
+6. Create a Pull Request (PR) on GitHub:
+    Please include a detailed description of your changes and the purpose of the update.
+7. We recommend following the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) 
+    for code formatting and consistency. But don't worry too much given the tight timeline.
+    we will also do this again before release.
 
 
 ## TODO
 
-Till 0511:
-
-[Lin]: 
-
-1. add varied-length input, 
-
-[Junyi]:
-
-1. SSL supporting
-
+For the main structure:
+[Lin]: localization 
+[Junyi]: add an example for SSL 
+[Johan]: calibration, fusion
 [Lin, Shuai] move wespeaker part to pip install wespeaker
+
 
 
 

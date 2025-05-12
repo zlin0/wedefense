@@ -1,3 +1,5 @@
+# original from ASVspoof5 Evaluation Package 
+# (https://github.com/asvspoof-challenge/asvspoof5/tree/main/evaluation-package)
 #!/usr/bin/env python3
 """
 Adopted from https://github.com/shimhz/a_DCF

@@ -103,6 +103,8 @@ But we will use pre-commit to check code in future. So I input to here for recor
     │   ├── pooling_layers.py
     │   ├── projections.py
     │   ├── resnet.py
+    │   ├── ssl_backend.py
+    │   ├── ssl_backend  # folder to save those light weighted backend. i.e., mhfa, sls, etc. 
     │   └── speaker_model.py
     └── utils
         ├── checkpoint.py

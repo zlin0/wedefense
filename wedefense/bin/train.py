@@ -149,10 +149,10 @@ def train(config='conf/config.yaml', **kwargs):
             **configs['dataset_args'][frontend_args],
             sample_rate=configs['dataset_args']['resample_rate'])
         configs['model_args']['feat_dim'] = frontend.output_size()
-        model = get_speaker_model(configs['model'])(**configs['model_args'])
+        model = get_model(configs['model'])(**configs['model_args'])
         model.add_module("frontend", frontend)
     else:
-        model = get_speaker_model(configs['model'])(**configs['model_args'])
+        model = get_model(configs['model'])(**configs['model_args'])
     if rank == 0:
         num_params = sum(param.numel() for param in model.parameters())
         logger.info('speaker_model size: {}'.format(num_params))

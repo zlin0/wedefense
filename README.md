@@ -78,7 +78,7 @@ pip install safe_gpu
     ├── fusion # TODO? folder to implement fusion [Johan]
     │   ├── train_fusion.py # script to call fusion.
     │   └── xxx.py  # for fusion
-	├── calibration # TODO? folder to save calibration related recipts. [Johan]  
+    ├── calibration # TODO? folder to save calibration related recipts. [Johan]  
     ├── bin
     │   ├── average_model.py
     │   ├── extract.py

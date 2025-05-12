@@ -16,11 +16,16 @@ If you are working on merlin:
 pip install safe_gpu
 ```
 
+We don't need to instaill pre-commit before the first realse version. 
+But we will use pre-commit to check code in future. So I input to here for record.
+```shell
+# pre-commit install  # for clean and tidy code
+```
 
 
 ## Updates
 
-* `egs/detection/partialspoof/v03_resnet18` is relatively complete. I'm still working on updating dataset.py, but you can run it to get familiar with the toolkit.
+* `egs/detection/partialspoof/v03_resnet18` is relatively complete. You can run it to get familiar with the toolkit.
 * 2025-05-08: [Lin] clean code for stage 5-7 of `egs/detection/partialspoof/v03_resnet18/`
 * 2025-05-07: [Lin] clean code for stage 1-4 of `egs/detection/partialspoof/v03_resnet18/`
 
@@ -111,40 +116,17 @@ pip install safe_gpu
 ```
 
 ## Contribute (For coauthors)
-0. Adopted rule from wespeaker (https://wenet.org.cn/wespeaker/contribute.html)
-
-1. Git clone to your local machine [may not need to fork right now?]
-2. Create a new branch for your changes:
-    * `feature/xxx` for new features
-    * `database_name/model_name/xxx` changes for specific model under a database
-    * `bugfix/xxx` for bug fixes
-    * etc.
-3. Make your changes and ensure the code runs successfully on your local environment.
-4. Commit your changes with a meaningful message:
-   `git commit -am '[type] Brief description of your update` 
-5. Push your changes to your remote branch
-6. Create a Pull Request (PR) on GitHub:
-    Please include a detailed description of your changes and the purpose of the update.
-7. We recommend following the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) 
-    for code formatting and consistency. But don't worry too much given the tight timeline.
-    we will also do this again before release.
-
+Please go to [CN](https://docs.google.com/document/d/1rZlAkg5HQqo4-4LL_qjj5BhBxiDBpUytFdgjouAQRuA/edit?pli=1&tab=t.jihl866cxwi4) or [EN](https://docs.google.com/document/d/1rZlAkg5HQqo4-4LL_qjj5BhBxiDBpUytFdgjouAQRuA/edit?pli=1&tab=t.5tnshafu0hxz) for reference
 
 ## TODO
 
 For the main structure of wedefense: (need to be implemented ASAP)
-
-Lin: localization
-Junyi: add an example for SSL 
-Johan: calibration, fusion
-Lin, Shuai: move wespeaker part to pip install wespeaker
-
-
+* Lin: localization
+* Junyi: add an example for SSL 
+* Johan: calibration, fusion
+* Lin, Shuai: move wespeaker part to pip install wespeaker
 
 Other TODOs please refer to our overleaf.
 
-
-
 ## Reference:
-
 1. Mainly adopated from [wespeaker](https://github.com/wenet-e2e/wespeaker)

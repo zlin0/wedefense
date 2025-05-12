@@ -37,6 +37,7 @@ from wedefense.utils.utils import get_logger, parse_config_or_kwargs, set_seed, 
     spk2id
 
 import wedefense.dataset.customize_collate_fn as nii_collate_fn
+import wedefense.dataset.customize_sampler as nii_sampler_fn
 
 def train(config='conf/config.yaml', **kwargs):
     """Trains a model on the given features and spk labels.
@@ -101,14 +102,24 @@ def train(config='conf/config.yaml', **kwargs):
     else:
         collate_fn = None
 
-    #TODO# sampler
-    #if sampler=='duration' and batch_size >1:
-    #    tmp_sampler = nii_sampler_fn.SamplerBlockShuffleByLen(
-    #            self.m_concate_set.f_get_seq_len_list(), 
-    #            batch_size)
-    #    tmp_params['shuffle'] = False
-    #else:
-    #    tmp_sampler = None
+    #TODO# sampler to support building mini-batch accroding to length.
+    tmp_params_dataloader = configs['dataloader_args'].copy()
+    if sampler=='block_shuffle_by_length' and batch_size >1:
+        raise NotImplementedError("IteratableDataset does not support custom sampler") 
+        # `IterableDataset` does not support custom `batch_sampler` or 
+        # `sampler` since the key is irrelevant (unless we support 
+        # generator-style dataset one day...).
+        # https://github.com/pytorch/pytorch/blob/91c076eadc9f61828f66fb702b3f99109bf97915/torch/utils/data/dataloader.py#L202-L226
+        train_dur = os.path.join(os.path.dirname(train_label),'reco2dur') 
+        assert os.path.isfile(train_dur), f"reco2dur file not found: {train_dur}"
+        train_utt_dur_list = read_table(train_dur)
+        seq_len_list = [float(row[-1]) for row in train_utt_dur_list]
+        ## 2. set the new sampler 
+        tmp_sampler = nii_sampler_fn.SamplerBlockShuffleByLen(seq_len_list, batch_size)
+        tmp_params_dataloader['sampler'] = tmp_sampler 
+        tmp_params_dataloader['shuffle'] = False
+    else:
+        pass
 
     # dataset and dataloader
     train_dataset = Dataset(configs['data_type'],
@@ -118,7 +129,7 @@ def train(config='conf/config.yaml', **kwargs):
                             whole_utt = configs['dataset_args'].get('whole_utt'),
                             reverb_lmdb_file = configs.get('reverb_data', None),
                             noise_lmdb_file = configs.get('noise_data', None))
-    train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, **configs['dataloader_args'])
+    train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, **tmp_params_dataloader)
     if configs['dataset_args'].get('sample_num_per_epoch', 0) > 0:
         sample_num_per_epoch = configs['dataset_args']['sample_num_per_epoch']
     else:

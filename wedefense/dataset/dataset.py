@@ -25,6 +25,7 @@ from torch.utils.data import IterableDataset
 from wedefense.utils.file_utils import read_lists
 from wedefense.dataset.lmdb_data import LmdbData
 import wedefense.dataset.processor as processor
+#import wedefense.dataset.customize_sampler as nii_sampler_fn
 
 
 class Processor(IterableDataset):

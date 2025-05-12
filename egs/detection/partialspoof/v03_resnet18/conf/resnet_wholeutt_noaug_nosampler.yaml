@@ -1,6 +1,6 @@
 ### train configuraton
 
-exp_dir: exp/ResNet18-TSTP-emb256-fbank80-wholeutt_nosample-aug0-spFalse-saFalse-Softmax-SGD-epoch100
+exp_dir: exp/ResNet18-TSTP-emb256-fbank80-wholeutt_nosampler-aug0-spFalse-saFalse-Softmax-SGD-epoch100
 gpus: "[0,1]"
 num_avg: 10
 enable_amp: False # whether enable automatic mixed precision training
@@ -30,7 +30,9 @@ dataset_args:
     max_num_frames: 800
   resample_rate: 16000
   speed_perturb: False
-  num_frms: 200
+  #num_frms: 200
+  #sampler: block_shuffle_by_length #To sample and build minibatch based on similar duration or not.
+  whole_utt: True #To use the whole utt but not randomly chunk num_frms
   aug_prob: 0 # prob to add reverb & noise aug per sample
   fbank_args:
     num_mel_bins: 80

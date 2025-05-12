@@ -24,6 +24,8 @@ import wedefense.models.whisper_PMFA as whisper_PMFA
 import wedefense.models.redimnet as redimnet
 import wedefense.models.samresnet as samresnet
 import wedefense.models.xi_vector as xi_vector
+import wedefense.models.ssl_backend as ssl_backend
+
 
 
 
@@ -52,6 +54,8 @@ def get_speaker_model(model_name: str):
         return getattr(samresnet, model_name)
     elif model_name.startswith("XI_VEC"):
         return getattr(xi_vector, model_name)
+    elif model_name.startswith("SSL_BACKEND"):
+        return getattr(ssl_backend, model_name)
     else:  # model_name error !!!
         print(model_name + " not found !!!")
         exit(1)

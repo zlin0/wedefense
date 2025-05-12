@@ -27,14 +27,52 @@ class S3prlFrontend(nn.Module):
                  upstream_args: dict,
                  download_dir: str = "./s3prl_hub",
                  multilayer_feature: bool = True,
+                 layerwise_feature: bool = False,
                  layer: int = -1,
                  frozen: bool = False,
                  frame_shift: int = 20,
                  frame_length: int = 20,
                  sample_rate: int = 16000):
+        """
+        Args:
+            upstream_args (dict): 
+                Configuration dictionary for the S3PRL upstream model.
+                Must include the key "name" (e.g., "hubert_base") and can include:
+                - "path_or_url": Optional pretrained model path or URL
+                - "normalize": Whether to apply layer normalization
+                - "extra_conf": Additional config for the model
+
+            download_dir (str): 
+                Directory to download S3PRL models if not cached. Default: "./s3prl_hub"
+
+            multilayer_feature (bool): 
+                If True, extracts and fuses representations (shape: Batch, Time, D) from multiple layers. 
+                Set to False to use only the top layer. Default: True
+
+            layerwise_feature (bool): 
+                If True, returns the full set of layer-wise representations (shape: B, D, T, N).
+                If False, uses featurizer to combine layers. Default: False
+
+            layer (int): 
+                Specific layer index to extract features from. If -1, uses all layers.
+                Must be -1 when multilayer_feature is True. Default: -1
+
+            frozen (bool): 
+                If True, disables gradient updates for the upstream model. Default: False
+
+            frame_shift (int): 
+                Frame shift in milliseconds. Used to verify downsampling alignment. Default: 20
+
+            frame_length (int): 
+                Frame length in milliseconds (unused here but kept for interface consistency). Default: 20
+
+            sample_rate (int): 
+                Input audio sample rate in Hz. Used for compatibility checks. Default: 16000
+        """
         super().__init__()
 
         self.multilayer_feature = multilayer_feature
+        self.layerwise_feature = layerwise_feature
         self.layer = layer
         self.frozen = frozen
 
@@ -43,6 +81,7 @@ class S3prlFrontend(nn.Module):
 
         assert upstream_args.get("name",
                                  None) in S3PRLUpstream.available_names()
+        self.upstream_name = upstream_args["name"].lower()
         self.upstream = S3PRLUpstream(
             upstream_args.get("name"),
             path_or_url=upstream_args.get("path_or_url", None),
@@ -61,10 +100,11 @@ class S3prlFrontend(nn.Module):
                 "multilayer_feature must be False if layer is specified"
         else:
             layer_selections = None
-        self.featurizer = Featurizer(self.upstream,
+        if not self.layerwise_feature:
+            self.featurizer = Featurizer(self.upstream,
                                      layer_selections=layer_selections)
 
-        assert self.featurizer.downsample_rate == sample_rate * frame_shift // 1000
+            assert self.featurizer.downsample_rate == sample_rate * frame_shift // 1000
 
         if self.frozen:
             for param in self.upstream.parameters():
@@ -75,7 +115,15 @@ class S3prlFrontend(nn.Module):
                     param.requires_grad_(False)
 
     def output_size(self):
-        return self.featurizer.output_size
+        if self.layerwise_feature:
+            if "large" in self.upstream_name:
+                return 1024
+            elif "base" in self.upstream_name:
+                return 768
+            else:
+                raise ValueError(f"Unknown model size for: {self.upstream_name}")
+        else:
+            return self.featurizer.output_size
 
     def forward(self, input: torch.Tensor, input_lengths: torch.LongTensor):
         with torch.no_grad() if self.frozen else contextlib.nullcontext():
@@ -84,6 +132,10 @@ class S3prlFrontend(nn.Module):
             layer = self.layer
             feats, feats_lens = feats[layer], feats_lens[layer]
             return feats, feats_lens
+        if self.layer == -1 and self.layerwise_feature:
+            layer_reps = [x for x in feats]
+            layer_reps = torch.stack(layer_reps).permute(1, 3, 2, 0) # B, D, T, Nb_layers
+            return layer_reps, feats_lens[-1:]
 
         if self.multilayer_feature:
             feats, feats_lens = self.featurizer(feats, feats_lens)

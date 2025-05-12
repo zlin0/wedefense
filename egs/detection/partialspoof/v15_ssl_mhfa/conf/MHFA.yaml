@@ -1,6 +1,6 @@
 ### train configuraton
 
-exp_dir: exp/ResNet18-TSTP-emb256-fbank80-num_frms200-aug0.6-spTrue-saFalse-ArcMargin-SGD-epoch100
+exp_dir: exp/MHFA-TSTP-emb256-fbank80-num_frms200-aug0.6-spTrue-saFalse-ArcMargin-SGD-epoch100
 gpus: "[0,1]"
 num_avg: 10
 enable_amp: False # whether enable automatic mixed precision training
@@ -31,7 +31,7 @@ dataset_args:
   resample_rate: 16000
   speed_perturb: False
   num_frms: 150
-  aug_prob: 0.6 # prob to add reverb & noise aug per sample
+  aug_prob: 0 # prob to add reverb & noise aug per sample
   frontend: "s3prl" # fbank, s3prl
   s3prl_args:
     upstream_args:
@@ -55,7 +55,7 @@ dataset_args:
     max_f: 8
     prob: 0.6
 
-model: SSL_BACKEND_MHFA # ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
+model: SSL_BACKEND_MHFA # starts from SSL_BACKEND (as defined in models/speaker_model.py) 
 model_init: null
 model_args:
   feat_dim: -1

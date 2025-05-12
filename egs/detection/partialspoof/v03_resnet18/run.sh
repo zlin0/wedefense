@@ -180,5 +180,5 @@ fi
 # 2. boostrap testing
 # 3. embedding visulization
 
-exit 1
+exit 0
 

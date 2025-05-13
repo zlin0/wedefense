@@ -145,7 +145,7 @@ class S3prlFrontend(nn.Module):
 
         return feats, feats_lens
 
-def main():
+def download_pretrained_model():
 	frontend = S3prlFrontend(
 			upstream_args={
             "name": "wav2vec_base_960", #TODO: change to the model you want 
@@ -171,4 +171,4 @@ def main():
     print("Output lengths:", feats_lens)
 
 if __name__ == "__main__":
-    main()
+    download_pretrained_model()

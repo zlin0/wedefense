@@ -88,6 +88,7 @@ class S3prlFrontend(nn.Module):
             normalize=upstream_args.get("normalize", False),
             extra_conf=upstream_args.get("extra_conf", None),
         )
+        self.feat_dim=upstream_args.get("feat_dim", None)
         if getattr(self.upstream.upstream, "model", None):
             if getattr(self.upstream.upstream.model, "feature_grad_mult",
                        None) is not None:
@@ -120,6 +121,9 @@ class S3prlFrontend(nn.Module):
                 return 1024
             elif "base" in self.upstream_name:
                 return 768
+            elif "local" in self.upstream_name:
+                assert self.feat_dim > 0
+                return self.feat_dim
             else:
                 raise ValueError(f"Unknown model size for: {self.upstream_name}")
         else:

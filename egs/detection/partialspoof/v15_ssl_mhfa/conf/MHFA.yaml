@@ -1,6 +1,6 @@
 ### train configuraton
 
-exp_dir: exp/MHFA-TSTP-emb256-fbank80-num_frms200-aug0.6-spTrue-saFalse-ArcMargin-SGD-epoch100
+exp_dir: exp/MHFA-TSTP-emb256-fbank80-num_frms400-aug0-spFalse-saFalse-ArcMargin-SGD-epoch100
 gpus: "[0,1]"
 num_avg: 10
 enable_amp: False # whether enable automatic mixed precision training

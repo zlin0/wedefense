@@ -98,6 +98,11 @@ class SSL_BACKEND_MHFA(nn.Module):
         return outs
 
 class SSL_BACKEND_CorrelationPooling(nn.Module):
+    """
+    adapted from https://github.com/tstafylakis/Speaker-Embeddings-Correlation-Pooling
+    Speaker embeddings by modeling channel-wise correlations
+    Authors: Themos Stafylakis, Johan Rohdin, Lukas Burget
+    """
     def __init__(self, head_nb=8, feat_dim=768, compression_dim=128, outputs_dim=256):
         super(SSL_BACKEND_CorrelationPooling, self).__init__()
 
@@ -113,7 +118,8 @@ class SSL_BACKEND_CorrelationPooling(nn.Module):
 
         # Define compression linear layers for keys and values
         self.cmp_linear_k = nn.Linear(self.ins_dim, self.cmp_dim)
-        self.pooling_fc = nn.Linear(int(128*(128-1)/2), self.ous_dim)
+        #self.pooling_fc = nn.Linear(int(128*(128-1)/2), self.ous_dim)
+        self.pooling_fc = nn.Linear(int(self.cmp_dim * (self.cmp_dim - 1) / 2), self.ous_dim)
 
 
     def forward(self, x):

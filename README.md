@@ -26,6 +26,7 @@ But we will use pre-commit to check code in future. So I input to here for recor
 
 ## Updates
 
+* 2025-05-13: [Junyi] prepare code for `egs/detection/partialspoof/v15_ssl_mhfa`. You can run it now! :tada:
 * `egs/detection/partialspoof/v03_resnet18` is relatively complete. You can run it to get familiar with the toolkit.
 * 2025-05-08: [Lin] clean code for stage 5-7 of `egs/detection/partialspoof/v03_resnet18/`
 * 2025-05-07: [Lin] clean code for stage 1-4 of `egs/detection/partialspoof/v03_resnet18/`
@@ -103,7 +104,6 @@ But we will use pre-commit to check code in future. So I input to here for recor
     │   ├── pooling_layers.py
     │   ├── projections.py
     │   ├── resnet.py
-    │   ├── ssl_backend.py
     │   ├── ssl_backend  # folder to save those light weighted backend. i.e., mhfa, sls, etc. 
     │   └── speaker_model.py
     └── utils

@@ -35,7 +35,7 @@ dataset_args:
   frontend: "s3prl" # fbank, s3prl
   s3prl_args:
     upstream_args:
-      name: "wavlm_base_plus"
+      name: "wav2vec2_base_960"
     download_dir: ./s3prl_hub
     multilayer_feature: True
     layerwise_feature: True

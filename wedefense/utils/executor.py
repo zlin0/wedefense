@@ -44,10 +44,10 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
             wavs = wavs.squeeze(1).float().to(device)  # (B,W)
             wavs_len = torch.LongTensor([wavs.shape[1]]).repeat(
                 wavs.shape[0]).to(device)  # (B)
-            with torch.amp.autocast('cuda', enabled=configs['enable_amp']):
+            with torch.cuda.amp.autocast(enabled=configs['enable_amp']):
                 features, _ = model.module.frontend(wavs, wavs_len)
 
-        with torch.amp.autocast('cuda', enabled=configs['enable_amp']):
+        with torch.cuda.amp.autocast(enabled=configs['enable_amp']):
             # apply cmvn
             if configs['dataset_args'].get('cmvn', True):
                 features = apply_cmvn(

@@ -121,9 +121,6 @@ class S3prlFrontend(nn.Module):
                 return 1024
             elif "base" in self.upstream_name:
                 return 768
-            elif "local" in self.upstream_name:
-                assert self.feat_dim > 0
-                return self.feat_dim
             else:
                 raise ValueError(f"Unknown model size for: {self.upstream_name}")
         else:
@@ -162,8 +159,7 @@ def main():
         frame_shift=20,
         frame_length=20,
         sample_rate=16000,
-    
-			)
+		)
 
     dummy_input = torch.randn(2, 16000)
     dummy_lengths = torch.tensor([16000, 16000])

@@ -147,3 +147,32 @@ class S3prlFrontend(nn.Module):
             feats, feats_lens = self.featurizer(feats[-1:], feats_lens[-1:])
 
         return feats, feats_lens
+
+def main():
+	frontend = S3prlFrontend(
+			upstream_args={
+            "name": "wav2vec_base_960", #TODO: change to the model you want 
+            "normalize": False,
+        
+			},
+        download_dir="/path/to/wedefense/egs/detection/partialspoof/v15_ssl_mhfa/s3prl_hub", #TODO change to your path.
+        multilayer_feature=True,
+        layer=-1,
+        frozen=True,
+        frame_shift=20,
+        frame_length=20,
+        sample_rate=16000,
+    
+			)
+
+    dummy_input = torch.randn(2, 16000)
+    dummy_lengths = torch.tensor([16000, 16000])
+
+    with torch.no_grad():
+        feats, feats_lens = frontend(dummy_input, dummy_lengths)
+
+    print("Output shape:", feats.shape)
+    print("Output lengths:", feats_lens)
+
+if __name__ == "__main__":
+    main()

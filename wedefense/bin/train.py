@@ -29,7 +29,7 @@ import wedefense.utils.schedulers as schedulers
 from wedefense.dataset.dataset import Dataset
 from wedefense.frontend import *
 from wedefense.models.projections import get_projection
-from wedefense.models.speaker_model import get_speaker_model
+from wedefense.models.get_model import get_model
 from wedefense.utils.checkpoint import load_checkpoint, save_checkpoint
 from wedefense.utils.executor import run_epoch
 from wedefense.utils.file_utils import read_table
@@ -149,10 +149,10 @@ def train(config='conf/config.yaml', **kwargs):
             **configs['dataset_args'][frontend_args],
             sample_rate=configs['dataset_args']['resample_rate'])
         configs['model_args']['feat_dim'] = frontend.output_size()
-        model = get_speaker_model(configs['model'])(**configs['model_args'])
+        model = get_model(configs['model'])(**configs['model_args'])
         model.add_module("frontend", frontend)
     else:
-        model = get_speaker_model(configs['model'])(**configs['model_args'])
+        model = get_model(configs['model'])(**configs['model_args'])
     if rank == 0:
         num_params = sum(param.numel() for param in model.parameters())
         logger.info('speaker_model size: {}'.format(num_params))
@@ -255,7 +255,7 @@ def train(config='conf/config.yaml', **kwargs):
             logger.info(line)
     dist.barrier(device_ids=[gpu])  # synchronize here
 
-    scaler = torch.amp.GradScaler('cuda', enabled=configs['enable_amp'])
+    scaler = torch.cuda.amp.GradScaler(enabled=configs['enable_amp'])
     for epoch in range(start_epoch, configs['num_epochs'] + 1):
         train_dataset.set_epoch(epoch)
 

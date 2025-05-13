@@ -17,14 +17,14 @@ import torch
 import fire
 import yaml
 
-from wedefense.models.speaker_model import get_speaker_model
+from wedefense.models.get_model import get_model
 from wedefense.models.repvgg import repvgg_model_convert
 from wedefense.utils.utils import parse_config_or_kwargs
 
 
 def convert(config='conf/config.yaml', **kwargs):
     configs = parse_config_or_kwargs(config, **kwargs)
-    speaker_model = get_speaker_model(
+    speaker_model = get_model(
         configs['model'])(**configs['model_args'])
     configs['model_args']['deploy'] = True
     # save new configs for testing and deploying

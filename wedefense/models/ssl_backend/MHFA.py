@@ -1,3 +1,26 @@
+# Copyright (c) 2025 Junyi Peng (pengjy@fit.vut.cz)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""
+MHFA as the backend for SSL models.
+
+From the paper: An attention-based backend allowing efficient fine-tuning 
+                of transformer models for speaker verification
+Author: Junyi Peng, Oldrich Plchot, Themos Stafylakis, Ladislav Mosner, 
+        Lukas Burget, Jan Cernocky
+Link: https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10022775
+"""
+
 import math
 import torch
 import torch.nn as nn
@@ -75,6 +98,11 @@ class SSL_BACKEND_MHFA(nn.Module):
         return outs
 
 class SSL_BACKEND_CorrelationPooling(nn.Module):
+    """
+    adapted from https://github.com/tstafylakis/Speaker-Embeddings-Correlation-Pooling
+    Speaker embeddings by modeling channel-wise correlations
+    Authors: Themos Stafylakis, Johan Rohdin, Lukas Burget
+    """
     def __init__(self, head_nb=8, feat_dim=768, compression_dim=128, outputs_dim=256):
         super(SSL_BACKEND_CorrelationPooling, self).__init__()
 
@@ -90,7 +118,8 @@ class SSL_BACKEND_CorrelationPooling(nn.Module):
 
         # Define compression linear layers for keys and values
         self.cmp_linear_k = nn.Linear(self.ins_dim, self.cmp_dim)
-        self.pooling_fc = nn.Linear(int(128*(128-1)/2), self.ous_dim)
+        #self.pooling_fc = nn.Linear(int(128*(128-1)/2), self.ous_dim)
+        self.pooling_fc = nn.Linear(int(self.cmp_dim * (self.cmp_dim - 1) / 2), self.ous_dim)
 
 
     def forward(self, x):

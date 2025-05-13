@@ -13,7 +13,7 @@
 #unset PYTHONHOME
 #
 source ~/.bashrc
-conda activate wedefense_fair
+conda activate wedefense310
 #conda activate /homes/kazi/isilnova/.conda/envs/wespeaker
 #which python
 

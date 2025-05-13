@@ -25,7 +25,7 @@ from tqdm import tqdm
 from wedefense.dataset.dataset import Dataset
 from wedefense.dataset.dataset_utils import apply_cmvn, spec_aug
 from wedefense.frontend import *
-from wedefense.models.speaker_model import get_speaker_model
+from wedefense.models.get_model import get_model
 from wedefense.utils.checkpoint import load_checkpoint
 from wedefense.utils.utils import parse_config_or_kwargs, validate_path
 
@@ -45,7 +45,7 @@ def extract(config='conf/config.yaml', **kwargs):
 
     test_conf = copy.deepcopy(configs['dataset_args'])
     # model: frontend (optional) => speaker model
-    model = get_speaker_model(configs['model'])(**configs['model_args'])
+    model = get_model(configs['model'])(**configs['model_args'])
     frontend_type = test_conf.get('frontend', 'fbank')
     if frontend_type != 'fbank':
         frontend_args = frontend_type + "_args"

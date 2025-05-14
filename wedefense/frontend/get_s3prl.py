@@ -146,12 +146,11 @@ class S3prlFrontend(nn.Module):
         return feats, feats_lens
 
 def download_pretrained_model():
-	frontend = S3prlFrontend(
-			upstream_args={
+    frontend = S3prlFrontend(
+        upstream_args={
             "name": "wav2vec_base_960", #TODO: change to the model you want 
             "normalize": False,
-        
-			},
+        },
         download_dir="/path/to/wedefense/egs/detection/partialspoof/v15_ssl_mhfa/s3prl_hub", #TODO change to your path.
         multilayer_feature=True,
         layer=-1,
@@ -159,7 +158,7 @@ def download_pretrained_model():
         frame_shift=20,
         frame_length=20,
         sample_rate=16000,
-		)
+    )
 
     dummy_input = torch.randn(2, 16000)
     dummy_lengths = torch.tensor([16000, 16000])

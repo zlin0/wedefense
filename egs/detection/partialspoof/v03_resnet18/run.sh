@@ -100,7 +100,7 @@ model_path=$avg_model
 #######################################################################################
 # Stage 4. Averaging the model, and extract embeddings
 #######################################################################################
-if [ ${stage} -ge 4 ] && [ ${stop_stage} -le 4 ]; then
+if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
   echo "Do model average ..."
   python wedefense/bin/average_model.py \
     --dst_model $avg_model \

@@ -103,7 +103,7 @@ class SSL_BACKEND_CorrelationPooling(nn.Module):
     Speaker embeddings by modeling channel-wise correlations
     Authors: Themos Stafylakis, Johan Rohdin, Lukas Burget
     """
-    def __init__(self, head_nb=8, feat_dim=768, compression_dim=128, outputs_dim=256):
+    def __init__(self, head_nb=8, feat_dim=768, compression_dim=128, embed_dim=256, feature_grad_mult=1.0,nb_layer=13):
         super(SSL_BACKEND_CorrelationPooling, self).__init__()
 
         # Define learnable weights for key and value computations across layers
@@ -113,7 +113,7 @@ class SSL_BACKEND_CorrelationPooling(nn.Module):
         self.head_nb = head_nb
         self.ins_dim = feat_dim
         self.cmp_dim = compression_dim
-        self.ous_dim = outputs_dim
+        self.ous_dim = embed_dim
 
 
         # Define compression linear layers for keys and values
@@ -125,7 +125,7 @@ class SSL_BACKEND_CorrelationPooling(nn.Module):
     def forward(self, x):
         # print(self.drop_f)
         # Input x has shape: [Batch, Dim, Frame_len, Nb_Layer]
-
+        print(x.shape)
         # Compute the key by taking a weighted sum of input across layers
         k = torch.sum(x.mul(nn.functional.softmax(self.weights_k, dim=-1)), dim=-1).transpose(1, 2)
         feature_BxTxH = self.cmp_linear_k(k) # B T H

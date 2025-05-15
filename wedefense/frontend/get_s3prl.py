@@ -117,7 +117,7 @@ class S3prlFrontend(nn.Module):
 
     def output_size(self):
         if self.layerwise_feature:
-            if "large" in self.upstream_name:
+            if "large" in self.upstream_name or "xlsr" in self.upstream_name:
                 return 1024
             elif "base" in self.upstream_name:
                 return 768
@@ -146,13 +146,12 @@ class S3prlFrontend(nn.Module):
         return feats, feats_lens
 
 def download_pretrained_model():
-	frontend = S3prlFrontend(
+    frontend = S3prlFrontend(
 			upstream_args={
-            "name": "wav2vec_base_960", #TODO: change to the model you want 
-            "normalize": False,
-        
+            "name": "data2vec_large_ll60k", #TODO: change to the model you want, wav2vec2_base_960 
+            "normalize": False, 
 			},
-        download_dir="/path/to/wedefense/egs/detection/partialspoof/v15_ssl_mhfa/s3prl_hub", #TODO change to your path.
+        download_dir="/mnt/matylda6/pengjy/shared_model_weights/lin/wedefense/egs/detection/partialspoof/v15_ssl_mhfa/s3prl_hub", #TODO change to your path.
         multilayer_feature=True,
         layer=-1,
         frozen=True,
@@ -160,7 +159,7 @@ def download_pretrained_model():
         frame_length=20,
         sample_rate=16000,
 		)
-
+    
     dummy_input = torch.randn(2, 16000)
     dummy_lengths = torch.tensor([16000, 16000])
 

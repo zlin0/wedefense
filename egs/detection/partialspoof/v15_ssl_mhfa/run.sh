@@ -15,10 +15,8 @@ PS_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database
 data=data/partialspoof # data folder
 data_type="shard"  # shard/raw
 
-#config=conf/resnet_noaug_nosample.yaml
-#exp_dir=exp/exp/ResNet18-TSTP-emb256-fbank80-wholeutt_nosample-aug0-spFalse-saFalse-Softmax-SGD-epoch100
-config=conf/MHFA.yaml #wespeaker version 
-exp_dir=exp/W2V2baseFrozen-MHFA-TSTP-emb256-fbank80-num_frms400-aug0-spFalse-saFalse-ArcMargin-SGD-epoch100
+config=conf/MHFA_wav2vec2.yaml #wespeaker version 
+exp_dir=exp/W2V2baseFrozen-MHFA-TSTP-emb256-num_frms150-aug0-spFalse-saFalse-Softmax-SGD-epoch20
 gpus="[0]"
 num_avg=2 # how many models you want to average
 checkpoint=

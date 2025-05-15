@@ -2,9 +2,18 @@
 
 ## Enviorment:
 
+
 ```shell
-conda create -n wedefense python=3.10
-conda activate wedefense
+conda create -n wedefense_pip python=3.10
+conda activate wedefense_pip
+pip install torch==2.1.2+cu121 torchaudio==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu121
+pip install -r requirements.txt
+```
+
+You can also try the following method, which allows conda to automatically install the appropriate PyTorch version based on your CUDA and driver setup:
+```shell
+conda create -n wedefense_conda python=3.10
+conda activate wedefense_conda
 conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
 pip install -r requirements.txt
 ```

@@ -117,7 +117,7 @@ class S3prlFrontend(nn.Module):
 
     def output_size(self):
         if self.layerwise_feature:
-            if "large" in self.upstream_name:
+            if "large" in self.upstream_name or "xlsr" in self.upstream_name:
                 return 1024
             elif "base" in self.upstream_name:
                 return 768

@@ -41,7 +41,7 @@ def main(model_path, config, num_classes, embedding_scp_path, out_path, data_typ
     embd = np.vstack( embd )    
     print(embd.shape)    
 
-    checkpoint = torch.load(model_path, map_location='cpu', weights_only=True)
+    checkpoint = torch.load(model_path, map_location='cpu')
     
 
     configs = parse_config_or_kwargs(config)

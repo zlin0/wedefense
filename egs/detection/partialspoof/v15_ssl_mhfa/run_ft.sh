@@ -24,7 +24,7 @@ num_avg=2 # how many models you want to average
 checkpoint=
 score_norm_method="asnorm"  # asnorm/snorm
 top_n=300
-
+ft_config=conf/MHFA-FT.yaml
 # setup for large margin fine-tuning
 lm_config=conf/campplus_lm.yaml
 
@@ -102,7 +102,6 @@ model_path=$avg_model
 # Stage 4. Averaging the model, and extract embeddings
 #######################################################################################
 if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
-
   echo "Do model average ..."
   python wedefense/bin/average_model.py \
     --dst_model $avg_model \
@@ -176,11 +175,24 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
 fi
 
 #######################################################################################
-# Stage 8. Analyses 
+# Stage 8. Fine-tuning 
 #######################################################################################
-# TODO
-# 1. significant test
-# 2. boostrap testing
-# 3. embedding visulization
+if [ ${stage} -le 8 ] && [ ${stop_stage} -ge 8 ]; then
+  echo "Full fine-tuning ..."
+  ft_exp_dir=${exp_dir}-FT
+  mkdir -p ${ft_exp_dir}/models
+  cp ${exp_dir}/models/avg_model.pt ${ft_exp_dir}/models/model_0.pt
+  bash ./run_ft.sh --stage 3 --stop_stage 7 \
+      --data ${data} \
+      --data_type ${data_type} \
+      --config ${ft_config} \
+      --exp_dir ${ft_exp_dir} \
+      --gpus $gpus \
+      --num_avg 1 \
+      --checkpoint ${ft_exp_dir}/models/model_0.pt \
+      --score_norm_method ${score_norm_method} \
+      --top_n ${top_n}
+fi
+#######################################################################################
 exit 0
 

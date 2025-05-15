@@ -5,7 +5,7 @@
 #           2025 Johan Rohdin, Lin Zhang (rohdin@fit.vut.cz, partialspoof@gmail.com)
 #           2025 Junyi Peng (pengjy@fit.vut.cz)
 
-set -x
+# set -x
 . ./path.sh || exit 1
 
 stage=3
@@ -18,9 +18,9 @@ data_type="shard"  # shard/raw
 #config=conf/resnet_noaug_nosample.yaml
 #exp_dir=exp/exp/ResNet18-TSTP-emb256-fbank80-wholeutt_nosample-aug0-spFalse-saFalse-Softmax-SGD-epoch100
 config=conf/MHFA.yaml #wespeaker version 
-exp_dir=exp/W2V2baseFrozen_MHFA-TSTP-emb256-num_frms150-frame_shift20-aug0-spFalse-saFalse-Softmax-SGD-epoch20
+exp_dir=exp/W2V2baseFrozen-MHFA-TSTP-emb256-fbank80-num_frms400-aug0-spFalse-saFalse-ArcMargin-SGD-epoch100
 gpus="[0]"
-num_avg=10 # how many models you want to average
+num_avg=2 # how many models you want to average
 checkpoint=
 score_norm_method="asnorm"  # asnorm/snorm
 top_n=300
@@ -102,6 +102,7 @@ model_path=$avg_model
 # Stage 4. Averaging the model, and extract embeddings
 #######################################################################################
 if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
+
   echo "Do model average ..."
   python wedefense/bin/average_model.py \
     --dst_model $avg_model \

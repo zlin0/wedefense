@@ -1,6 +1,7 @@
 
 # some intermediate generated files
 data/
+data
 exp/
 s3prl_hub/
 .nfs*

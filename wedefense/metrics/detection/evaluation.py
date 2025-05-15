@@ -25,7 +25,7 @@ def main(args: argparse.Namespace) -> None:
         minDCF, eer, cllr, actDCF = calculate_minDCF_EER_CLLR_actDCF(
             cm_scores = cm_scores,
             cm_keys = cm_keys,
-            output_file=os.path.join(save_path,"track1_result.txt"))
+            output_file=os.path.join(save_path,"detection_result.txt"))
         print("# Track 1 Result: \n")
         print("-eval_mindcf: {:.5f}\n-eval_eer (%): {:.3f}\n-eval_cllr (bits): {:.5f}\n-eval_actDCF: {:.5f}\n".format(
             minDCF, eer*100, cllr, actDCF))

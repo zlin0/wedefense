@@ -1,7 +1,9 @@
 #!/bin/bash
 set -x
+PS_dir=$1
 FILE_NAMEs="train dev eval protocols"
 
+cd ${PS_dir}/../ # cd to /path/to/PartialSpoof
 for file in ${FILE_NAMEs}; do
 
     link="https://zenodo.org/record/5766198/files/database_"${file}".tar.gz?download=1"
@@ -13,4 +15,5 @@ for file in ${FILE_NAMEs}; do
         rm database_${file}.tar.gz
     fi
 done
-echo 'We have PartialSpoof database now'
+cd -
+echo 'We have PartialSpoof database on '${PS_PATH}' now'

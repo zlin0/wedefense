@@ -25,7 +25,7 @@ from tqdm import tqdm
 from wedefense.dataset.dataset import Dataset
 from wedefense.dataset.dataset_utils import apply_cmvn, spec_aug
 from wedefense.frontend import *
-from wedefense.models.speaker_model import get_speaker_model
+from wedefense.models.get_model import get_model as get_speaker_model
 from wedefense.utils.checkpoint import load_checkpoint
 from wedefense.utils.utils import parse_config_or_kwargs, validate_path
 

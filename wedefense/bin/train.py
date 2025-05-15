@@ -199,6 +199,11 @@ def train(config='conf/config.yaml', **kwargs):
     else:
         start_epoch = 1
     logger.info('start_epoch: {}'.format(start_epoch))
+    
+    # freeze some pretraining-specific parameters
+    for name, param in model.named_parameters():
+        if any(k in name for k in ["quantizer", "project_q", "final_proj"]):
+            param.requires_grad = False
 
     # ddp_model
     model.cuda()

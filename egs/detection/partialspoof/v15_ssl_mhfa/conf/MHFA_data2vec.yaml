@@ -2,12 +2,12 @@
 
 exp_dir: exp/W2V2baseFrozen_MHFA-TSTP-emb256-fbank80-num_frms400-aug0-spFalse-saFalse-ArcMargin-SGD-epoch100
 gpus: "[0,1]"
-num_avg: 10
+num_avg: 2
 enable_amp: False # whether enable automatic mixed precision training
 
 seed: 42
-num_epochs: 100
-save_epoch_interval: 5 # save model every 5 epochs
+num_epochs: 20
+save_epoch_interval: 2 # save model every 5 epochs
 log_batch_interval: 100 # log every 100 batchs
 
 dataloader_args:
@@ -35,7 +35,7 @@ dataset_args:
   frontend: "s3prl" # fbank, s3prl
   s3prl_args:
     upstream_args:
-      name: "wav2vec2_base_960"
+      name: "data2vec_base_960"
     download_dir: ./s3prl_hub
     multilayer_feature: True
     layerwise_feature: True
@@ -89,7 +89,7 @@ optimizer_args:
 
 scheduler: ExponentialDecrease
 scheduler_args:
-  initial_lr: 0.01
-  final_lr: 0.00005
-  warm_up_epoch: 6
+  initial_lr: 0.1
+  final_lr: 0.0005
+  warm_up_epoch: 2
   warm_from_zero: True

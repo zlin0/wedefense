@@ -9,7 +9,26 @@
 - **Back-end**: Multi-Head Factorized Attentive Pooling (MHFA)
 
 ---
+### 🧪 Reproducibility Instructions
 
+#### 🔹 Frozen SSL Feature Extraction (e.g., `WavLM-base+`)
+
+```bash
+upstream=MHFA_wavlmplus
+./run.sh --stage 3 --stop_stage 7 \
+         --config conf/${upstream}.yaml \
+         --exp_dir exp/${upstream}_frozen
+```
+#### 🔹 Full Fine-tuning on Top of a Frozen Model
+
+```bash
+upstream=MHFA_wavlmplus
+./run_ft.sh --stage 8 --stop_stage 8 \
+            --config conf/${upstream}.yaml \
+            --ft_config conf/${upstream}-FT.yaml \
+            --exp_dir exp/${upstream}_frozen
+```
+---
 ### 🧪 SSL-based models (Frozen)
 
 | Front-end           | Dev-minDCF | Dev-EER | Dev-Cllr | Dev-actDCF | Eval-minDCF | Eval-EER | Eval-Cllr | Eval-actDCF |

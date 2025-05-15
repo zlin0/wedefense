@@ -148,10 +148,10 @@ class S3prlFrontend(nn.Module):
 def download_pretrained_model():
     frontend = S3prlFrontend(
         upstream_args={
-            "name": "wav2vec_base_960", #TODO: change to the model you want 
+            "name": "wav2vec2_base_960", #TODO: change to the model you want 
             "normalize": False,
         },
-        download_dir="/path/to/wedefense/egs/detection/partialspoof/v15_ssl_mhfa/s3prl_hub", #TODO change to your path.
+        download_dir="s3prl_hub", #TODO change to your path.
         multilayer_feature=True,
         layer=-1,
         frozen=True,

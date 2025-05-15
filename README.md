@@ -4,8 +4,8 @@
 
 ```shell
 conda create -n wedefense python=3.10
-conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
 conda activate wedefense
+conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
 pip install -r requirements.txt
 ```
 If you got warn: ModuleNotFoundError: No module named 'whisper'

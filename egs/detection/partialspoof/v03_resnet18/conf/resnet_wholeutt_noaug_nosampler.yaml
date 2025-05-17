@@ -28,6 +28,7 @@ dataset_args:
   filter_args:
     min_num_frames: 100
     max_num_frames: 800
+  sampler: block_shuffle_by_length
   resample_rate: 16000
   speed_perturb: False
   #num_frms: 200

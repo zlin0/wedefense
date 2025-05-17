@@ -11,10 +11,13 @@ torchaudio.set_audio_backend("sox_io")
 scp = sys.argv[1]
 dur_scp = sys.argv[2]
 
+with open(scp, 'r') as f:
+    line_count = sum(1 for x in f)
+    
 with open(scp, 'r') as f, open(dur_scp, 'w') as fout:
     cnt = 0
     total_duration = 0
-    for l in tqdm(f):
+    for l in tqdm(f, total = line_count):
         items = l.strip().split()
         wav_id = items[0]
         fname = items[1]

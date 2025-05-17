@@ -1,5 +1,6 @@
 # Copyright (c) 2021 Hongji Wang (jijijiang77@gmail.com)
 #               2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
+#               2025 Lin Zhang (partialspoof@gmail.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +20,8 @@ import torch
 import torchnet as tnt
 from wedefense.dataset.dataset_utils import apply_cmvn, spec_aug
 
+self_intergrate=['SSL_BACKEND_MHFA',] 
+#Those don't need to do weighted sum to intergrate ssl layers.
 
 def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
               margin_scheduler, epoch, logger, scaler, device, configs):
@@ -45,7 +48,7 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
             wavs_len = torch.LongTensor([wavs.shape[1]]).repeat(
                 wavs.shape[0]).to(device)  # (B)
             with torch.cuda.amp.autocast(enabled=configs['enable_amp']):
-                features, _ = model.module.frontend(wavs, wavs_len)
+                features, _ = model.module.frontend(wavs, wavs_len) #(B, F, T, layers)
 
         with torch.cuda.amp.autocast(enabled=configs['enable_amp']):
             # apply cmvn
@@ -57,7 +60,11 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
                 features = spec_aug(features,
                                     **configs['dataset_args']['spec_aug_args'])
 
-            outputs = model(features)  # (embed_a,embed_b) in most cases
+            # weighted sum:
+            if(configs['model'] not in self_intergrate):
+                outputs = model(features[:,:,:,-1])  # TODO add weighted sum
+            else:
+                outputs = model(features)  # (embed_a,embed_b) in most cases
             embeds = outputs[-1] if isinstance(outputs, tuple) else outputs
             outputs = model.module.projection(embeds, targets)
             if isinstance(outputs, tuple):

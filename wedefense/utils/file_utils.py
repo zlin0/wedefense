@@ -63,3 +63,17 @@ def read_table(table_file):
             tokens = line.strip().split()
             table_list.append(tokens)
     return table_list
+
+def read_seglab_npy(seglab_npy_file):
+    """ Get label fro PartialSpoof database
+    
+    Args:
+      seglabel_npy_file (str): npy, path to the label file
+      in the file, {'uttid':<segment-level label> [0, 0, ..., 0, 1]}
+    
+    Returns:
+      data_buffer: dict{list}, data_bufer[filename] -> 1 (bonafide), 0 (spoof)
+    """ 
+    data = np.load(seglab_npy_file, allow_pickle=True)
+    data_buffer=data.item()
+    return data_buffer

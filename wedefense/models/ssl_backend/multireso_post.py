@@ -155,12 +155,13 @@ class Branch(nn.Module):
 
 
 class MaxPool1d_scales(nn.Module):
-    # The main modules for multi-reso structure.
+    # The main modules for multi-reso structure. Most modules are Inherits this class.
     def __init__(self, num_scale=5, feat_dim=60, embed_dim = 64,flag_pool = 'ap', 
-            multi_reso_active = '', Frame_shifts = [2,4,8,16,32,64] ):
+            multi_reso_active = ['utt'], Frame_shifts = [2,4,8,16,32,64] ):
         super(MaxPool1d_scales, self).__init__()
-
+        self.num_scale = num_scale
         self.Frame_shifts = Frame_shifts
+        assert len(multi_reso_active>0) 
         self.multi_reso_active = multi_reso_active
         
         # Set up downsampling module (from (0)20ms -> (5)640ms -> (6)utt, 7 in total)
@@ -186,8 +187,8 @@ class MaxPool1d_scales(nn.Module):
             self.post_nets_seg[f"disc_{i}"] = Branch(dim=dim, embed_dim=embed_dim, flag_pool="None")
 
         #utt    
-
         self.post_nets_utt = Branch(dim=dim, embed_dim=embed_dim, flag_pool=flag_pool)
+        self.freeze_unused_para()
 
 
     def forward(self, x):
@@ -208,11 +209,69 @@ class MaxPool1d_scales(nn.Module):
         if('utt' in self.multi_reso_active):
             outs.append(o_utt)  
 
-        return outs
+        return outs[0] if len(outs) == 1 else outs
 
-class MaxPool1d_blstmlinear_scales(MaxPool1d_scales):
-    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 64, blstm_layers=1, flag_pool = 'ap', 
-            multi_reso_active = '', Frame_shifts = [2,4,8,16,32,64] ):
+    def freeze_unused_para(self):
+        """
+        Freeze blocks(downsampling) and post_nets_seg that are not in self.multi_reso_active.
+        support ['2', '4', ..., 'utt'] in multi_reso_active
+        """
+        #TODO Supports both scale indices ['0', '1', ...] and frame shifts ['2', '4', ..., 'utt'].
+        # Handle multi_reso_active as either frame shifts or scale indices
+        frame_shift_to_index = {str(fs): str(i) for i, fs in enumerate(self.Frame_shifts)}
+        active_raw = set(str(k) for k in self.multi_reso_active)
+        # Convert reso values (e.g. '4') to index keys (e.g. '1') if needed
+        active_indices = set()
+        for k in active_raw:
+            if k == 'utt':
+                active_indices.add('utt')
+            elif k in frame_shift_to_index:
+                active_indices.add(frame_shift_to_index[k])
+            elif k.isdigit():
+                active_indices.add(k)  # assume already scale index
+
+        # Freeze block (downsampling modules) 
+        # Generate those require updated downsampling module(block) based on their dependency:
+        # e.g., scale 2 requires downsampling blocks 0 and 1.
+        required_block_keys = set()
+        for idx in active_indices:
+            if idx == 'utt':
+                required_block_keys.update(str(i) for i in range(len(self.Frame_shifts)))
+                required_block_keys.add('utt')
+            elif idx.isdigit():
+                required_block_keys.update(str(i) for i in range(int(idx)+1))
+
+        for key, module in self.blocks.items():
+            #if(key == 'utt'):
+            #    if('utt' not in active_indices):
+            #        for param in module.parameters():
+            #            param.requires_grad_(False)
+            if(key not in required_block_keys):
+                 for param in module.parameters():
+                     param.requires_grad_(False)
+
+        # Freeze post_nets_seg:             
+        for key, module in self.post_nets_seg.items():
+            idx_str = key.replace("disc_", "")  # e.g., "disc_1" -> "1"
+            if(idx_str not in active_indices):
+                for param in module.parameters():
+                    param.requires_grad_(False)
+        
+        # Freeze utt scoring module:
+        if('utt' not in active_indices):
+            for param in self.post_nets_utt.parameters():
+                param.requires_grad_(False)
+        
+        #debug
+        for name, param in self.named_parameters():
+            if not param.requires_grad:
+                print(f"[Frozen] {name}")
+
+
+
+class SSL_BACKEND_multireso_MaxPool1d_blstmlinear(MaxPool1d_scales):
+    def __init__(self, num_scale=6, feat_dim=60, embed_dim = 64, blstm_layers=1, flag_pool = 'ap', 
+            multi_reso_active = ['utt'], Frame_shifts = [2,4,8,16,32,64] ):
         super(MaxPool1d_scales, self).__init__()
 
         self.blocks=MaxPool1d_scales(num_scale, feat_dim, embed_dim, flag_pool).blocks 
@@ -227,11 +286,12 @@ class MaxPool1d_blstmlinear_scales(MaxPool1d_scales):
         #utt    
         self.post_nets_utt = Branch(dim = dim, embed_dim = embed_dim, 
                 flag_pool = flag_pool, blstm_layers = blstm_layers)
+        self.freeze_unused_para()
 
 
-class MaxPool1dLin_scales(MaxPool1d_scales):
-    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 64,flag_pool = 'ap',
-            multi_reso_active = '', Frame_shifts = [2,4,8,16,32,64] ):
+class SSL_BACKEND_multireso_MaxPool1dLin(MaxPool1d_scales):
+    def __init__(self, num_scale=6, feat_dim=60, embed_dim = 64,flag_pool = 'ap',
+            multi_reso_active = ['utt'], Frame_shifts = [2,4,8,16,32,64] ):
         super(MaxPool1d_scales, self).__init__()
         self.Frame_shifts = Frame_shifts
         self.multi_reso_active = multi_reso_active
@@ -259,20 +319,22 @@ class MaxPool1dLin_scales(MaxPool1d_scales):
             self.post_nets_seg[f"disc_{i}"] = Branch(dim, embed_dim, "None")
         #utt    
         self.post_nets_utt = Branch(dim, embed_dim, flag_pool)
+        self.freeze_unused_para()
 
-class MaxPool1dLin_blstmlinear_scales(MaxPool1d_blstmlinear_scales):
-    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 64, blstm_layers=1, flag_pool = 'ap',
-            multi_reso_active = '', Frame_shifts = [2,4,8,16,32,64] ):
-        super(MaxPool1d_blstmlinear_scales, self).__init__()
+class SSL_BACKEND_multireso_MaxPool1dLin_blstmlinear(SSL_BACKEND_multireso_MaxPool1d_blstmlinear):
+    def __init__(self, num_scale=6, feat_dim=60, embed_dim = 64, blstm_layers=1, flag_pool = 'ap',
+            multi_reso_active = ['utt'], Frame_shifts = [2,4,8,16,32,64] ):
+        super(SSL_BACKEND_multireso_MaxPool1d_blstmlinear, self).__init__()
         self.Frame_shifts = Frame_shifts
         self.multi_reso_active = multi_reso_active
 
-        self.blocks=MaxPool1dLin_scales(num_scale, feat_dim, embed_dim, flag_pool).blocks
+        self.blocks=SSL_BACKEND_multireso_MaxPool1dLin(num_scale, feat_dim, embed_dim, flag_pool).blocks
 
-        base_model = MaxPool1d_blstmlinear_scales(num_scale, feat_dim, embed_dim, blstm_layers, flag_pool)
+        base_model = SSL_BACKEND_multireso_MaxPool1d_blstmlinear(num_scale, feat_dim, embed_dim, blstm_layers, flag_pool)
         self.post_nets_seg = base_model.post_nets_seg
 
         self.post_nets_utt = base_model.post_nets_utt
+        self.freeze_unused_para()
 
 
 ####Gmlp
@@ -331,11 +393,11 @@ class gMLP(nn.Module):
 
         return x    
 
-class SSL_BACKEND_MaxPool1d_gmlp_scales(MaxPool1d_scales):
+class SSL_BACKEND_multireso_MaxPool1d_gmlp(MaxPool1d_scales):
     # Inherits MaxPool1d_scales
     def __init__(self, num_scale=5, feat_dim=60, embed_dim = 256, seq_len = 2001, 
                  gmlp_layers=1, batch_first=True, flag_pool = 'ap',
-            multi_reso_active = '', Frame_shifts = [2,4,8,16,32,64] ):
+            multi_reso_active = [''], Frame_shifts = [2,4,8,16,32,64] ):
 
         super(MaxPool1d_scales, self).__init__()
 
@@ -353,17 +415,18 @@ class SSL_BACKEND_MaxPool1d_gmlp_scales(MaxPool1d_scales):
         #utt    
         self.post_nets_utt = gMLP(dim, embed_dim, seq_len // pow(2,i) , gmlp_layers = gmlp_layers, 
                                                    batch_first=batch_first, flag_pool=flag_pool)
+        self.freeze_unused_para()
 
-class SSL_BACKEND_MaxPool1dLin_gmlp_scales(MaxPool1d_scales):
+class SSL_BACKEND_multireso_MaxPool1dLin_gmlp(MaxPool1d_scales):
     def __init__(self, num_scale=5, feat_dim=60, embed_dim = 256, seq_len = 2001, 
                  gmlp_layers=1, batch_first=True, flag_pool = 'ap',
-            multi_reso_active = '', Frame_shifts = [2,4,8,16,32,64] ):
+            multi_reso_active = [''], Frame_shifts = [2,4,8,16,32,64] ):
 
         super(MaxPool1d_scales, self).__init__()
         self.Frame_shifts = Frame_shifts
         self.multi_reso_active = multi_reso_active
 
-        self.blocks=MaxPool1dLin_scales(num_scale, feat_dim, embed_dim, flag_pool,
+        self.blocks=SSL_BACKEND_multireso_MaxPool1dLin(num_scale, feat_dim, embed_dim, flag_pool,
                 Frame_shifts = Frame_shifts).blocks
 
         self.post_nets_seg = nn.ModuleDict()
@@ -375,15 +438,16 @@ class SSL_BACKEND_MaxPool1dLin_gmlp_scales(MaxPool1d_scales):
         #utt    
         self.post_nets_utt = gMLP(dim, embed_dim, seq_len // pow(2,i) , gmlp_layers = gmlp_layers, 
                                                    batch_first=batch_first, flag_pool=flag_pool)
+        self.freeze_unused_para()
 
 
 
 def debug():
     t = torch.rand((8, 48, 768))
-    #model=MaxPool1dLin_scales(num_scale=7, feat_dim=768, flag_pool='ap')
-    model = SSL_BACKEND_MaxPool1d_gmlp_scales(num_scale=6, feat_dim=768, embed_dim=-2,
+    #model=SSL_BACKEND_multireso_MaxPool1dLin(num_scale=7, feat_dim=768, flag_pool='ap')
+    model = SSL_BACKEND_multireso_MaxPool1d_gmlp(num_scale=6, feat_dim=768, embed_dim=-2,
             seq_len=2001, gmlp_layers = 1, batch_first=True, flag_pool='ap' )
-    model_ml = SSL_BACKEND_MaxPool1dLin_gmlp_scales(num_scale=6, feat_dim=768, embed_dim=-2,
+    model_ml = SSL_BACKEND_multireso_MaxPool1dLin_gmlp(num_scale=6, feat_dim=768, embed_dim=-2,
             seq_len=2001, gmlp_layers = 1, batch_first=True, flag_pool='ap' )
     o = model(t)
     for i in o: #(B x T x F) 20 ms -> 640ms -> utt.

@@ -117,7 +117,7 @@ def customize_collate(batch):
 
             # allocate the memory based on maximum numel
             numel = max([x.numel() for x in batch_new]) * len(batch_new)
-            storage = elem.storage()._new_shared(numel)
+            storage = elem._typed_storage()._new_shared(numel)
             # updated according to latest collate function
             # otherwise, it raises warning
             # pytorch/blob/master/torch/utils/data/_utils/collate.py

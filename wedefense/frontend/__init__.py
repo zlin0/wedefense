@@ -17,7 +17,6 @@ from .get_s3prl import S3prlFrontend
 from .whisper_encoder import whisper_encoder
 
 frontend_class_dict = {
-    'fbank': None#,
+    'fbank': None,
     's3prl': S3prlFrontend,
-    'whisper_encoder': whisper_encoder
-}
+    'whisper_encoder': whisper_encoder}

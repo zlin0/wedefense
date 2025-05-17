@@ -121,14 +121,15 @@ class S3prlFrontend(nn.Module):
                 return 1024
             elif "base" in self.upstream_name:
                 return 768
-            else:
+            else: #TODO for other models, 
                 raise ValueError(f"Unknown model size for: {self.upstream_name}")
         else:
             return self.featurizer.output_size
 
     def forward(self, input: torch.Tensor, input_lengths: torch.LongTensor):
         with torch.no_grad() if self.frozen else contextlib.nullcontext():
-            feats, feats_lens = self.upstream(input, input_lengths)
+            feats, feats_lens = self.upstream(input, input_lengths) 
+            #List<[B,T,D]> (len=Nb_layer) , List<[T, T, .., T](len = B) x Nb_layer>
         if self.layer != -1:
             layer = self.layer
             feats, feats_lens = feats[layer], feats_lens[layer]

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 
 def read_scp(scp_file):
     """read scp file (also support PIPE format)
@@ -63,3 +64,17 @@ def read_table(table_file):
             tokens = line.strip().split()
             table_list.append(tokens)
     return table_list
+
+
+def read_json_list(list_file):
+    """read a list of json 
+
+    Args:
+        list_file (str): path to the table file
+
+    Returns:
+        list: list of dict
+    """
+    lists = read_lists(list_file)
+    return [json.loads(x) for x in lists]
+        

@@ -227,7 +227,7 @@ def spk_to_id(data, spk2id):
 
         Args:
             data: Iterable[{key, wav/feat, spk}]
-            spk2id: Dict[str, int]
+            spk2id: Dict[str, int] i.e.:{'bonafide': 1, 'spoof': 0}
 
         Returns:
             Iterable[{key, wav/feat, label}]

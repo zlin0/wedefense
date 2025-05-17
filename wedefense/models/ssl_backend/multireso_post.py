@@ -5,6 +5,10 @@
 
 '''
     implement multi-reso CM
+    Title: The PartialSpoof Database and Countermeasures for the Detection of 
+           Short Fake Speech Segments Embedded in an Utterance
+           https://ieeexplore.ieee.org/document/10003971
+    Author: Lin Zhang, Xin Wang, Erica Cooper, Junichi Yamagishi, Nicholas Evans
 '''
 
 import math
@@ -93,11 +97,11 @@ class SELayer_TF(nn.Module):
 
 
 class Branch(nn.Module):
-    def __init__(self, dim, emb_dim=64, flag_pool="None", blstm_layers=0):
+    def __init__(self, dim, embed_dim=64, flag_pool="None", blstm_layers=0):
         """
         Input: 
           dim: input_features dim of input.
-          emb_dim: int. the dim of output (out_features).
+          embed_dim: int. the dim of output (out_features).
             >0: the fixed vaule
             <0: the reduced multiple value, like -2 for reduce by half. 
           flag_pool: for utt Branch. pooling layer used to transfer embeeding from segment level to utterance level.
@@ -105,15 +109,15 @@ class Branch(nn.Module):
 
         For Branch:
           Input: hidden feature: B x T x H 
-          Output: B x T x emb_dim for segment, or B x T for utterance.
+          Output: B x T x embed_dim for segment, or B x T for utterance.
         """
         super(Branch, self).__init__()
         self.dim = dim
-        if(emb_dim > 0):
-            self.emb_dim = emb_dim
-        elif(emb_dim < 0):
-            #if emb_dim <0, we will reduce dim by emb_dim. like -2 will be dim/2
-            self.emb_dim = int(dim / abs(emb_dim))
+        if(embed_dim > 0):
+            self.embed_dim = embed_dim
+        elif(embed_dim < 0):
+            #if embed_dim <0, we will reduce dim by embed_dim. like -2 will be dim/2
+            self.embed_dim = int(dim / abs(embed_dim))
 
         self.flag_pool = flag_pool
         self.use_blstm = blstm_layers > 0
@@ -127,7 +131,7 @@ class Branch(nn.Module):
                          bidirectional=True))
             self.layers = nn.Sequential(*layers)
 
-        self.fc = nn.Linear(self.dim, self.emb_dim, bias=False)
+        self.fc = nn.Linear(self.dim, self.embed_dim, bias=False)
 
 
     def forward(self, x):
@@ -151,13 +155,15 @@ class Branch(nn.Module):
 
 
 class MaxPool1d_scales(nn.Module):
-    def __init__(self, num_scale=5, feature_F_dim=60, emb_dim = 64,flag_pool = 'ap', 
-            multi_branch_fix = '', Frame_shifts = [2,4,8,16,32,64] ):
+    # The main modules for multi-reso structure.
+    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 64,flag_pool = 'ap', 
+            multi_reso_active = '', Frame_shifts = [2,4,8,16,32,64] ):
         super(MaxPool1d_scales, self).__init__()
 
-        self.multi_branch_fix = multi_branch_fix
         self.Frame_shifts = Frame_shifts
+        self.multi_reso_active = multi_reso_active
         
+        # Set up downsampling module (from (0)20ms -> (5)640ms -> (6)utt, 7 in total)
         self.blocks=nn.ModuleDict()
         self.blocks['0']= nn.Sequential(
                 )
@@ -173,21 +179,15 @@ class MaxPool1d_scales(nn.Module):
             nn.Dropout(0.7)
             )
 
+        # Set up Branch (scoring modules), 
         self.post_nets_seg = nn.ModuleDict()
         for i in range(num_scale):
-            dim = feature_F_dim // pow(2,i) 
-            self.post_nets_seg[f"disc_{i}"] = Branch(dim=dim, emb_dim=emb_dim, flag_pool="None")
+            dim = feat_dim // pow(2,i) 
+            self.post_nets_seg[f"disc_{i}"] = Branch(dim=dim, embed_dim=embed_dim, flag_pool="None")
 
-            if(str(self.Frame_shifts[i]) in self.multi_branch_fix):
-                freeze_by_names_deep(self, f"disc_{i}")
-            #else:
-            #    #unfreeze_by_names(self, f"post_nets_seg.disc_{i}")
-                #self.post_nets_seg[f"disc_{i}"].requires_grad = False 
         #utt    
-        if('utt' in self.multi_branch_fix):
-            freeze_by_names(self, "post_nets_utt")
 
-        self.post_nets_utt = Branch(dim=dim, emb_dim=emb_dim, flag_pool=flag_pool)
+        self.post_nets_utt = Branch(dim=dim, embed_dim=embed_dim, flag_pool=flag_pool)
 
 
     def forward(self, x):
@@ -198,46 +198,43 @@ class MaxPool1d_scales(nn.Module):
             #print(x.shape) #check
             x=self.blocks[f"{idx}"](x)
             o = self.post_nets_seg[key](x)
-            outs.append(o)
-            #outs.append(disc(x))
+            if(idx in self.multi_reso_active):
+                outs.append(o)
+                #outs.append(disc(x))
 
         in_utt = self.blocks['utt'](x)
         o_utt = self.post_nets_utt(in_utt)
 
-        outs.append(o_utt)  
+        if('utt' in self.multi_reso_active):
+            outs.append(o_utt)  
 
         return outs
 
 class MaxPool1d_blstmlinear_scales(MaxPool1d_scales):
-    def __init__(self, num_scale=5, feature_F_dim=60, emb_dim = 64, blstm_layers=1, flag_pool = 'ap', 
-            multi_branch_fix = '', Frame_shifts = [2,4,8,16,32,64] ):
+    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 64, blstm_layers=1, flag_pool = 'ap', 
+            multi_reso_active = '', Frame_shifts = [2,4,8,16,32,64] ):
         super(MaxPool1d_scales, self).__init__()
 
-        self.blocks=MaxPool1d_scales(num_scale, feature_F_dim, emb_dim, flag_pool).blocks 
-
-        self.multi_branch_fix = multi_branch_fix
+        self.blocks=MaxPool1d_scales(num_scale, feat_dim, embed_dim, flag_pool).blocks 
         self.Frame_shifts = Frame_shifts
+        self.multi_reso_active = multi_reso_active
 
         self.post_nets_seg = nn.ModuleDict()
         for i in range(num_scale):
-            dim = feature_F_dim // pow(2,i) 
-            self.post_nets_seg[f"disc_{i}"] = Branch(dim = dim, emb_dim = emb_dim, 
+            dim = feat_dim // pow(2,i) 
+            self.post_nets_seg[f"disc_{i}"] = Branch(dim = dim, embed_dim = embed_dim, 
                     flag_pool = "None", blstm_layers = blstm_layers)
-            if(str(self.Frame_shifts[i]) in self.multi_branch_fix):
-                freeze_by_names_deep(self, f"disc_{i}")
         #utt    
-        self.post_nets_utt = Branch(dim = dim, emb_dim = emb_dim, 
+        self.post_nets_utt = Branch(dim = dim, embed_dim = embed_dim, 
                 flag_pool = flag_pool, blstm_layers = blstm_layers)
-        if('utt' in self.multi_branch_fix):
-            freeze_by_names(self, "post_nets_utt")
 
 
 class MaxPool1dLin_scales(MaxPool1d_scales):
-    def __init__(self, num_scale=5, feature_F_dim=60, emb_dim = 64,flag_pool = 'ap',
-            multi_branch_fix = '', Frame_shifts = [2,4,8,16,32,64] ):
+    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 64,flag_pool = 'ap',
+            multi_reso_active = '', Frame_shifts = [2,4,8,16,32,64] ):
         super(MaxPool1d_scales, self).__init__()
-        self.multi_branch_fix = multi_branch_fix
         self.Frame_shifts = Frame_shifts
+        self.multi_reso_active = multi_reso_active
 
         self.blocks=nn.ModuleDict()
         self.blocks['0']= nn.Sequential(
@@ -245,11 +242,11 @@ class MaxPool1dLin_scales(MaxPool1d_scales):
         for b_idx in range(1, num_scale-1):
             self.blocks[f'{b_idx}']= nn.Sequential(
                 nn.MaxPool2d([2, 2], [2, 2]),
-                nn.Linear(feature_F_dim // pow(2, b_idx), feature_F_dim // pow(2, b_idx))
+                nn.Linear(feat_dim // pow(2, b_idx), feat_dim // pow(2, b_idx))
                     )
         self.blocks[f'{num_scale-1}']= nn.Sequential(
             nn.MaxPool2d([2, 2], [2, 2], padding=[1, 0]),
-            nn.Linear(feature_F_dim // pow(2, num_scale-1), feature_F_dim // pow(2, num_scale-1)),
+            nn.Linear(feat_dim // pow(2, num_scale-1), feat_dim // pow(2, num_scale-1)),
 
             )
         self.blocks['utt'] = nn.Sequential(
@@ -258,33 +255,24 @@ class MaxPool1dLin_scales(MaxPool1d_scales):
 
         self.post_nets_seg = nn.ModuleDict()
         for i in range(num_scale):
-            dim = feature_F_dim // pow(2,i) 
-            self.post_nets_seg[f"disc_{i}"] = Branch(dim, emb_dim, "None")
-            if(str(self.Frame_shifts[i]) in self.multi_branch_fix):
-                freeze_by_names_deep(self, f"disc_{i}")
+            dim = feat_dim // pow(2,i) 
+            self.post_nets_seg[f"disc_{i}"] = Branch(dim, embed_dim, "None")
         #utt    
-        self.post_nets_utt = Branch(dim, emb_dim, flag_pool)
-        if('utt' in self.multi_branch_fix):
-            freeze_by_names(self, "post_nets_utt")
+        self.post_nets_utt = Branch(dim, embed_dim, flag_pool)
 
 class MaxPool1dLin_blstmlinear_scales(MaxPool1d_blstmlinear_scales):
-    def __init__(self, num_scale=5, feature_F_dim=60, emb_dim = 64, blstm_layers=1, flag_pool = 'ap',
-            multi_branch_fix = '', Frame_shifts = [2,4,8,16,32,64] ):
+    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 64, blstm_layers=1, flag_pool = 'ap',
+            multi_reso_active = '', Frame_shifts = [2,4,8,16,32,64] ):
         super(MaxPool1d_blstmlinear_scales, self).__init__()
-        self.multi_branch_fix = multi_branch_fix
         self.Frame_shifts = Frame_shifts
+        self.multi_reso_active = multi_reso_active
 
-        self.blocks=MaxPool1dLin_scales(num_scale, feature_F_dim, emb_dim, flag_pool).blocks
+        self.blocks=MaxPool1dLin_scales(num_scale, feat_dim, embed_dim, flag_pool).blocks
 
-        base_model = MaxPool1d_blstmlinear_scales(num_scale, feature_F_dim, emb_dim, blstm_layers, flag_pool)
+        base_model = MaxPool1d_blstmlinear_scales(num_scale, feat_dim, embed_dim, blstm_layers, flag_pool)
         self.post_nets_seg = base_model.post_nets_seg
-        for i in range(num_scale):
-            if(str(self.Frame_shifts[i]) in self.multi_branch_fix):
-                freeze_by_names_deep(self, f"disc_{i}")
 
         self.post_nets_utt = base_model.post_nets_utt
-        if('utt' in self.multi_branch_fix):
-            freeze_by_names(self, "post_nets_utt")
 
 
 ####Gmlp
@@ -307,7 +295,7 @@ class gMLP(nn.Module):
         if(d_ffn > 0):
             pass
         elif(d_ffn < 0):
-            #if emb_dim <0, we will reduce dim by emb_dim. like -2 will be dim/2
+            #if embed_dim <0, we will reduce dim by embed_dim. like -2 will be dim/2
             d_ffn = int(d_model / abs(d_ffn))
 
         layers = []
@@ -316,7 +304,7 @@ class gMLP(nn.Module):
         self.layers = nn.Sequential(*layers)
 
         if(self.flag_pool=='sap'):
-            self.pool=nii_nn.SelfWeightedPooling(self.dim, mean_only=True)
+            self.pool=SelfWeightedPooling(self.dim, mean_only=True)
 
 
         self.fc = nn.Linear(d_model, d_ffn, bias=False)
@@ -344,195 +332,64 @@ class gMLP(nn.Module):
         return x    
 
 class SSL_BACKEND_MaxPool1d_gmlp_scales(MaxPool1d_scales):
-    def __init__(self, num_scale=5, feature_F_dim=60, emb_dim = 256, seq_len = 2001, gmlp_layers=1, batch_first=True, flag_pool = 'ap',
-            multi_branch_fix = '', Frame_shifts = [2,4,8,16,32,64] ):
+    # Inherits MaxPool1d_scales
+    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 256, seq_len = 2001, 
+                 gmlp_layers=1, batch_first=True, flag_pool = 'ap',
+            multi_reso_active = '', Frame_shifts = [2,4,8,16,32,64] ):
 
         super(MaxPool1d_scales, self).__init__()
 
-        self.multi_branch_fix = multi_branch_fix
         self.Frame_shifts = Frame_shifts
+        self.multi_reso_active = multi_reso_active
 
-        self.blocks=MaxPool1d_scales(num_scale, feature_F_dim, emb_dim, flag_pool).blocks
+        self.blocks=MaxPool1d_scales(num_scale, feat_dim, embed_dim, flag_pool).blocks
 
         self.post_nets_seg = nn.ModuleDict()
         for i in range(num_scale):
-            dim = feature_F_dim // pow(2,i) 
-            self.post_nets_seg[f"disc_{i}"] = gMLP(dim, emb_dim, seq_len // pow(2,i) , gmlp_layers = gmlp_layers, 
+            dim = feat_dim // pow(2,i) 
+            self.post_nets_seg[f"disc_{i}"] = gMLP(dim, embed_dim, seq_len // pow(2,i) , 
+                                                   gmlp_layers = gmlp_layers, 
                                                    batch_first=batch_first, flag_pool='None')
-            if(str(self.Frame_shifts[i]) in self.multi_branch_fix):
-                freeze_by_names_deep(self, f"disc_{i}")
         #utt    
-        self.post_nets_utt = gMLP(dim, emb_dim, seq_len // pow(2,i) , gmlp_layers = gmlp_layers, 
+        self.post_nets_utt = gMLP(dim, embed_dim, seq_len // pow(2,i) , gmlp_layers = gmlp_layers, 
                                                    batch_first=batch_first, flag_pool=flag_pool)
-        if('utt' in self.multi_branch_fix):
-            freeze_by_names(self, "post_nets_utt")
 
 class SSL_BACKEND_MaxPool1dLin_gmlp_scales(MaxPool1d_scales):
-    def __init__(self, num_scale=5, feature_F_dim=60, emb_dim = 256, seq_len = 2001, gmlp_layers=1, batch_first=True, flag_pool = 'ap',
-            multi_branch_fix = '', Frame_shifts = [2,4,8,16,32,64] ):
+    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 256, seq_len = 2001, 
+                 gmlp_layers=1, batch_first=True, flag_pool = 'ap',
+            multi_reso_active = '', Frame_shifts = [2,4,8,16,32,64] ):
 
         super(MaxPool1d_scales, self).__init__()
-        self.multi_branch_fix = multi_branch_fix
         self.Frame_shifts = Frame_shifts
+        self.multi_reso_active = multi_reso_active
 
-        self.blocks=MaxPool1dLin_scales(num_scale, feature_F_dim, emb_dim, flag_pool,
+        self.blocks=MaxPool1dLin_scales(num_scale, feat_dim, embed_dim, flag_pool,
                 Frame_shifts = Frame_shifts).blocks
 
         self.post_nets_seg = nn.ModuleDict()
         for i in range(num_scale):
-            dim = feature_F_dim // pow(2,i) 
-            self.post_nets_seg[f"disc_{i}"] = gMLP(dim, emb_dim, seq_len // pow(2,i) , gmlp_layers = gmlp_layers, 
+            dim = feat_dim // pow(2,i) 
+            self.post_nets_seg[f"disc_{i}"] = gMLP(dim, embed_dim, seq_len // pow(2,i) , 
+                                                   gmlp_layers = gmlp_layers, 
                                                    batch_first=batch_first, flag_pool='None')
-            if(str(self.Frame_shifts[i]) in self.multi_branch_fix):
-                freeze_by_names_deep(self, f"disc_{i}")
         #utt    
-        self.post_nets_utt = gMLP(dim, emb_dim, seq_len // pow(2,i) , gmlp_layers = gmlp_layers, 
+        self.post_nets_utt = gMLP(dim, embed_dim, seq_len // pow(2,i) , gmlp_layers = gmlp_layers, 
                                                    batch_first=batch_first, flag_pool=flag_pool)
-        if('utt' in self.multi_branch_fix):
-            freeze_by_names(self, "post_nets_utt")
 
 
 
 def debug():
     t = torch.rand((8, 48, 768))
-    #model=MaxPool1dLin_scales(num_scale=7, feature_F_dim=768, flag_pool='ap')
-    model = SSL_BACKEND_MaxPool1d_gmlp_scales(num_scale=7, feature_F_dim=768, emb_dim=-2,
+    #model=MaxPool1dLin_scales(num_scale=7, feat_dim=768, flag_pool='ap')
+    model = SSL_BACKEND_MaxPool1d_gmlp_scales(num_scale=6, feat_dim=768, embed_dim=-2,
             seq_len=2001, gmlp_layers = 1, batch_first=True, flag_pool='ap' )
-    model_ml = SSL_BACKEND_MaxPool1dLin_gmlp_scales(num_scale=7, feature_F_dim=768, emb_dim=-2,
+    model_ml = SSL_BACKEND_MaxPool1dLin_gmlp_scales(num_scale=6, feat_dim=768, embed_dim=-2,
             seq_len=2001, gmlp_layers = 1, batch_first=True, flag_pool='ap' )
     o = model(t)
-
-    print(o.shape)
+    for i in o: #(B x T x F) 20 ms -> 640ms -> utt.
+        print(i.shape)
 
 
 if __name__ == '__main__':
     debug()
-
-
-
-class SelfWeightedPooling(torch_nn.Module):
-    """ SelfWeightedPooling module
-    Inspired by
-    https://github.com/joaomonteirof/e2e_antispoofing/blob/master/model.py
-    To avoid confusion, I will call it self weighted pooling
-    
-    Using self-attention format, this is similar to softmax(Query, Key)Value
-    where Query is a shared learnarble mm_weight, Key and Value are the input
-    Sequence.
-
-    l_selfpool = SelfWeightedPooling(5, 1, False)
-    with torch.no_grad():
-        input_data = torch.rand([3, 10, 5])
-        output_data = l_selfpool(input_data)
-    """
-    def __init__(self, feature_dim, num_head=1, mean_only=False):
-        """ SelfWeightedPooling(feature_dim, num_head=1, mean_only=False)
-        Attention-based pooling
-        
-        input (batchsize, length, feature_dim) ->
-        output 
-           (batchsize, feature_dim * num_head), when mean_only=True
-           (batchsize, feature_dim * num_head * 2), when mean_only=False
-        
-        args
-        ----
-          feature_dim: dimension of input tensor
-          num_head: number of heads of attention
-          mean_only: whether compute mean or mean with std
-                     False: output will be (batchsize, feature_dim*2)
-                     True: output will be (batchsize, feature_dim)
-        """
-        super(SelfWeightedPooling, self).__init__()
-
-        self.feature_dim = feature_dim
-        self.mean_only = mean_only
-        self.noise_std = 1e-5
-        self.num_head = num_head
-
-        # transformation matrix (num_head, feature_dim)
-        self.mm_weights = torch_nn.Parameter(
-            torch.Tensor(num_head, feature_dim), requires_grad=True)
-        torch_init.kaiming_uniform_(self.mm_weights)
-        return
-    
-    def _forward(self, inputs):
-        """ output, attention = forward(inputs)
-        inputs
-        ------
-          inputs: tensor, shape (batchsize, length, feature_dim)
-        
-        output
-        ------
-          output: tensor
-           (batchsize, feature_dim * num_head), when mean_only=True
-           (batchsize, feature_dim * num_head * 2), when mean_only=False
-          attention: tensor, shape (batchsize, length, num_head)
-        """        
-        # batch size
-        batch_size = inputs.size(0)
-        # feature dimension
-        feat_dim = inputs.size(2)
-        
-        # input is (batch, legth, feature_dim)
-        # change mm_weights to (batchsize, feature_dim, num_head)
-        # weights will be in shape (batchsize, length, num_head)
-        weights = torch.bmm(inputs, 
-                            self.mm_weights.permute(1, 0).contiguous()\
-                            .unsqueeze(0).repeat(batch_size, 1, 1))
-        
-        # attention (batchsize, length, num_head)
-        attentions = torch_nn_func.softmax(torch.tanh(weights),dim=1)        
-        
-        # apply attention weight to input vectors
-        if self.num_head == 1:
-            # We can use the mode below to compute self.num_head too
-            # But there is numerical difference.
-            #  original implementation in github
-            
-            # elmentwise multiplication
-            # weighted input vector: (batchsize, length, feature_dim)
-            weighted = torch.mul(inputs, attentions.expand_as(inputs))
-        else:
-            # weights_mat = (batch * length, feat_dim, num_head)
-            weighted = torch.bmm(
-                inputs.view(-1, feat_dim, 1), 
-                attentions.view(-1, 1, self.num_head))
-            
-            # weights_mat = (batch, length, feat_dim * num_head)
-            weighted = weighted.view(batch_size, -1, feat_dim * self.num_head)
-            
-        # pooling
-        if self.mean_only:
-            # only output the mean vector
-            representations = weighted.sum(1)
-        else:
-            # output the mean and std vector
-            noise = self.noise_std * torch.randn(
-                weighted.size(), dtype=weighted.dtype, device=weighted.device)
-
-            avg_repr, std_repr = weighted.sum(1), (weighted+noise).std(1)
-            # concatenate mean and std
-            representations = torch.cat((avg_repr,std_repr),1)
-        # done
-        return representations, attentions
-    
-    def forward(self, inputs):
-        """ output = forward(inputs)
-        inputs
-        ------
-          inputs: tensor, shape (batchsize, length, feature_dim)
-        
-        output
-        ------
-          output: tensor
-           (batchsize, feature_dim * num_head), when mean_only=True
-           (batchsize, feature_dim * num_head * 2), when mean_only=False
-        """
-        output, _ = self._forward(inputs)
-        return output
-
-    def debug(self, inputs):
-        return self._forward(inputs)
-
-
 

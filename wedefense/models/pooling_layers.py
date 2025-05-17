@@ -382,7 +382,7 @@ class XI(torch.nn.Module):
         return self.prior_mean, self.prior_logprec
 
 
-class SelfWeightedPooling(torch_nn.Module):
+class SelfWeightedPooling(torch.nn.Module):
     """ SelfWeightedPooling module
     Inspired by
     https://github.com/joaomonteirof/e2e_antispoofing/blob/master/model.py
@@ -422,7 +422,7 @@ class SelfWeightedPooling(torch_nn.Module):
         self.num_head = num_head
 
         # transformation matrix (num_head, feature_dim)
-        self.mm_weights = torch_nn.Parameter(
+        self.mm_weights = torch.nn.Parameter(
             torch.Tensor(num_head, feature_dim), requires_grad=True)
         torch_init.kaiming_uniform_(self.mm_weights)
         return
@@ -453,7 +453,7 @@ class SelfWeightedPooling(torch_nn.Module):
                             .unsqueeze(0).repeat(batch_size, 1, 1))
         
         # attention (batchsize, length, num_head)
-        attentions = torch_nn_func.softmax(torch.tanh(weights),dim=1)        
+        attentions = F.softmax(torch.tanh(weights),dim=1)        
         
         # apply attention weight to input vectors
         if self.num_head == 1:

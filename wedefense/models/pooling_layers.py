@@ -425,7 +425,6 @@ class SelfWeightedPooling(torch.nn.Module):
         self.mm_weights = torch.nn.Parameter(
             torch.Tensor(num_head, feature_dim), requires_grad=True)
         nn.init.kaiming_uniform_(self.mm_weights)
-        return
     
     def _forward(self, inputs):
         """ output, attention = forward(inputs)

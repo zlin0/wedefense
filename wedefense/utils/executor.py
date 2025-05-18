@@ -1,5 +1,6 @@
 # Copyright (c) 2021 Hongji Wang (jijijiang77@gmail.com)
 #               2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
+#               2025 Lin Zhang (partialspoof@gmail.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +19,6 @@ import tableprint as tp
 import torch
 import torchnet as tnt
 from wedefense.dataset.dataset_utils import apply_cmvn, spec_aug
-
 
 def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
               margin_scheduler, epoch, logger, scaler, device, configs):
@@ -45,7 +45,7 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
             wavs_len = torch.LongTensor([wavs.shape[1]]).repeat(
                 wavs.shape[0]).to(device)  # (B)
             with torch.cuda.amp.autocast(enabled=configs['enable_amp']):
-                features, _ = model.module.frontend(wavs, wavs_len)
+                features, _ = model.module.frontend(wavs, wavs_len) 
 
         with torch.cuda.amp.autocast(enabled=configs['enable_amp']):
             # apply cmvn

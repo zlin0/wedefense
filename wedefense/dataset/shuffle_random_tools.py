@@ -1,9 +1,10 @@
-# copy from https://github.com/nii-yamagishilab/project-NN-Pytorch-scripts/blob/master/core_scripts/math_tools/random_tools.py
-# copy from https://github.com/nii-yamagishilab/project-NN-Pytorch-scripts/blob/master/core_scripts/math_tools/random_tools.py#!/usr/bin/env python
+#!/usr/bin/env python
+# Copyright (c) 2025 Xin Wang (wangxin@nii.ac.jp)
+# Licensed under the BSD 3-Clause License
+# 
+# https://github.com/nii-yamagishilab/project-NN-Pytorch-scripts core_scripts/math_tools/random_tools.py
 """
-random.py
-
-Tools related to randomness
+shuffle_random_tools.py
 
 """
 from __future__ import absolute_import
@@ -15,13 +16,13 @@ import random
 
 __author__ = "Xin Wang"
 __email__ = "wangxin@nii.ac.jp"
-__copyright__ = "Copyright 2021, Xin Wang"
+__copyright__ = "Copyright 2025, Xin Wang"
 
 ##############
 # Shuffling tools
 ##############
 
-def f_shuffle_slice_inplace(input_list, slice_start=None, slice_stop=None):
+def f_shuffle_slice_inplace(input_list, slice_start=None, slice_stop=None, rand_state=1234):
     """ shuffle_slice(input_list, slice_start, slice_stop)
     
     Shuffling input list (in place) in the range specified by slice_start
@@ -35,7 +36,8 @@ def f_shuffle_slice_inplace(input_list, slice_start=None, slice_stop=None):
       input_list: list
       slice_start: int, start idx of the range to be shuffled
       slice_end: int, end idx of the range to be shuffled
-      
+      rand_state: int, random state, default 1234
+
       Both slice_start and slice_end should be in the style of python index
       e.g., shuffle_slice(input_list, 0, N) will shuffle the slice input[0:N]
     
@@ -53,7 +55,7 @@ def f_shuffle_slice_inplace(input_list, slice_start=None, slice_stop=None):
         
     idx = slice_start
     while (idx < slice_stop - 1):
-        idx_swap = random.randrange(idx, slice_stop)
+        idx_swap = random.Random(rand_state).randrange(idx, slice_stop)
         # naive swap
         tmp = input_list[idx_swap]
         input_list[idx_swap] = input_list[idx]
@@ -61,7 +63,7 @@ def f_shuffle_slice_inplace(input_list, slice_start=None, slice_stop=None):
         idx += 1
     return
 
-def f_shuffle_in_block_inplace(input_list, block_size):
+def f_shuffle_in_block_inplace(input_list, block_size, rand_state=1234):
     """
     f_shuffle_in_block_inplace(input_list, block_size)
     
@@ -78,6 +80,7 @@ def f_shuffle_in_block_inplace(input_list, block_size):
     -----
       input_list: input list
       block_size: int
+      rand_state: int, random init state, default 1234
     
     output
     ------
@@ -92,10 +95,13 @@ def f_shuffle_in_block_inplace(input_list, block_size):
         for iter_idx in range( -(-list_length // block_size) ):
             # shuffle within each block
             f_shuffle_slice_inplace(
-                input_list, iter_idx * block_size, (iter_idx+1) * block_size)
+                input_list,
+                iter_idx * block_size,
+                (iter_idx+1) * block_size,
+                rand_state)
         return
 
-def f_shuffle_blocks_inplace(input_list, block_size):
+def f_shuffle_blocks_inplace(input_list, block_size, rand_state=1234):
     """ 
     f_shuffle_blocks_inplace(input_list, block_size)
     
@@ -112,6 +118,7 @@ def f_shuffle_blocks_inplace(input_list, block_size):
     -----
       input_list: input list
       block_size: int
+      rand_state: int, random init state, default 1234
     
     output
     ------
@@ -123,7 +130,7 @@ def f_shuffle_blocks_inplace(input_list, block_size):
     block_number = len(input_list) // block_size
     
     shuffle_block_idx = [x for x in range(block_number)]
-    random.shuffle(shuffle_block_idx)
+    random.Random(rand_state).shuffle(shuffle_block_idx)
 
     new_idx = None
     for iter_idx in range(block_size * block_number):

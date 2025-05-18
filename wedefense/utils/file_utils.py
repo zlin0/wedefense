@@ -80,7 +80,6 @@ def read_json_list(list_file):
     lists = read_lists(list_file)
     return [json.loads(x) for x in lists]
         
-
 def read_seglab_npy(seglab_npy_file):
     """ Get label fro PartialSpoof database
     
@@ -94,5 +93,3 @@ def read_seglab_npy(seglab_npy_file):
     data = np.load(seglab_npy_file, allow_pickle=True)
     data_buffer=data.item()
     return data_buffer
-
-

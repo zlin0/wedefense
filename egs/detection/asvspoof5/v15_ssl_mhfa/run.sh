@@ -11,8 +11,8 @@
 stage=3
 stop_stage=3
 
-PS_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database
-data=data/asv5 # data folder
+ASVspoof5_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database
+data=data/asvspoof5 # data folder
 data_type="shard"  # shard/raw
 
 config=conf/MHFA_wav2vec2.yaml #wespeaker version 
@@ -33,7 +33,7 @@ lm_config=conf/campplus_lm.yaml
 #######################################################################################
 if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
   echo "Prepare datasets ..."
-  ./local/prepare_data.sh ${PS_dir} ${data}
+  ./local/prepare_data.sh ${ASVspoof5_dir} ${data}
 fi
 
 #######################################################################################
@@ -42,9 +42,9 @@ fi
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Covert train and test data to ${data_type}..."
   
-  ln -s ${data}/train/flac_T_all ${data}/train
-  ln -s ${data}/train/flac_D_all ${data}/dev
-  ln -s ${data}/train/flac_E_eval_all ${data}/eval
+  ln -s ${data}/train/flac_T ${data}/train
+  ln -s ${data}/train/flac_D ${data}/dev
+  ln -s ${data}/train/flac_E_eval ${data}/eval
   # We don't use VAD here
 
   for dset in train dev eval;do

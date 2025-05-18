@@ -8,7 +8,7 @@
 #$ -q long.q@supergpu8,long.q@supergpu9,long.q@supergpu10,long.q@supergpu11,long.q@supergpu12,long.q@supergpu13,long.q@supergpu14,long.q@supergpu15,long.q@supergpu16,long.q@supergpu17,long.q@supergpu18
 #$ -pe smp 1
 #$ -l gpu_ram=20G,ram_free=10G,mem_free=10G,gpu=1
-#$ -t 1-1
+#$ -t 1-${#SSLMODELs[@]}
 
 source ~/.bashrc
 conda activate /mnt/matylda6/pengjy/python_new/miniconda/envs/wespeaker

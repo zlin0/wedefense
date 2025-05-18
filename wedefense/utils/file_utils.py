@@ -81,14 +81,14 @@ def read_json_list(list_file):
     return [json.loads(x) for x in lists]
         
 def read_seglab_npy(seglab_npy_file):
-    """ Get label fro PartialSpoof database
+    """ Get label for PartialSpoof database
     
     Args:
       seglabel_npy_file (str): npy, path to the label file
       in the file, {'uttid':<segment-level label> [0, 0, ..., 0, 1]}
     
     Returns:
-      data_buffer: dict{list}, data_bufer[filename] -> 1 (bonafide), 0 (spoof)
+      data_buffer: dict{list}, data_buffer[filename] -> 1 (bonafide), 0 (spoof)
     """ 
     data = np.load(seglab_npy_file, allow_pickle=True)
     data_buffer=data.item()

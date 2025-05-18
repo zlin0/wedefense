@@ -1,4 +1,9 @@
 * conf/resnet.yml: Johan's wespeaker version
-* conf/resnet_noaug_nosample.yaml: w/o aug, using the whole utt for training. but don't consider similar duration to build minibatch 
+* conf/resnet_noaug_nosample.yaml: w/o aug, using the whole utt for training. 
+  [05] but don't consider similar duration to build minibatch 
+  [0517] Xin implenent it  block_shuffle_by_length. 
+         For varied-length input, we are using:
+         wholt_utt: True
+         sampler: block_shuffle_by_length
 
 

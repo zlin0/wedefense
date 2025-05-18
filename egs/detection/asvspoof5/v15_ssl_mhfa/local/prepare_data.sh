@@ -24,19 +24,12 @@ set -xe
 ASVspoof5_dir=$1
 data_dir=$2
 
-DSETs_download="T D E"
 DSETs=(T D E_eval)
 DSETs_full=(train dev eval)
 
 if [ ! -d ${ASVspoof5_dir} ]; then
     mkdir -p ${ASVspoof5_dir}
-    for dset in ${DSETs_download}; do
-        bash ./01_download_database.sh ${ASVspoof5_dir} ${dset}
-    done
-
-    wget -q --show-progress -c "https://zenodo.org/records/14498691/files/ASVspoof5_protocols.tar.gz?download=1" \
-        -O "${ASVspoof5_dir}/ASVspoof5_protocols.tar.gz"
-    tar -xf "${ASVspoof5_dir}/ASVspoof5_protocols.tar.gz" -C "${ASVspoof5_dir}"
+    bash ./01_download_database.sh ${ASVspoof5_dir} 
 fi
 
 for i in "${!DSETs[@]}"; do

@@ -424,7 +424,7 @@ class SelfWeightedPooling(torch.nn.Module):
         # transformation matrix (num_head, feature_dim)
         self.mm_weights = torch.nn.Parameter(
             torch.Tensor(num_head, feature_dim), requires_grad=True)
-        torch_init.kaiming_uniform_(self.mm_weights)
+        nn.init.kaiming_uniform_(self.mm_weights)
         return
     
     def _forward(self, inputs):
@@ -506,8 +506,7 @@ class SelfWeightedPooling(torch.nn.Module):
     def debug(self, inputs):
         return self._forward(inputs)
 
-
-if __name__ == '__main__':
+def debug():
     data = torch.randn(16, 512, 10, 35)
     # model = StatisticsPooling()
     model = MQMHASTP(512 * 10)
@@ -518,11 +517,11 @@ if __name__ == '__main__':
     out = model(data)
     print(out.shape)
     print(model.get_out_dim())
-    model = SSL_BACKEND_MaxPool1d_gmlp_scales(num_scale=7, feature_F_dim=768, emb_dim=-2,
+    model = SSL_BACKEND_MaxPool1d_gmlp_scales(num_scale=6, feature_F_dim=768, emb_dim=-2,
             seq_len=2001, gmlp_layers = 1, batch_first=True, flag_pool='ap' )
-    model_ml = SSL_BACKEND_MaxPool1dLin_gmlp_scales(num_scale=7, feature_F_dim=768, emb_dim=-2,
+    model_ml = SSL_BACKEND_MaxPool1dLin_gmlp_scales(num_scale=6, feature_F_dim=768, emb_dim=-2,
             seq_len=2001, gmlp_layers = 1, batch_first=True, flag_pool='ap' )
-    o = model(t)
+    o = model(data)
 
     print(o.shape)
 

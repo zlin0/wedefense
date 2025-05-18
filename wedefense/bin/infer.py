@@ -81,7 +81,12 @@ def main(model_path, config, num_classes, embedding_scp_path, out_path, data_typ
     # Also a dummy label need to be provided below
 
     with torch.no_grad():
-        output = projection(torch.from_numpy(embd), torch.from_numpy(np.zeros(embd.shape[0]))).detach().numpy()
+        output = projection(torch.from_numpy(embd), torch.from_numpy(np.zeros(embd.shape[0])))
+        if isinstance(output, tuple):
+            # some projection layers return output and loss
+            output = output[0].detach().numpy()
+        else:
+            output = output.detach().numpy()
     
     print(output.shape)
     #print(output)

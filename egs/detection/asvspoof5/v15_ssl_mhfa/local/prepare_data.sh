@@ -33,6 +33,10 @@ if [ ! -d ${ASVspoof5_dir} ]; then
     for dset in ${DSETs_download}; do
         bash ./01_download_database.sh ${ASVspoof5_dir} ${dset}
     done
+
+    wget -q --show-progress -c "https://zenodo.org/records/14498691/files/ASVspoof5_protocols.tar.gz?download=1" \
+        -O "${ASVspoof5_dir}/ASVspoof5_protocols.tar.gz"
+    tar -xf "${ASVspoof5_dir}/ASVspoof5_protocols.tar.gz" -C "${ASVspoof5_dir}"
 fi
 
 for i in "${!DSETs[@]}"; do

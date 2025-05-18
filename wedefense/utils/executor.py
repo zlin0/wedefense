@@ -20,10 +20,6 @@ import torch
 import torchnet as tnt
 from wedefense.dataset.dataset_utils import apply_cmvn, spec_aug
 
-self_intergrate=['SSL_BACKEND_MHFA',] 
-special=['SSL_BACKEND_MaxPool1dLin_gmlp_scales']
-#Those don't need to do weighted sum to intergrate ssl layers.
-
 def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
               margin_scheduler, epoch, logger, scaler, device, configs):
     model.train()

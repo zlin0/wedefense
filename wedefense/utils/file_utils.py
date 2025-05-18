@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import json
+import numpy as np
 
 def read_scp(scp_file):
     """read scp file (also support PIPE format)

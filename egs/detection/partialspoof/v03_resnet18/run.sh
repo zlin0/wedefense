@@ -9,14 +9,15 @@ set -x
 stage=3
 stop_stage=3
 
-PS_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database
+PS_dir=/gs/bs/tgh-25IAC/ud03523/DATA/PartialSpoof/database
 data=data/partialspoof # data folder
-data_type="shard"  # shard/raw
+#data_type="shard"  # shard/raw
+data_type="raw"  # shard/raw
 
-config=conf/resnet_wholeutt_noaug_nosampler.yaml 
-exp_dir=exp/ResNet18-TSTP-emb256-fbank80-wholeutt_nosampler-aug0-spFalse-saFalse-Softmax-SGD-epoch100
 config=conf/resnet.yaml #wespeaker version 
 exp_dir=exp/ResNet18-TSTP-emb256-fbank80-frms400-aug0-spFalse-saFalse-Softmax-SGD-epoch100
+#config=conf/resnet_wholeutt_noaug_nosampler.yaml 
+#exp_dir=exp/ResNet18-TSTP-emb256-fbank80-wholeutt_nosampler-aug0-spFalse-saFalse-Softmax-SGD-epoch100
 
 gpus="[0]"
 num_avg=10 # how many models you want to average

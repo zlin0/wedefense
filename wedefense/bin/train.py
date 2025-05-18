@@ -83,12 +83,12 @@ def train(config='conf/config.yaml', **kwargs):
 
     # train data
     train_label = configs['train_label']
-    train_utt_spk_list = read_table(train_label)
-    spk2id_dict = spk2id(train_utt_spk_list)
+    train_utt_cls_list = read_table(train_label)
+    spk2id_dict = spk2id(train_utt_cls_list)
     if rank == 0:
         logger.info("<== Data statistics ==>")
         logger.info("train data num: {}, class num: {}".format(
-            len(train_utt_spk_list), len(spk2id_dict)))
+            len(train_utt_cls_list), len(spk2id_dict)))
 
     batch_size = configs['dataloader_args']['batch_size']
     whole_utt = configs['dataset_args'].get('whole_utt', False) #set as True after debugging.
@@ -129,7 +129,7 @@ def train(config='conf/config.yaml', **kwargs):
     if configs['dataset_args'].get('sample_num_per_epoch', 0) > 0:
         sample_num_per_epoch = configs['dataset_args']['sample_num_per_epoch']
     else:
-        sample_num_per_epoch = len(train_utt_spk_list)
+        sample_num_per_epoch = len(train_utt_cls_list)
     epoch_iter = sample_num_per_epoch // world_size // batch_size
     if rank == 0:
         logger.info("<== Dataloaders ==>")
@@ -159,8 +159,24 @@ def train(config='conf/config.yaml', **kwargs):
     elif checkpoint is None:
         logger.info('Train model from scratch ...')
     # projection layer
-    configs['projection_args']['embed_dim'] = configs['model_args'][
-        'embed_dim']
+    if(configs['model_args']['embed_dim'] < 0): #TODO check
+        # #if emb_dim <0, we will reduce dim by emb_dim. like -2 will be dim/2
+        if 'multireso' in configs['model'] and configs['model_args']['num_scale'] > 0:
+            # If we are using multireso structure, dim will reduced by 
+            #['embed_dim'] in ['num_scale'] times.
+            configs['projection_args']['embed_dim'] = int(
+                    configs['model_args']['feat_dim'] / 
+                    pow(abs(configs['model_args']['embed_dim']), 
+                        configs['model_args']['num_scale'])
+                    )
+        else:
+            configs['projection_args']['embed_dim'] = int(
+                    configs['model_args']['feat_dim'] / 
+                    abs(configs['model_args']['embed_dim'])
+                    )
+    else:
+        configs['projection_args']['embed_dim'] = configs['model_args'][
+            'embed_dim']
     configs['projection_args']['num_class'] = len(spk2id_dict)
     configs['projection_args']['do_lm'] = configs.get('do_lm', False)
     if configs['data_type'] != 'feat' and configs['dataset_args'][

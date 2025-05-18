@@ -1,4 +1,5 @@
 # Copyright (c) 2022 Hongji Wang (jijijiang77@gmail.com)
+#               2025 Lin Zhang, Xin Wang (partialspoof@gmail.com, wangxin@nii.ac.jp)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +14,7 @@
 # limitations under the License.
 
 import json
+import numpy as np
 
 def read_scp(scp_file):
     """read scp file (also support PIPE format)
@@ -78,3 +80,16 @@ def read_json_list(list_file):
     lists = read_lists(list_file)
     return [json.loads(x) for x in lists]
         
+def read_seglab_npy(seglab_npy_file):
+    """ Get label for PartialSpoof database
+    
+    Args:
+      seglabel_npy_file (str): npy, path to the label file
+      in the file, {'uttid':<segment-level label> [0, 0, ..., 0, 1]}
+    
+    Returns:
+      data_buffer: dict{list}, data_buffer[filename] -> 1 (bonafide), 0 (spoof)
+    """ 
+    data = np.load(seglab_npy_file, allow_pickle=True)
+    data_buffer=data.item()
+    return data_buffer

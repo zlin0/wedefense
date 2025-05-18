@@ -1,4 +1,5 @@
 # Copyright (c) 2022 Hongji Wang (jijijiang77@gmail.com)
+#               2025 Lin Zhang, Xin Wang (partialspoof@gmail.com, wangxin@nii.ac.jp)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -65,6 +66,20 @@ def read_table(table_file):
             table_list.append(tokens)
     return table_list
 
+
+def read_json_list(list_file):
+    """read a list of json 
+
+    Args:
+        list_file (str): path to the table file
+
+    Returns:
+        list: list of dict
+    """
+    lists = read_lists(list_file)
+    return [json.loads(x) for x in lists]
+        
+
 def read_seglab_npy(seglab_npy_file):
     """ Get label fro PartialSpoof database
     
@@ -79,15 +94,4 @@ def read_seglab_npy(seglab_npy_file):
     data_buffer=data.item()
     return data_buffer
 
-def read_json_list(list_file):
-    """read a list of json 
 
-    Args:
-        list_file (str): path to the table file
-
-    Returns:
-        list: list of dict
-    """
-    lists = read_lists(list_file)
-    return [json.loads(x) for x in lists]
-        

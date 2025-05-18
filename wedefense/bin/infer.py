@@ -47,8 +47,24 @@ def main(model_path, config, num_classes, embedding_scp_path, out_path, data_typ
     configs = parse_config_or_kwargs(config)
 
     # projection layer
-    configs['projection_args']['embed_dim'] = configs['model_args'][
-        'embed_dim']
+    if(configs['model_args']['embed_dim'] < 0): #TODO check
+        # #if emb_dim <0, we will reduce dim by emb_dim. like -2 will be dim/2
+        if 'multireso' in configs['model'] and configs['model_args']['num_scale'] > 0:
+            # If we are using multireso structure, dim will reduced by 
+            #['embed_dim'] in ['num_scale'] times.
+            configs['projection_args']['embed_dim'] = int(
+                    configs['model_args']['feat_dim'] / 
+                    pow(abs(configs['model_args']['embed_dim']), 
+                        configs['model_args']['num_scale'])
+                    )
+        else:
+            configs['projection_args']['embed_dim'] = int(
+                    configs['model_args']['feat_dim'] / 
+                    abs(configs['model_args']['embed_dim'])
+                    )
+    else:
+        configs['projection_args']['embed_dim'] = configs['model_args'][
+            'embed_dim']
     configs['projection_args']['num_class'] = num_classes
     configs['projection_args']['do_lm'] = configs.get('do_lm', False)
     if data_type != 'feat' and configs['dataset_args'][

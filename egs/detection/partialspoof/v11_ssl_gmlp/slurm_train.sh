@@ -22,7 +22,7 @@ conda activate wedefense_pip
 echo "[$(date)] Starting Job ID: $SLURM_JOB_ID" > logs/debug_$SLURM_JOB_ID.txt
 
 CONFIGs=(singlereso-utt_gmlp_wavlm-large_frozen
-	 singlereso-utt_gmlp_xlsr-53_ft)
+	 singlereso-utt_gmlp_xlsr53_ft)
 config_name=${CONFIGs[$SLURM_ARRAY_TASK_ID]} 
 
 

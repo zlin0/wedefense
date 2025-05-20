@@ -1,5 +1,19 @@
 # wedefense
 
+
+
+>  ⚠️ **Warning / Disclaimer**⚠️ 
+>
+> This repository is released for **academic research purposes only**. While the goal of this toolkit is to promote progress in fake detection, we acknowledge that any open-source software may be misused by malicious actors.
+> **We strongly discourage any use of the models or code for harmful purposes**, such as:
+>
+> * Bypassing biometric authentication
+> * Creating or enhancing systems that generate fake or deceptive audio
+> 
+> Some of the models included here perform well on public datasets, but may not generalize to unseen or adversarial scenarios. Please be aware of these limitations and use this repository responsibly and ethically.
+
+
+
 ## Enviorment:
 
 
@@ -10,7 +24,7 @@ pip install torch==2.1.2+cu121 torchaudio==2.1.2 torchvision==0.16.2 --index-url
 pip install -r requirements.txt
 ```
 
-You can also try the following method, which allows conda to automatically install the appropriate PyTorch version based on your CUDA and driver setup:
+You can also try the following method, which allows conda to automatically install the appropriate PyTorch version based on your CUDA and driver setup (you might got some warn for some deprecated functions when using more advanced version):
 ```shell
 conda create -n wedefense_conda python=3.10
 conda activate wedefense_conda
@@ -73,7 +87,7 @@ But we will use pre-commit to check code in future. So I input to here for recor
     │   ├── average_model.py
     │   ├── extract.py
     │   └── train.py
-    ├── calibration						# folder to implement calibration [Johan]
+    ├── calibration_fusion						# folder to implement calibration [Johan]
     ├── dataset
     │   ├── acoustic_feature
     │   ├── augmentation
@@ -91,7 +105,6 @@ But we will use pre-commit to check code in future. So I input to here for recor
     │   ├── __init__.py
     │   ├── s3prl.py
     │   └── whisper_encoder.py
-    ├── fusion 				# folder to implement fusion [Johan]
     ├── __init__.py
     ├── metrics
     │   ├── confidence_intervals
@@ -113,7 +126,7 @@ But we will use pre-commit to check code in future. So I input to here for recor
     │   ├── pooling_layers.py
     │   ├── projections.py
     │   ├── resnet.py
-    │   ├── ssl_backend  # folder to save those light weighted backend. i.e., mhfa, sls, etc. 
+    │   ├── ssl_backend/  # folder to save those light weighted backend. i.e., mhfa, sls, etc. 
     │   └── speaker_model.py
     └── utils
         ├── checkpoint.py

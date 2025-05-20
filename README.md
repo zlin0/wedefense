@@ -24,7 +24,7 @@ pip install torch==2.1.2+cu121 torchaudio==2.1.2 torchvision==0.16.2 --index-url
 pip install -r requirements.txt
 ```
 
-You can also try the following method, which allows conda to automatically install the appropriate PyTorch version based on your CUDA and driver setup (you might got some warn for some deprecated functions when using more advanced version):
+You can also try the following method, which allows conda to automatically install the appropriate PyTorch version based on your CUDA and driver setup (you might receive warnings regarding deprecated functions when using more advanced versions):
 ```shell
 conda create -n wedefense_conda python=3.10
 conda activate wedefense_conda

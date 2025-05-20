@@ -1,5 +1,6 @@
-# Copyright (c) 2025 You Zhang (you.zhang@rochester.edu)
-#               2024 Qishan Zhang
+# Copyright (c)  2024 Qishan Zhang
+#                2025 You Zhang (you.zhang@rochester.edu)
+#              
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -42,7 +43,7 @@ def getAttenF(layerResult):
         torch.Tensor: Full feature map of shape (Batch, Feature_Dim * Frame_Length, Nb_Layers).
     """
 
-    poollayerResult, fullf = [], []
+    poollayerResult = []
 
     # Iterate over each layer's feature map
     for layer_idx in range(layerResult.shape[-1]):

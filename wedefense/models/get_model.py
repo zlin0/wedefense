@@ -1,6 +1,8 @@
 # Copyright (c) 2022 Hongji Wang (jijijiang77@gmail.com)
 #               2024 Shuai Wang (wsstriving@gmail.com)
 #               2025 Junyi Peng (pengjy@fit.vut.cz)
+#               2025 Xin Wang (wangxin@nii.ac.jp)
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -26,7 +28,7 @@ import wedefense.models.redimnet as redimnet
 import wedefense.models.samresnet as samresnet
 import wedefense.models.xi_vector as xi_vector
 import wedefense.models.ssl_backend as ssl_backend
-
+import wedefense.models.lcnn_lstm as lcnn_lstm
 
 
 
@@ -57,6 +59,8 @@ def get_model(model_name: str):
         return getattr(xi_vector, model_name)
     elif model_name.startswith("SSL_BACKEND"):
         return getattr(ssl_backend, model_name)
+    elif model_name.startswith('LCNN_LSTM'):
+        return getattr(lcnn_lstm, model_name)
     else:  # model_name error !!!
         print(model_name + " not found !!!")
         exit(1)

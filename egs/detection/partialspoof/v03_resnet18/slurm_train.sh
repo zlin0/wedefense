@@ -13,11 +13,15 @@
 #unset PYTHONHOME
 #
 source ~/.bashrc
-conda activate wedefense_new
+conda activate wedefense_pip
 #conda activate /homes/kazi/isilnova/.conda/envs/wespeaker
 #which python
 
 # You may consider to submit them separately to desired machine.
-./run.sh --stage 3 --stop_stage 3 >> logs/run.sh.stage3.log.$SLURM_JOB_ID 2>&1
-./run.sh --stage 4 --stop_stage 6 >> logs/run.sh.stage4-6.log.$SLURM_JOB_ID 2>&1
-./run.sh --stage 7 --stop_stage 7 >> logs/run.sh.stage7.log.$SLURM_JOB_ID 2>&1
+#./run.sh --stage 3 --stop_stage 3 >> logs/run.sh.stage3.log.$SLURM_JOB_ID 2>&1
+#./run.sh --stage 4 --stop_stage 6 >> logs/run.sh.stage4-6.log.$SLURM_JOB_ID 2>&1
+#./run.sh --stage 7 --stop_stage 7 >> logs/run.sh.stage7.log.$SLURM_JOB_ID 2>&1
+./run.sh --stage 3 --stop_stage 7 \
+	--config conf/resnet_lfcc_torchaudio.yaml \
+	--exp_dir exp/resnet_torchaudiolfcc_300frms \
+	>> logs/run.sh.stage3-7_lfcc.log.$SLURM_JOB_ID 2>&1

@@ -525,8 +525,8 @@ def compute_torchaudio_lfcc(data,
     # Assume all samples share the same sample rate; extract from the first sample
     # data_lst = list(data) Too slow
     # sample_rate = data_lst[0]['sample_rate']
-    from itertools import tee
-    first_sample = next(data_copy)
+    from itertools import chain
+    first_sample = next(data)
     data = chain([first_sample], data)
     lfcc_extractor = torchaudio_T.LFCC(
             sample_rate = first_sample['sample_rate'],
@@ -549,7 +549,7 @@ def compute_torchaudio_lfcc(data,
         waveform = waveform * (1 << 15) ## Convert from float [-1.0, 1.0] to int16 [-32767, 32767]
         # Only keep key, feat, label
 
-        mat = lfcc_extractor(waveform) #doesn't support energy
+        mat = lfcc_extractor(waveform) #doesn't support energy #[1, F, T]
         if(use_delta):
             lfcc_delta = compute_delta(mat) 
             lfcc_delta_delta = compute_delta(lfcc_delta) 

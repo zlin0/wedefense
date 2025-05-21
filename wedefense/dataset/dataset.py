@@ -311,7 +311,7 @@ def Dataset(data_type,
         if frontend_type == 'fbank':
             dataset = Processor(dataset, processor.compute_fbank,
                                 **configs['fbank_args'])
-        if frontend_type == 'torchaudio_lfcc':
+        elif frontend_type == 'torchaudio_lfcc':
             dataset = Processor(dataset, processor.compute_torchaudio_lfcc,
                                 **configs['torchaudio_lfcc_args'])
 

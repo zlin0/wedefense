@@ -36,7 +36,7 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
         utts = batch['key']
         targets = batch['label']
         targets = targets.long().to(device)  # (B)
-        if frontend_type == 'fbank':
+        if frontend_type == 'fbank' or 'lfcc' in frontend_type:
             features = batch['feat']  # (B,T,F)
             features = features.float().to(device)
         else:  # 's3prl'

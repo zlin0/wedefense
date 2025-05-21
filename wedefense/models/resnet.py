@@ -122,7 +122,8 @@ class ResNet(nn.Module):
         self.in_planes = m_channels
         self.feat_dim = feat_dim
         self.embed_dim = embed_dim
-        self.stats_dim = math.ceil(feat_dim / 8) * m_channels * 8 #
+        self.stats_dim = math.ceil(feat_dim / 8) * m_channels * 8 
+        #zlin change from int to ceil
         self.two_emb_layer = two_emb_layer
 
         self.conv1 = nn.Conv2d(1,

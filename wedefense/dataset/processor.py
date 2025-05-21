@@ -32,7 +32,8 @@ import torch
 import torchaudio
 import torchaudio.compliance.kaldi as kaldi
 
-import wedefense.dataset.augmentation.rawboost_util as rawboost_util 
+import wedefense.dataset.augmentation.rawboost_util as rawboost_util
+import wedefense.dataset.augmentation.codec_util as codec_util 
 
 AUDIO_FORMAT_SETS = set(['flac', 'mp3', 'm4a', 'ogg', 'opus', 'wav', 'wma'])
 
@@ -589,6 +590,38 @@ def rawboost(data,
         sample['wav'] = rawboost_util.process_Rawboost_feature(audio, sample_rate, algo)
         yield sample
 
+
+
+def codec(data, random_seed=42):
+    """ Process codec
+
+        Args:
+            data: Iterable[{key, wav, label, sample_rate}]
+            random_seed (int): random seed for random(), default 42
+
+        Returns:
+            Iterable[{key, wav, label, sample_rate}]
+    """
+    random.seed(random_seed)
+
+    
+    for sample in data:
+        assert 'sample_rate' in sample
+        assert 'wav' in sample
+        assert 'key' in sample
+        
+        sr = sample['sample_rate']
+        audio = sample['wav']
+
+        codec_name = random.choice(codec_util.SUPPORTED_CODEC_FOR_AUGMENTATION)
+        bitrate = random.choice(codec_util.SUPPORTED_CODEC_CONFIG[codec_name])
+
+        sample['wav'] = codec_util.codec_apply(audio, sr, codec_name, bitrate)
+        #print(codec_name, bitrate, audio.shape, sample['wav'].shape, type(audio), type(sample['wav']))
+        yield sample
+
+
+    
 #TODO
 # codec
 # Rawboost

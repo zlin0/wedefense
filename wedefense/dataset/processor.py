@@ -503,10 +503,10 @@ def compute_fbank(data,
                           dither=dither,
                           sample_frequency=sample_rate,
                           window_type='hamming',
-                          use_energy=False)
+                          use_energy=False) #[T, F]
         yield dict(key=sample['key'], label=sample['label'], feat=mat)
 
-def compute_torchaudio_lfcc(data,
+def compute_lfcc_torchaudio(data,
                   n_fft=512,
                   n_lfcc=20,
                   frame_length=20,
@@ -533,11 +533,12 @@ def compute_torchaudio_lfcc(data,
             n_lfcc = n_lfcc,
             speckwargs = {
                 "n_fft": n_fft,
-                "win_length": frame_length,
-                "hop_length": frame_shift,
+                "win_length": frame_length / 1000 * sample_rate, 
+                "hop_length": frame_shift /1000 * sample_rate,
                 "center": False
                 }
             )
+
 
     for sample in data:
         assert 'sample_rate' in sample
@@ -549,7 +550,7 @@ def compute_torchaudio_lfcc(data,
         waveform = waveform * (1 << 15) ## Convert from float [-1.0, 1.0] to int16 [-32767, 32767]
         # Only keep key, feat, label
 
-        mat = lfcc_extractor(waveform) #doesn't support energy #[1, F, T]
+        mat = lfcc_extractor(waveform).squeeze(0).permute(1, 0) #doesn't support energy #[1, F, T] -> [T, F]
         if(use_delta):
             lfcc_delta = compute_delta(mat) 
             lfcc_delta_delta = compute_delta(lfcc_delta) 

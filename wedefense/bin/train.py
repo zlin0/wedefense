@@ -139,7 +139,7 @@ def train(config='conf/config.yaml', **kwargs):
     # model: frontend (optional) => speaker model => projection layer
     logger.info("<== Model ==>")
     frontend_type = configs['dataset_args'].get('frontend', 'fbank')
-    if frontend_type != "fbank" and "lfcc" not in frontend_type:
+    if frontend_type != "fbank" and not frontend_type.startswith('lfcc'):
         frontend_args = frontend_type + "_args"
         frontend = frontend_class_dict[frontend_type](
             **configs['dataset_args'][frontend_args],

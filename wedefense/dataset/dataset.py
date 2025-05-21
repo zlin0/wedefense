@@ -311,9 +311,9 @@ def Dataset(data_type,
         if frontend_type == 'fbank':
             dataset = Processor(dataset, processor.compute_fbank,
                                 **configs['fbank_args'])
-        elif frontend_type == 'torchaudio_lfcc':
-            dataset = Processor(dataset, processor.compute_torchaudio_lfcc,
-                                **configs['torchaudio_lfcc_args'])
+        elif frontend_type == 'lfcc_torchaudio':
+            dataset = Processor(dataset, processor.compute_lfcc_torchaudio,
+                                **configs['lfcc_torchaudio_args'])
 
     # !!!IMPORTANT NOTICE!!!
     # To support different frontends (including ssl pretrained models),

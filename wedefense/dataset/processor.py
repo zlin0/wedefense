@@ -528,8 +528,9 @@ def compute_lfcc_torchaudio(data,
     from itertools import chain
     first_sample = next(data)
     data = chain([first_sample], data)
+    sample_rate = first_sample['sample_rate']
     lfcc_extractor = torchaudio_T.LFCC(
-            sample_rate = first_sample['sample_rate'],
+            sample_rate = sample_rate,
             n_lfcc = n_lfcc,
             speckwargs = {
                 "n_fft": n_fft,

@@ -534,8 +534,8 @@ def compute_lfcc_torchaudio(data,
             n_lfcc = n_lfcc,
             speckwargs = {
                 "n_fft": n_fft,
-                "win_length": frame_length / 1000 * sample_rate, 
-                "hop_length": frame_shift /1000 * sample_rate,
+                "win_length": int(frame_length/1000)*sample_rate, 
+                "hop_length": int(frame_shift/1000)*sample_rate,
                 "center": False
                 }
             )

@@ -33,7 +33,7 @@ import torchaudio
 import torchaudio.compliance.kaldi as kaldi
 
 import wedefense.dataset.augmentation.rawboost_util as rawboost_util 
-from wedefense.utils.diarization.rttm_tool import rttm2vadvec
+from wedefense.utils.diarization.rttm_tool import get_rttm, rttm2vadvec
 
 AUDIO_FORMAT_SETS = set(['flac', 'mp3', 'm4a', 'ogg', 'opus', 'wav', 'wma'])
 
@@ -731,8 +731,12 @@ def rawboost(data,
         sample['wav'] = rawboost_util.process_Rawboost_feature(audio, sample_rate, algo)
         yield sample
 
-#TODO
-# codec
-# Rawboost
+def update_label_with_rttm(data, rttm):
+    #rttm = get_rttm(rttm_file)
+    for sample in data:
+        assert 'key' in sample
+        assert 'spk' in sample
+        sample['spk'] = rttm[sample['key']]
+        yield sample
 
 

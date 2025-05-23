@@ -88,7 +88,7 @@ def train(config='conf/config.yaml', **kwargs):
         train_reco2timestamps_dict, label2id_dict = get_rttm(train_label)
     elif(train_label.endswith('.npy')):
         raise NotImplementedError("seglab vec is not checked yet.")
-        train_reco2timestaps_dict = read_seglab_npy(train_label)
+        train_reco2timestamps_dict = read_seglab_npy(train_label)
     else:
         raise NotImplementedError("Other label type is not implemented yet.")
 
@@ -120,7 +120,10 @@ def train(config='conf/config.yaml', **kwargs):
     else:
         train_dur = None
         block_shuffle_size = 0
-
+    
+    # read rttm file to get label in timestamps.
+    # TODO move rttm to make_raw/shard_list.py
+    # train_rttm = os.path.join(configs['rttm_file']) 
 
     # dataset and dataloader
     train_dataset = Dataset(configs['data_type'],
@@ -131,6 +134,7 @@ def train(config='conf/config.yaml', **kwargs):
                             reverb_lmdb_file = configs.get('reverb_data', None),
                             noise_lmdb_file = configs.get('noise_data', None),
                             data_dur_file = train_dur,
+                            train_reco2timestamps_dict = train_reco2timestamps_dict,
                             block_shuffle_size = block_shuffle_size)
 
     train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, **tmp_params_dataloader)

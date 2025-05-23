@@ -104,7 +104,9 @@ class MaxFeatureMap2D(torch_nn.Module):
         # m, i = inputs.view(*shape).max(self.max_dim)
         
         # manually do this to make torchscript happy
-        m, i = inputs.view(shape[0], shape[1], shape[2], shape[3], shape[4]).max(self.max_dim)
+        m, i = inputs.view(
+            shape[0], shape[1], shape[2], shape[3], shape[4]).max(self.max_dim)
+        
         return m
 
 

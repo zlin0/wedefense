@@ -54,7 +54,7 @@ model_args:
   pooling_func: "TSTP" # TSTP, ASTP, MQMHASTP
 
 projection_args:
-  project_type: "softmax" # add_margin, arc_margin, sphere, sphereface2, softmax, arc_margin_intertopk_subcenter
+  project_type: "TanhLinear" # add_margin, arc_margin, sphere, sphereface2, softmax, arc_margin_intertopk_subcenter
   scale: 32.0
   easy_margin: False
 
@@ -70,15 +70,13 @@ margin_update:
 loss: CrossEntropyLoss
 loss_args: {}
 
-optimizer: SGD
+optimizer: Adam
 optimizer_args:
-  momentum: 0.9
-  nesterov: True
-  weight_decay: 0.0001
+  amsgrad: False
 
 scheduler: ExponentialDecrease
 scheduler_args:
-  initial_lr: 0.1
+  initial_lr: 0.001
   final_lr: 0.00005
   warm_up_epoch: 6
   warm_from_zero: True

@@ -59,7 +59,8 @@ def get_projection(conf):
                                  margin_type=conf.get('margin_type', 'C'))
     elif conf['project_type'] == 'MSEp2sgrad':
         projection = MSEp2sgrad(conf['embed_dim'], conf['num_class'])
-        
+    elif conf['project_type'] == 'TanhLinear':
+        projection = TanhLinear(conf['embed_dim'], conf['num_class'])
     else:
         projection = Linear(conf['embed_dim'], conf['num_class'])
 
@@ -520,6 +521,22 @@ class Linear(nn.Module):
 
         self.trans = nn.Sequential(nn.BatchNorm1d(emb_dim),
                                    nn.ReLU(inplace=True),
+                                   nn.Linear(emb_dim, class_num))
+
+    def forward(self, input, label):
+        out = self.trans(input)
+        return out
+
+class TanhLinear(nn.Module):
+    """
+    The linear transform for simple softmax loss
+    
+    Simpler without batchnorm and ReLU
+    """
+    def __init__(self, emb_dim=512, class_num=1000):
+        super(TanhLinear, self).__init__()
+
+        self.trans = nn.Sequential(nn.Tanh(),
                                    nn.Linear(emb_dim, class_num))
 
     def forward(self, input, label):

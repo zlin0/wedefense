@@ -80,6 +80,8 @@ for i in "${!DSETs[@]}"; do
 			 > ${data_dir}/flac_${dset}/${fname}
 	 fi
      done
+     ./tools/utt2spk_to_spk2utt.pl ${data_dir}/flac_${dset}/utt2cls \
+	  >${data_dir}/flac_${dset}/cls2utt
   fi
 done
 

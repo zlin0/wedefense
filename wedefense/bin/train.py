@@ -83,8 +83,8 @@ def train(config='conf/config.yaml', **kwargs):
 
     # train data
     train_label = configs['train_label']
-    train_utt_cls_list = read_table(train_label)
-    spk2id_dict = spk2id(train_utt_cls_list)
+    train_utt_cls_list = read_table(train_label) # List[[utt_id, label]], e.g., [['LA_T_12345', 'bonafide']]
+    spk2id_dict = spk2id(train_utt_cls_list)  # Dict:{'label': int} {'bonafide': 0, 'spoof': 1}
     if rank == 0:
         logger.info("<== Data statistics ==>")
         logger.info("train data num: {}, class num: {}".format(
@@ -102,7 +102,6 @@ def train(config='conf/config.yaml', **kwargs):
     else:
         collate_fn = None
 
-    #TODO# sampler to support building mini-batch accroding to length.
     tmp_params_dataloader = configs['dataloader_args'].copy()
     if sampler=='block_shuffle_by_length' and batch_size >1:
         # load utterance duration

@@ -27,7 +27,7 @@ and prepare data dir for partial spoof evaluation: wav.scp, utt2cls, cls2utt, ut
 LPS_dir=$1
 data=$2
 
-# Donwload data
+# Download data
 curpath=$( pwd )
 if [ ! -f ${LPS_dir}/label_R01TTS.0.a.txt ]; then 
   cd ${LPS_dir}

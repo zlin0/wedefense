@@ -47,8 +47,9 @@ def extract(config='conf/config.yaml', **kwargs):
     # model: frontend (optional) => speaker model
     model = get_model(configs['model'])(**configs['model_args'])
     frontend_type = test_conf.get('frontend', 'fbank')
-    if frontend_type != 'fbank':
+    if frontend_type != "fbank" and not frontend_type.startswith('lfcc'):
         frontend_args = frontend_type + "_args"
+        # frontends besides acoustic features, like s3prl
         print('Initializing frontend model (this could take some time) ...')
         frontend = frontend_class_dict[frontend_type](
             **test_conf[frontend_args], sample_rate=test_conf['resample_rate'])
@@ -92,7 +93,7 @@ def extract(config='conf/config.yaml', **kwargs):
                                  embed_scp) as writer:
             for _, batch in tqdm(enumerate(dataloader)):
                 utts = batch['key']
-                if frontend_type == 'fbank':
+                if frontend_type == 'fbank' or frontend_type.startswith('lfcc'):
                     features = batch['feat']
                     features = features.float().to(device)  # (B,T,F)
                 else:  # 's3prl'

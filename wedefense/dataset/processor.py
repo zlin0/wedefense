@@ -33,6 +33,7 @@ import torchaudio
 import torchaudio.compliance.kaldi as kaldi
 
 import wedefense.dataset.augmentation.rawboost_util as rawboost_util 
+from wedefense.utils.diarization.rttm_tool import rttm2vadvec
 
 AUDIO_FORMAT_SETS = set(['flac', 'mp3', 'm4a', 'ogg', 'opus', 'wav', 'wma'])
 
@@ -227,7 +228,7 @@ def spk_to_id(data, spk2id):
 
         Args:
             data: Iterable[{key, wav/feat, spk}]
-            spk2id: Dict[str, int] i.e.:{'bonafide': 1, 'spoof': 0}
+            spk2id: Dict[str, int] e.g.:{'bonafide': 1, 'spoof': 0}
 
         Returns:
             Iterable[{key, wav/feat, label}]
@@ -241,6 +242,32 @@ def spk_to_id(data, spk2id):
         sample['label'] = label
         yield sample
 
+def spk_to_id_timestamps(data, label2id):
+    """ Parse spk id
+
+        Args:
+            data: Iterable[{key, wav/feat, spk}],
+                 'spk': [<str: label>, <float: st>, <float: end>]
+            spk2id: Dict[str, int] e.g.:{'bonafide': 1, 'spoof': 0}
+
+        Returns:
+            Iterable[{key, wav/feat, label}]
+    """
+    for sample in data:
+        assert 'spk' in sample
+        one_rttm_id = []
+        # check whether it is in rttm fotmat
+        for seg in sample['spk']:
+            label_str, st, et = seg
+            label_id = label2id[label_str]
+            if label_str in label2id:
+                label = label2id[sample['spk']]
+            else:
+                label = -1
+            one_rttm_id.append([label_id, st, et])
+
+        sample['label'] = one_rttm_id
+        yield sample
 
 def resample(data, resample_rate=16000):
     """ Resample data.
@@ -325,6 +352,112 @@ def get_random_chunk(data, chunk_len):
 
     return data
 
+def chunk_label_timestamps(label_timestamps, start, end):
+    """ Chunk segments to a specified time interval.
+    Args:
+        label_timestamps (List[List[int, float, float]]): one utterance's RTTM segments
+                         after mapping label to int.        
+        start (float): start time of crop
+        end (float): end time of crop
+    Returns:
+        List[List[int, float, float]]: chunked segments, time-shifted so new start is 0.0
+    """
+    new_label_timestamps = []
+    assert(start <= end)
+
+    for lab, st, et in label_timestamps:
+        # check if segment overlaped with [st, et]
+        if(et <= start or st >= end):
+            continue #no overlap
+        new_st = max(st, start) - start
+        new_et = min(et, end) - start
+        new_label_timestamps.append([lab, new_st, new_et])
+
+    return new_label_timestamps
+
+def pad_label_timestamps(label_timestamps, chunk_len):
+    """ Pad segments
+    Args:
+        label_timestamps (List[List[int, float, float]]): one utterance's RTTM segments
+                         after mapping label to int.        
+        start (float): start time of crop
+        end (float): end time of crop
+    Returns:
+        List[List[int, float, float]]: chunked segments, time-shifted so new start is 0.0
+    """
+    assert label_timestamps[0][1] == 0.0 # Assume the label_timestamps starts from 0.0
+                                         # And every secons are labeled.
+    duration = label_timestamps[-1][2] # assume the last end is total duration
+    repeat_label_timestamps = label_timestamps.copy()
+
+    while(duration < chunk_len):
+        for lab, st, et in label_timestamps:
+            new_st = st + duration
+            new_et = et + duration
+            if(new_st >= chunk_len):
+                break
+            repeat_label_timestamps.append([lab, new_st, min(new_et, chunk_len)])
+            duration += (min(new_et, chunk_len) - new_st)
+
+    return repeat_label_timestamps
+
+def get_random_chunk_timestamps(data, label, chunk_len):
+    """ Get random chunk, support labels in timestamps.
+
+        Args:
+            data: torch.Tensor (random len)
+            label: [<str: label>, <float: st>, <float: end>]
+            chunk_len: chunk length
+
+        Returns:
+            torch.Tensor (exactly chunk_len)
+    """
+    data_len = len(data)
+    data_shape = data.shape
+    # random chunk
+    if data_len >= chunk_len:
+        chunk_start = random.randint(0, data_len - chunk_len)
+        data = data[chunk_start:chunk_start + chunk_len]
+        new_label = chunk_label_timestamps(label, chunk_start, chunk_start+chunk_len)
+        # re-clone the data to avoid memory leakage
+        if type(data) == torch.Tensor:
+            data = data.clone()
+        else:  # np.array
+            data = data.copy()
+    else:
+        # padding
+        repeat_factor = chunk_len // data_len + 1
+        repeat_shape = repeat_factor if len(data_shape) == 1 else (
+            repeat_factor, 1)
+        if type(data) == torch.Tensor:
+            data = data.repeat(repeat_shape)
+        else:  # np.array
+            data = np.tile(data, repeat_shape)
+        data = data[:chunk_len]
+        new_label = pad_label_timestamps(label, chunk_len)
+
+    return data, new_label
+
+def timestampe_to_labelvec(data, shift_sec, spk2id, reco2dur):
+    """ Replace 'spk' segment field with frame-level label vector.
+    Args:
+        samples (List[Dict]): each sample has 'spk', 'wav'
+        shift_sec (float): frame shift
+        spk2id (Dict[str, int]): label to id
+        reco2dur (Dict[str, float]): utterance duration
+    Yields:
+        sample['spk'] replaced by frame-level label vector
+    """    
+
+    for sample in data:
+        assert 'spk' in sample
+        label = sample['spk']    
+        dur = reco2dur[sample['wav']] #TODO check
+        labvec = rttm2vadvec(label, shift_sec, dur, spk2id)
+        sample['spk'] = labvec
+
+        yield sample
+
 
 def filter(data,
            min_num_frames=100,
@@ -344,6 +477,8 @@ def filter(data,
     """
     for sample in data:
         assert 'key' in sample
+        assert 'spk' in sample
+        label = sample['spk']
 
         if data_type == 'feat':
             assert 'feat' in sample
@@ -351,8 +486,11 @@ def filter(data,
             if len(feat) < min_num_frames:
                 continue
             elif len(feat) > max_num_frames:
-                feat = get_random_chunk(feat, max_num_frames)
+                #TODO
+                raise NotImplementeError("Note impelment chunk for frames yet.")
+                feat, new_label = get_random_chunk_timestamps(feat, label, max_num_frames)
             sample['feat'] = feat
+            sample['spk'] = label
         else:
             assert 'sample_rate' in sample
             assert 'wav' in sample
@@ -365,8 +503,9 @@ def filter(data,
             if len(wav) < min_len:
                 continue
             elif len(wav) > max_len:
-                wav = get_random_chunk(wav, max_len)
+                wav, new_label = get_random_chunk_timestamps(wav, label, max_len)
             sample['wav'] = wav.unsqueeze(0)
+            sample['spk'] = new_label
 
         yield sample
 
@@ -383,17 +522,20 @@ def random_chunk(data, chunk_len, data_type='shard/raw/feat'):
     """
     for sample in data:
         assert 'key' in sample
+        assert 'spk' in sample
+        label = sample['spk']
 
         if data_type == 'feat':
             assert 'feat' in sample
             feat = sample['feat']
-            feat = get_random_chunk(feat, chunk_len)
+            feat, new_label = get_random_chunk_timestamps(feat, label, chunk_len)
             sample['feat'] = feat
         else:
             assert 'wav' in sample
             wav = sample['wav'][0]
-            wav = get_random_chunk(wav, chunk_len)
+            wav, new_label = get_random_chunk_timestamps(wav, label, chunk_len)
             sample['wav'] = wav.unsqueeze(0)
+            sample['spk'] = new_label
         yield sample
 
 

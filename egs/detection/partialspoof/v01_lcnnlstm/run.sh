@@ -14,7 +14,7 @@ data=data/partialspoof # data folder
 #data_type="shard"  # shard/raw
 data_type="raw"  # shard/raw
 
-config=conf/lcnn_lstm.yaml #wespeaker version 
+config=conf/lcnn_lstm_tanh.yaml #wespeaker version 
 exp_dir=exp/LCNN_LSTM-TSTP-emb256-fbank80-frms300-noaug-spFalse-saFalse-Softmax-SGD-epoch100
 
 gpus="[0]"

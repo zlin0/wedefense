@@ -124,7 +124,7 @@ def rttm2vadvec(rttm, seg_shift_sec, label2id, dur=0, skip_last=True):
         vadvec[sf : ef] = label2id[lab]
     return vadvec
 
-def vadvec2othlab(vadvec, othlab, othlab2num, label2num_file = default_label2num):
+def vadvec2othlab(vadvec, othlab, othlab2num, label2num_file):
 
     label2num, num2label = get_label2num(label2num_file)
     newlab=[]

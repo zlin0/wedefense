@@ -190,6 +190,7 @@ def Dataset(data_type,
             noise_lmdb_file=None,
             repeat_dataset=True,
             data_dur_file=None,
+            reco2timestampes_dict=None,
             block_shuffle_size = 0):
     """ Construct dataset from arguments
 
@@ -207,6 +208,7 @@ def Dataset(data_type,
             whole_utt: use whole utt or random chunk
             repeat_dataset: True for training while False for testing
             data_dur_file (str): path to the utterance duration file
+            reco2timestampes_dict (dict): dict to save map between recoid to rttm
             block_shuffle_size (int): size of block shuffle. 
                     Default to 0, no block shuffle
     """
@@ -250,6 +252,8 @@ def Dataset(data_type,
         dataset = Processor(dataset, processor.parse_raw)
     else:
         dataset = Processor(dataset, processor.parse_feat)
+
+    dataset = Processor(dataset, processor.update_label_with_rttm, reco2timestampes_dict)
 
     if configs.get('filter', True):
         # Filter the data with unwanted length

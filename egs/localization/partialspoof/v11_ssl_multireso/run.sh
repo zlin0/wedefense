@@ -54,6 +54,12 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
           python tools/make_raw_list.py --vad_file ${data}/$dset/vad ${data}/$dset/wav.scp \
               ${data}/$dset/utt2cls ${data}/$dset/raw.list
       fi
+
+      # For localization
+      python local/map_rttm.py \
+    	  --input_rttm data/partialspoof/${dset}/rttm \
+    	  --map_file data/partialspoof/map_rttm_localization \
+    	  --output_rttm data/partialspoof/${dset}/rttm_localization
   done
 
   #TODO: wespeaker doesn't support multi-channel wavs.
@@ -67,6 +73,8 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   # Convert all rirs data to LMDB
   python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
   rsync -av ${HOME}/local_lmdb/rirs/lmdb data/rirs/lmdb
+
+
 fi
 
 #######################################################################################

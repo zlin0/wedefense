@@ -190,7 +190,7 @@ def Dataset(data_type,
             noise_lmdb_file=None,
             repeat_dataset=True,
             data_dur_file=None,
-            reco2timestampes_dict=None,
+            reco2timestamps_dict=None,
             block_shuffle_size = 0):
     """ Construct dataset from arguments
 
@@ -208,7 +208,7 @@ def Dataset(data_type,
             whole_utt: use whole utt or random chunk
             repeat_dataset: True for training while False for testing
             data_dur_file (str): path to the utterance duration file
-            reco2timestampes_dict (dict): dict to save map between recoid to rttm
+            reco2timestamps_dict (dict): dict to save map between recoid to rttm
             block_shuffle_size (int): size of block shuffle. 
                     Default to 0, no block shuffle
     """
@@ -225,10 +225,10 @@ def Dataset(data_type,
         assert data_type == 'raw', "block shuffle requires raw data type"
 
         # load duration
-        uttdur = {x[0]:float(x[1]) for x in read_table(data_dur_file)}
+        utt2dur = {x[0]:float(x[1]) for x in read_table(data_dur_file)}
         # data_list_file is not necessarily aligned with the utt2dur file
         js = read_json_list(data_list_file)
-        u2d = [uttdur[x['key']] if x['key'] in uttdur else -1 for x in js]
+        u2d = [utt2dur[x['key']] if x['key'] in uttdur else -1 for x in js]
 
         assert len(u2d) == len(lists), \
             "#.lines unequal {:s} {:s}".format(data_dur_file, data_list_file)
@@ -253,7 +253,7 @@ def Dataset(data_type,
     else:
         dataset = Processor(dataset, processor.parse_feat)
 
-    dataset = Processor(dataset, processor.update_label_with_rttm, reco2timestampes_dict)
+    dataset = Processor(dataset, processor.update_label_with_rttm, reco2timestamps_dict)
 
     if configs.get('filter', True):
         # Filter the data with unwanted length
@@ -318,8 +318,8 @@ def Dataset(data_type,
 
         # Convert timestamps to frame-level label vector
         # Put to the final step after all chunk/shuffle.
-        dataset = Processor(dataset, processor.compute_fbank,
-                            **configs['fbank_args'])
+        dataset = Processor(dataset, processor.timestamps_to_labvec, 
+                            0.01, reco2timestamps_dict, utt2dur)
 
     # !!!IMPORTANT NOTICE!!!
     # To support different frontends (including ssl pretrained models),

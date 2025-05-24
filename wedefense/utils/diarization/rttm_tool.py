@@ -71,7 +71,7 @@ def get_rttm(rttm_file):
                 label_set.append(lab)
             start = float(st)
             end =  float(format(float(st) + float(dur), '.5f')) 
-            rttm[reco].append([lab, st, end])
+            rttm[reco].append([lab, start, end])
     label2id = {lab: idx for idx, lab in enumerate(label_set)}        
     return rttm, label2id
 
@@ -95,19 +95,18 @@ def rttm2vadvec(rttm, seg_shift_sec, label2id, dur=0, skip_last=True):
         rttm (List[List[str, float, float]]): list of [label, start, end]
         shift_sec (float): frame duration in seconds
         label2id (Dict[str, int]): mapping from label name to ID
-        dur (float): total duration of the utterance (optional)
+        dur (float): total duration of the utterance
         skip_last (bool): if True, floor the last frame
 
     Returns:
         np.ndarray: 1D array of label IDs per frame (int)
 
     """
-    rttm = np.array(rttm)
-    dur = float(dur)
-    if(dur>0):
-        pass
+    # compute duration
+    if dur <= 0:
+        dur = max(float(et) for _, _, et in rttm)
     else:
-        dur = max(rttm[:,2])
+        pass
 
     if(skip_last):
         n_frames = int(float(dur) / seg_shift_sec)

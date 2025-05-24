@@ -31,7 +31,7 @@ def process_rttm(rttm_file, label_map, output_file):
             utt = parts[1]
             start = float(parts[3])
             dur = float(parts[4])
-            if(dur < 1e-3): # Skip extremely short or zero-duration segments
+            if(dur < 1e-4): # Skip extremely short or zero-duration segments
                 continue
             label = parts[7]
 
@@ -54,7 +54,7 @@ def process_rttm(rttm_file, label_map, output_file):
                         merged.append(list(seg))
 
             for s, d, l in merged:
-                if(d < 1e-3): # Skip extremely short or zero-duration segments
+                if(d < 1e-4): # Skip extremely short or zero-duration segments
                     continue
                 f_out.write(f"SPEAKER {utt} 1 {s:7.3f} {d:7.3f} <NA> <NA> {l} <NA> <NA>\n")
 

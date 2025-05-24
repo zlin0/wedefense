@@ -31,6 +31,7 @@ dataset_args:
   resample_rate: 16000
   speed_perturb: False
   num_frms: 300
+  whole_utt: True  # Enable custom collate function for variable length sequences
   aug_prob: 0 # prob to add reverb & noise aug per sample
   fbank_args:
     num_mel_bins: 80

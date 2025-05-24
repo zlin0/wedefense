@@ -261,7 +261,7 @@ def spk_to_id_timestamps(data, label2id):
             label_str, st, et = seg
             label_id = label2id[label_str]
             if label_str in label2id:
-                label = label2id[sample['spk']]
+                label = label2id[label_str]
             else:
                 label = -1
             one_rttm_id.append([label_id, st, et])
@@ -357,8 +357,8 @@ def chunk_label_timestamps(label_timestamps, start, end):
     Args:
         label_timestamps (List[List[int, float, float]]): one utterance's RTTM segments
                          after mapping label to int.        
-        start (float): start time of crop
-        end (float): end time of crop
+        start (float): start time of chunk, in second
+        end (float): end time of chunk, in second
     Returns:
         List[List[int, float, float]]: chunked segments, time-shifted so new start is 0.0
     """
@@ -380,8 +380,7 @@ def pad_label_timestamps(label_timestamps, chunk_len):
     Args:
         label_timestamps (List[List[int, float, float]]): one utterance's RTTM segments
                          after mapping label to int.        
-        start (float): start time of crop
-        end (float): end time of crop
+        chunk_len (float): the desired duration. in second, same as in rttm.
     Returns:
         List[List[int, float, float]]: chunked segments, time-shifted so new start is 0.0
     """
@@ -401,25 +400,27 @@ def pad_label_timestamps(label_timestamps, chunk_len):
 
     return repeat_label_timestamps
 
-def get_random_chunk_timestamps(data, label, chunk_len, sample_rate=16000):
+def get_random_chunk_timestamps(data, label, chunk_len_sp, sample_rate=16000):
     """ Get random chunk, support labels in timestamps.
 
         Args:
             data: torch.Tensor (random len)
             label: [<str: label>, <float: st>, <float: end>]
-            chunk_len: chunk length
+            chunk_len_sp: chunk length in sampling point.
 
         Returns:
-            torch.Tensor (exactly chunk_len)
+            torch.Tensor (exactly chunk_len_sp)
     """
+    if chunk_len_sp <= 100:
+        raise ValueError("chunk_len_sp must be positive, and is sample point")
     data_len = len(data)
     data_shape = data.shape
     # random chunk
-    if data_len >= chunk_len:
-        chunk_start = random.randint(0, data_len - chunk_len) #samplepoint
-        data = data[chunk_start:chunk_start + chunk_len]
+    if data_len >= chunk_len_sp:
+        chunk_start = random.randint(0, data_len - chunk_len_sp) #samplepoint
+        data = data[chunk_start:chunk_start + chunk_len_sp]
         new_label = chunk_label_timestamps(label, float(chunk_start/sample_rate), 
-                                           float((chunk_start+chunk_len)/sample_rate))
+                                           float((chunk_start+chunk_len_sp)/sample_rate))
         # re-clone the data to avoid memory leakage
         if type(data) == torch.Tensor:
             data = data.clone()
@@ -427,19 +428,19 @@ def get_random_chunk_timestamps(data, label, chunk_len, sample_rate=16000):
             data = data.copy()
     else:
         # padding
-        repeat_factor = chunk_len // data_len + 1
+        repeat_factor = chunk_len_sp // data_len + 1
         repeat_shape = repeat_factor if len(data_shape) == 1 else (
             repeat_factor, 1)
         if type(data) == torch.Tensor:
             data = data.repeat(repeat_shape)
         else:  # np.array
             data = np.tile(data, repeat_shape)
-        data = data[:chunk_len]
-        new_label = pad_label_timestamps(label, chunk_len)
+        data = data[:chunk_len_sp]
+        new_label = pad_label_timestamps(label, float(chunk_len_sp/sample_rate))
 
     return data, new_label
 
-def timestamps_to_labelvec(data, shift_sec, spk2id, reco2dur):
+def timestamps_to_labelvec(data, shift_sec, label2id, reco2dur):
     """ Replace 'spk' segment field with frame-level label vector.
     Args:
         samples (List[Dict]): each sample has 'spk', 'wav'
@@ -447,15 +448,25 @@ def timestamps_to_labelvec(data, shift_sec, spk2id, reco2dur):
         spk2id (Dict[str, int]): label to id
         reco2dur (Dict[str, float]): utterance duration
     Yields:
-        sample['spk'] replaced by frame-level label vector
+        sample['label'] replaced by frame-level label vector
+        #note that sample['spk'] has str as label, ['label'] has number as id
+        #TODO to be consistent.
     """    
 
     for sample in data:
-        assert 'spk' in sample
+        assert 'label' in sample
+        assert 'key' in sample
         label = sample['spk']    
-        dur = reco2dur[sample['wav']] #TODO check
-        labelvec = rttm2vadvec(label, shift_sec, dur, spk2id)
-        sample['spk'] = labelvec
+        # dur = reco2dur[sample['key']], may chunked, so need to use updated duration.
+        # TODO duration is calculated too many times, save duration info to data using processor.pt 
+        # Lin 20250524: we need to transfer dur in case rttm doesn't cover all durations.
+        # In current case, we assigned all durations, so use -1
+        # If needed, uncomment: 
+        # dur = float(len(sample['wav'])/sample['sample_rate'])
+        
+        labelvec = rttm2vadvec(rttm = label, seg_shift_sec = shift_sec, 
+                               label2id = label2id, dur = -1)
+        sample['label'] = labelvec
 
         yield sample
 
@@ -490,9 +501,10 @@ def filter(data,
                 continue
             elif len(feat) > max_num_frames:
                 #TODO
-                raise NotImplementeError("Note impelment chunk for frames yet.")
+                raise NotImplementedError("Note impelmented chunk for frames yet.")
                 feat, new_label = get_random_chunk_timestamps(feat, label, 
-                                                              max_num_frames, sample['sample_rate'])
+                                                              max_num_frames, 
+                                                              sample['sample_rate'])
             sample['feat'] = feat
             sample['spk'] = label
         else:
@@ -526,6 +538,7 @@ def random_chunk(data, chunk_len, data_type='shard/raw/feat'):
             Iterable[{key, wav/feat, label}]
     """
     for sample in data:
+        print(sample['key'])
         assert 'key' in sample
         assert 'spk' in sample
         label = sample['spk']

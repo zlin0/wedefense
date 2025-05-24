@@ -272,8 +272,6 @@ def Dataset(data_type,
         dataset = Processor(dataset, processor.shuffle,
                             **configs['shuffle_args'])
 
-    # spk2id
-    dataset = Processor(dataset, processor.spk_to_id_timestamps, spk2id_dict)
 
     if data_type == 'feat':
         if not whole_utt:
@@ -317,10 +315,13 @@ def Dataset(data_type,
             dataset = Processor(dataset, processor.compute_fbank,
                                 **configs['fbank_args'])
 
-        # Convert timestamps to frame-level label vector
-        # Put to the final step after all chunk/shuffle.
-        dataset = Processor(dataset, processor.timestamps_to_labelvec, 
-                            0.01, reco2timestamps_dict, utt2dur)
+
+    # spk2id
+    dataset = Processor(dataset, processor.spk_to_id_timestamps, spk2id_dict)
+    # Convert timestamps to frame-level label vector
+    # Put to the final step after all chunk/shuffle.
+    dataset = Processor(dataset, processor.timestamps_to_labelvec, 
+                        0.01, spk2id_dict, utt2dur) #we use 0.01sec as unit.
 
     # !!!IMPORTANT NOTICE!!!
     # To support different frontends (including ssl pretrained models),

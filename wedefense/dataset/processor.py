@@ -401,7 +401,7 @@ def pad_label_timestamps(label_timestamps, chunk_len):
 
     return repeat_label_timestamps
 
-def get_random_chunk_timestamps(data, label, chunk_len):
+def get_random_chunk_timestamps(data, label, chunk_len, sample_rate=16000):
     """ Get random chunk, support labels in timestamps.
 
         Args:
@@ -416,9 +416,10 @@ def get_random_chunk_timestamps(data, label, chunk_len):
     data_shape = data.shape
     # random chunk
     if data_len >= chunk_len:
-        chunk_start = random.randint(0, data_len - chunk_len)
+        chunk_start = random.randint(0, data_len - chunk_len) #samplepoint
         data = data[chunk_start:chunk_start + chunk_len]
-        new_label = chunk_label_timestamps(label, chunk_start, chunk_start+chunk_len)
+        new_label = chunk_label_timestamps(label, float(chunk_start/sample_rate), 
+                                           float((chunk_start+chunk_len)/sample_rate))
         # re-clone the data to avoid memory leakage
         if type(data) == torch.Tensor:
             data = data.clone()
@@ -438,7 +439,7 @@ def get_random_chunk_timestamps(data, label, chunk_len):
 
     return data, new_label
 
-def timestamp_to_labelvec(data, shift_sec, spk2id, reco2dur):
+def timestamps_to_labelvec(data, shift_sec, spk2id, reco2dur):
     """ Replace 'spk' segment field with frame-level label vector.
     Args:
         samples (List[Dict]): each sample has 'spk', 'wav'
@@ -453,8 +454,8 @@ def timestamp_to_labelvec(data, shift_sec, spk2id, reco2dur):
         assert 'spk' in sample
         label = sample['spk']    
         dur = reco2dur[sample['wav']] #TODO check
-        labvec = rttm2vadvec(label, shift_sec, dur, spk2id)
-        sample['spk'] = labvec
+        labelvec = rttm2vadvec(label, shift_sec, dur, spk2id)
+        sample['spk'] = labelvec
 
         yield sample
 
@@ -479,16 +480,19 @@ def filter(data,
         assert 'key' in sample
         assert 'spk' in sample
         label = sample['spk']
+        new_label = label.copy()
 
         if data_type == 'feat':
             assert 'feat' in sample
+            assert 'sample_rate' in sample
             feat = sample['feat']
             if len(feat) < min_num_frames:
                 continue
             elif len(feat) > max_num_frames:
                 #TODO
                 raise NotImplementeError("Note impelment chunk for frames yet.")
-                feat, new_label = get_random_chunk_timestamps(feat, label, max_num_frames)
+                feat, new_label = get_random_chunk_timestamps(feat, label, 
+                                                              max_num_frames, sample['sample_rate'])
             sample['feat'] = feat
             sample['spk'] = label
         else:
@@ -503,7 +507,8 @@ def filter(data,
             if len(wav) < min_len:
                 continue
             elif len(wav) > max_len:
-                wav, new_label = get_random_chunk_timestamps(wav, label, max_len)
+                wav, new_label = get_random_chunk_timestamps(wav, label, max_len, 
+                                                             sample['sample_rate'])
             sample['wav'] = wav.unsqueeze(0)
             sample['spk'] = new_label
 
@@ -528,12 +533,12 @@ def random_chunk(data, chunk_len, data_type='shard/raw/feat'):
         if data_type == 'feat':
             assert 'feat' in sample
             feat = sample['feat']
-            feat, new_label = get_random_chunk_timestamps(feat, label, chunk_len)
+            feat, new_label = get_random_chunk_timestamps(feat, label, chunk_len, sample['sample_rate'])
             sample['feat'] = feat
         else:
             assert 'wav' in sample
             wav = sample['wav'][0]
-            wav, new_label = get_random_chunk_timestamps(wav, label, chunk_len)
+            wav, new_label = get_random_chunk_timestamps(wav, label, chunk_len, sample['sample_rate'])
             sample['wav'] = wav.unsqueeze(0)
             sample['spk'] = new_label
         yield sample

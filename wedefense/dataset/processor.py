@@ -369,8 +369,8 @@ def chunk_label_timestamps(label_timestamps, start, end):
         # check if segment overlaped with [st, et]
         if(et <= start or st >= end):
             continue #no overlap
-        new_st = max(st, start) - start
-        new_et = min(et, end) - start
+        new_st = round(max(st, start) - start, 8)
+        new_et = round(min(et, end) - start, 8) # To avoid floating-point precision error in python
         new_label_timestamps.append([lab, new_st, new_et])
 
     return new_label_timestamps
@@ -539,6 +539,8 @@ def random_chunk(data, chunk_len, data_type='shard/raw/feat'):
     """
     for sample in data:
         print(sample['key'])
+        if(sample['key'] == 'LA_T_5795459'):
+            pass
         assert 'key' in sample
         assert 'spk' in sample
         label = sample['spk']
@@ -758,3 +760,19 @@ def update_label_with_rttm(data, rttm):
         yield sample
 
 
+
+def clean_batch(data):
+    for sample in data:
+        if('feat' in sample):
+             yield{
+                 'key': sample['key'],
+                 'feat': sample['feat'],
+                 'label': sample['label']
+             }
+
+        else:    
+             yield{
+                 'key': sample['key'],
+                 'wav': sample['wav'],
+                 'label': sample['label']
+             }

@@ -31,7 +31,7 @@ from wedefense.frontend import *
 from wedefense.models.projections import get_projection
 from wedefense.models.get_model import get_model
 from wedefense.utils.checkpoint import load_checkpoint, save_checkpoint
-from wedefense.utils.executor import run_epoch
+from wedefense.utils.executor_localization import run_epoch
 from wedefense.utils.file_utils import read_table, read_seglab_npy
 from wedefense.utils.utils import get_logger, parse_config_or_kwargs, set_seed, \
     spk2id

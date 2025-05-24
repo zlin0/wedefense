@@ -87,7 +87,7 @@ def get_vadvec(vad_file, seg_shift_sec):
             vadvec[sf : ef] = int(lab)
     return vadvec
 
-def rttm2vadvec(rttm, seg_shift_sec, label2id, dur=0, skip_last=True):
+def rttm2vadvec(rttm, seg_shift_sec, label2id, dur=0, skip_last=False):
     """
     Convert RTTM-style segments to frame-level label vector.
 
@@ -109,7 +109,7 @@ def rttm2vadvec(rttm, seg_shift_sec, label2id, dur=0, skip_last=True):
         pass
 
     if(skip_last):
-        n_frames = int(float(dur) / seg_shift_sec)
+        n_frames = round(float(dur) / seg_shift_sec)
     else:
         n_frames = int(np.ceil(float(dur) / seg_shift_sec))
 

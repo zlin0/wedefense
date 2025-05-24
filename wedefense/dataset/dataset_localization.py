@@ -323,6 +323,9 @@ def Dataset(data_type,
     dataset = Processor(dataset, processor.timestamps_to_labelvec, 
                         0.01, spk2id_dict, utt2dur) #we use 0.01sec as unit.
 
+    # keep timestamps will get error when collect.py:138 
+    dataset = Processor(dataset, processor.clean_batch) 
+
     # !!!IMPORTANT NOTICE!!!
     # To support different frontends (including ssl pretrained models),
     # we have to move apply_cmvn and spec_aug out of the dataset pipeline

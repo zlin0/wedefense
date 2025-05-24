@@ -438,7 +438,7 @@ def get_random_chunk_timestamps(data, label, chunk_len):
 
     return data, new_label
 
-def timestampe_to_labelvec(data, shift_sec, spk2id, reco2dur):
+def timestamp_to_labelvec(data, shift_sec, spk2id, reco2dur):
     """ Replace 'spk' segment field with frame-level label vector.
     Args:
         samples (List[Dict]): each sample has 'spk', 'wav'

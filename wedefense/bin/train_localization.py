@@ -26,7 +26,7 @@ import yaml
 from torch.utils.data import DataLoader
 
 import wedefense.utils.schedulers as schedulers
-from wedefense.dataset.dataset import Dataset
+from wedefense.dataset.dataset_localization import Dataset
 from wedefense.frontend import *
 from wedefense.models.projections import get_projection
 from wedefense.models.get_model import get_model
@@ -84,7 +84,7 @@ def train(config='conf/config.yaml', **kwargs):
 
     # train data
     train_label = configs['train_label']
-    if(train_label.endswith('rttm')):
+    if(os.path.basename(train_label).startswith('rttm')):
         train_reco2timestamps_dict, label2id_dict = get_rttm(train_label)
     elif(train_label.endswith('.npy')):
         raise NotImplementedError("seglab vec is not checked yet.")
@@ -92,11 +92,11 @@ def train(config='conf/config.yaml', **kwargs):
     else:
         raise NotImplementedError("Other label type is not implemented yet.")
 
-    num_class = len(label2id_dict.keys().uniq) 
+    num_class = len(label2id_dict.keys()) 
     if rank == 0:
         logger.info("<== Data statistics ==>")
         logger.info("train data num: {}, class num: {}".format(
-            len(train_utt2timestamps_dict.keys()), num_class))
+            len(train_reco2timestamps_dict.keys()), num_class))
 
     batch_size = configs['dataloader_args']['batch_size']
     whole_utt = configs['dataset_args'].get('whole_utt', False) #set as True after debugging.
@@ -129,19 +129,19 @@ def train(config='conf/config.yaml', **kwargs):
     train_dataset = Dataset(configs['data_type'],
                             configs['train_data'],
                             configs['dataset_args'],
-                            spk2id_dict,
+                            label2id_dict,
                             whole_utt = configs['dataset_args'].get('whole_utt'),
                             reverb_lmdb_file = configs.get('reverb_data', None),
                             noise_lmdb_file = configs.get('noise_data', None),
                             data_dur_file = train_dur,
-                            train_reco2timestamps_dict = train_reco2timestamps_dict,
+                            reco2timestamps_dict = train_reco2timestamps_dict,
                             block_shuffle_size = block_shuffle_size)
 
     train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, **tmp_params_dataloader)
     if configs['dataset_args'].get('sample_num_per_epoch', 0) > 0:
         sample_num_per_epoch = configs['dataset_args']['sample_num_per_epoch']
     else:
-        sample_num_per_epoch = len(train_utt2timestamps_dict.keys())
+        sample_num_per_epoch = len(train_reco2timestamps_dict.keys())
     epoch_iter = sample_num_per_epoch // world_size // batch_size
     if rank == 0:
         logger.info("<== Dataloaders ==>")

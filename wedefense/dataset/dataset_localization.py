@@ -219,13 +219,14 @@ def Dataset(data_type,
     # lists of file
     lists = read_lists(data_list_file)
         
+    # Both block_fhuffle and localization require duration information.
+    assert data_dur_file is not None, "utt2dur is required"
+    # load duration
+    utt2dur = {x[0]:float(x[1]) for x in read_table(data_dur_file)}
     # block_shuffle is to be used, sort the file list based on duration
     if block_shuffle_size > 0:
-        assert data_dur_file is not None, "utt2dur is required"
         assert data_type == 'raw', "block shuffle requires raw data type"
 
-        # load duration
-        utt2dur = {x[0]:float(x[1]) for x in read_table(data_dur_file)}
         # data_list_file is not necessarily aligned with the utt2dur file
         js = read_json_list(data_list_file)
         u2d = [utt2dur[x['key']] if x['key'] in uttdur else -1 for x in js]
@@ -318,7 +319,7 @@ def Dataset(data_type,
 
         # Convert timestamps to frame-level label vector
         # Put to the final step after all chunk/shuffle.
-        dataset = Processor(dataset, processor.timestamps_to_labvec, 
+        dataset = Processor(dataset, processor.timestamps_to_labelvec, 
                             0.01, reco2timestamps_dict, utt2dur)
 
     # !!!IMPORTANT NOTICE!!!

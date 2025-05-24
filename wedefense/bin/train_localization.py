@@ -89,6 +89,7 @@ def train(config='conf/config.yaml', **kwargs):
     elif(train_label.endswith('.npy')):
         raise NotImplementedError("seglab vec is not checked yet.")
         train_reco2timestamps_dict = read_seglab_npy(train_label)
+        #label2id_dict
     else:
         raise NotImplementedError("Other label type is not implemented yet.")
 
@@ -111,14 +112,15 @@ def train(config='conf/config.yaml', **kwargs):
         collate_fn = None
 
     tmp_params_dataloader = configs['dataloader_args'].copy()
+    # load utterance duration
+    # duration info is used by both block_shuffle_by_length and 
+    train_dur = os.path.join(os.path.dirname(train_label),'utt2dur') 
+    assert os.path.isfile(train_dur), f"utt2dur file not found: {train_dur}"
+
     if sampler=='block_shuffle_by_length' and batch_size >1:
-        # load utterance duration
-        train_dur = os.path.join(os.path.dirname(train_label),'utt2dur') 
-        assert os.path.isfile(train_dur), f"utt2dur file not found: {train_dur}"
         # size of block shuffle
         block_shuffle_size = world_size * batch_size
     else:
-        train_dur = None
         block_shuffle_size = 0
     
     # read rttm file to get label in timestamps.
@@ -189,7 +191,7 @@ def train(config='conf/config.yaml', **kwargs):
     else:
         configs['projection_args']['embed_dim'] = configs['model_args'][
             'embed_dim']
-    configs['projection_args']['num_class'] = len(spk2id_dict)
+    configs['projection_args']['num_class'] = len(label2id_dict)
     configs['projection_args']['do_lm'] = configs.get('do_lm', False)
     if configs['data_type'] != 'feat' and configs['dataset_args'][
             'speed_perturb']:

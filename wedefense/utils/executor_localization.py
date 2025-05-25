@@ -92,9 +92,18 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
                 else:
                     loss = criterion(outputs, targets.unsqueeze(2)) #targets: (B, T) -> (B, T, 1)
 
+
         # loss, acc
         loss_meter.add(loss.item())
-        acc_meter.add(outputs.cpu().detach().numpy(), targets.cpu().numpy())
+        # acc_meter.add(outputs.cpu().detach().numpy(), targets.cpu().numpy())
+        if isinstance(criterion, torch.nn.MSELoss):
+            # For MSE loss, using 0.5 as threshold
+            preds = (outputs > 0.5).float()
+            preds = preds.argmax(dim=2)  # (B, T)
+        else:
+            # For CE loss, using argmax
+            preds = outputs.argmax(dim=2)  # (B, T)
+        acc_meter.add(preds.cpu().detach().numpy(), targets.cpu().numpy())
 
         # updata the model
         optimizer.zero_grad()

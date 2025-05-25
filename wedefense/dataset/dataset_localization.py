@@ -261,7 +261,7 @@ def Dataset(data_type,
         # Filter the data with unwanted length
         filter_conf = configs.get('filter_args', {})
         dataset = Processor(dataset,
-                            processor.filter,
+                            processor.filter_timestamps,
                             frame_shift=configs[frontend_args].get(
                                 'frame_shift', 10),
                             data_type=data_type,

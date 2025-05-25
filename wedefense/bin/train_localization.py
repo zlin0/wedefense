@@ -173,15 +173,18 @@ def train(config='conf/config.yaml', **kwargs):
     elif checkpoint is None:
         logger.info('Train model from scratch ...')
     # projection layer
-    if(configs['model_args']['embed_dim'] < 0): #TODO check
+    if(configs['model_args']['embed_dim'] < 0): 
         # #if emb_dim <0, we will reduce dim by emb_dim. like -2 will be dim/2
         if 'multireso' in configs['model'] and configs['model_args']['num_scale'] > 0:
             # If we are using multireso structure, dim will reduced by 
             #['embed_dim'] in ['num_scale'] times.
+            # @Lin TODO, support multi-reso.
+            #for idx, scale in enumerate(configs['model_args']['num_scale']):
+            #    configs['projection'{idx}'_args']['embed_dim'] = 
+
             configs['projection_args']['embed_dim'] = int(
                     configs['model_args']['feat_dim'] / 
-                    pow(abs(configs['model_args']['embed_dim']), 
-                        configs['model_args']['num_scale'])
+                    pow(abs(configs['model_args']['embed_dim'])
                     )
         else:
             configs['projection_args']['embed_dim'] = int(

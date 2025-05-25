@@ -163,6 +163,8 @@ class MaxPool1d_scales(nn.Module):
         self.Frame_shifts = Frame_shifts
         assert len(multi_reso_active) > 0 
         self.multi_reso_active = multi_reso_active
+        active_raw = set(str(k) for k in self.multi_reso_active)
+        self.active_indices = self.convert_active_reso_to_index(active_raw)
         
         # Set up downsampling module (from (0)20ms -> (5)640ms -> (6)utt, 7 in total)
         self.blocks=nn.ModuleDict()
@@ -199,27 +201,22 @@ class MaxPool1d_scales(nn.Module):
             #print(x.shape) #check
             x=self.blocks[f"{idx}"](x)
             o = self.post_nets_seg[key](x)
-            if(idx in self.multi_reso_active):
+            if(str(idx) in self.active_indices):
                 outs.append(o)
                 #outs.append(disc(x))
 
         in_utt = self.blocks['utt'](x)
         o_utt = self.post_nets_utt(in_utt)
 
-        if('utt' in self.multi_reso_active):
+        if('utt' in self.active_indices):
             outs.append(o_utt)  
 
         return outs[0] if len(outs) == 1 else outs
 
-    def freeze_unused_para(self):
-        """
-        Freeze blocks(downsampling) and post_nets_seg that are not in self.multi_reso_active.
-        support ['2', '4', ..., 'utt'] in multi_reso_active
-        """
-        #TODO Supports both scale indices ['0', '1', ...] and frame shifts ['2', '4', ..., 'utt'].
+    def convert_active_reso_to_index(self, active_raw):
         # Handle multi_reso_active as either frame shifts or scale indices
         frame_shift_to_index = {str(fs): str(i) for i, fs in enumerate(self.Frame_shifts)}
-        active_raw = set(str(k) for k in self.multi_reso_active)
+
         # Convert reso values (e.g. '4') to index keys (e.g. '1') if needed
         active_indices = set()
         for k in active_raw:
@@ -229,12 +226,20 @@ class MaxPool1d_scales(nn.Module):
                 active_indices.add(frame_shift_to_index[k])
             elif k.isdigit():
                 active_indices.add(k)  # assume already scale index
+        return active_indices         
+
+
+    def freeze_unused_para(self):
+        """
+        Freeze blocks(downsampling) and post_nets_seg that are not in self.multi_reso_active.
+        support ['2', '4', ..., 'utt'] in multi_reso_active
+        """
 
         # Freeze block (downsampling modules) 
         # Generate those require updated downsampling module(block) based on their dependency:
         # e.g., scale 2 requires downsampling blocks 0 and 1.
         required_block_keys = set()
-        for idx in active_indices:
+        for idx in self.active_indices:
             if idx == 'utt':
                 required_block_keys.update(str(i) for i in range(len(self.Frame_shifts)))
                 required_block_keys.add('utt')
@@ -253,12 +258,12 @@ class MaxPool1d_scales(nn.Module):
         # Freeze post_nets_seg:             
         for key, module in self.post_nets_seg.items():
             idx_str = key.replace("disc_", "")  # e.g., "disc_1" -> "1"
-            if(idx_str not in active_indices):
+            if(idx_str not in self.active_indices):
                 for param in module.parameters():
                     param.requires_grad_(False)
         
         # Freeze utt scoring module:
-        if('utt' not in active_indices):
+        if('utt' not in self.active_indices):
             for param in self.post_nets_utt.parameters():
                 param.requires_grad_(False)
         
@@ -277,6 +282,8 @@ class SSL_BACKEND_multireso_MaxPool1d_blstmlinear(MaxPool1d_scales):
         self.blocks=MaxPool1d_scales(num_scale, feat_dim, embed_dim, flag_pool).blocks 
         self.Frame_shifts = Frame_shifts
         self.multi_reso_active = multi_reso_active
+        active_raw = set(str(k) for k in self.multi_reso_active)
+        self.active_indices = self.convert_active_reso_to_index(active_raw)
 
         self.post_nets_seg = nn.ModuleDict()
         for i in range(num_scale):
@@ -295,6 +302,8 @@ class SSL_BACKEND_multireso_MaxPool1dLin(MaxPool1d_scales):
         super(MaxPool1d_scales, self).__init__()
         self.Frame_shifts = Frame_shifts
         self.multi_reso_active = multi_reso_active
+        active_raw = set(str(k) for k in self.multi_reso_active)
+        self.active_indices = self.convert_active_reso_to_index(active_raw)
 
         self.blocks=nn.ModuleDict()
         self.blocks['0']= nn.Sequential(
@@ -327,6 +336,8 @@ class SSL_BACKEND_multireso_MaxPool1dLin_blstmlinear(SSL_BACKEND_multireso_MaxPo
         super(SSL_BACKEND_multireso_MaxPool1d_blstmlinear, self).__init__()
         self.Frame_shifts = Frame_shifts
         self.multi_reso_active = multi_reso_active
+        active_raw = set(str(k) for k in self.multi_reso_active)
+        self.active_indices = self.convert_active_reso_to_index(active_raw)
 
         self.blocks=SSL_BACKEND_multireso_MaxPool1dLin(num_scale, feat_dim, embed_dim, flag_pool).blocks
 
@@ -403,6 +414,8 @@ class SSL_BACKEND_multireso_MaxPool1d_gmlp(MaxPool1d_scales):
 
         self.Frame_shifts = Frame_shifts
         self.multi_reso_active = multi_reso_active
+        active_raw = set(str(k) for k in self.multi_reso_active)
+        self.active_indices = self.convert_active_reso_to_index(active_raw)
 
         self.blocks=MaxPool1d_scales(num_scale, feat_dim, embed_dim, flag_pool).blocks
 
@@ -425,6 +438,8 @@ class SSL_BACKEND_multireso_MaxPool1dLin_gmlp(MaxPool1d_scales):
         super(MaxPool1d_scales, self).__init__()
         self.Frame_shifts = Frame_shifts
         self.multi_reso_active = multi_reso_active
+        active_raw = set(str(k) for k in self.multi_reso_active)
+        self.active_indices = self.convert_active_reso_to_index(active_raw)
 
         self.blocks=SSL_BACKEND_multireso_MaxPool1dLin(num_scale, feat_dim, embed_dim, flag_pool,
                 Frame_shifts = Frame_shifts).blocks

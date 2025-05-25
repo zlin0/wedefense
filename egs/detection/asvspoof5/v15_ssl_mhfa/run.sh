@@ -11,7 +11,7 @@
 stage=3
 stop_stage=3
 
-ASVspoof5_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database
+ASVspoof5_dir=/gs/bs/tgh-25IAC/ud03523/DATA/ASVspoof5
 data=data/asvspoof5 # data folder
 data_type="shard"  # shard/raw
 

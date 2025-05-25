@@ -487,11 +487,12 @@ def filter(data,
         Returns:
             Iterable[{key, wav, label, sample_rate}]
     """
+    import copy
     for sample in data:
         assert 'key' in sample
         assert 'spk' in sample
         label = sample['spk']
-        new_label = label.copy()
+        new_label = copy.deepcopy(label)
 
         if data_type == 'feat':
             assert 'feat' in sample

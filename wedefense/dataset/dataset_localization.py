@@ -25,6 +25,7 @@ from torch.utils.data import IterableDataset
 from wedefense.utils.file_utils import read_lists, read_table, read_json_list
 from wedefense.dataset.lmdb_data import LmdbData
 import wedefense.dataset.processor as processor
+import wedefense.dataset.processor_time as processor_time
 import wedefense.dataset.shuffle_random_tools as shuffle_tools
 
 class Processor(IterableDataset):
@@ -255,13 +256,14 @@ def Dataset(data_type,
     else:
         dataset = Processor(dataset, processor.parse_feat)
 
-    dataset = Processor(dataset, processor.update_label_with_rttm, reco2timestamps_dict)
+    dataset = Processor(dataset, processor_time.update_label_with_rttm, 
+                        reco2timestamps_dict)
 
     if configs.get('filter', True):
         # Filter the data with unwanted length
         filter_conf = configs.get('filter_args', {})
         dataset = Processor(dataset,
-                            processor.filter_timestamps,
+                            processor_time.filter_timestamps,
                             frame_shift=configs[frontend_args].get(
                                 'frame_shift', 10),
                             data_type=data_type,
@@ -278,8 +280,8 @@ def Dataset(data_type,
         if not whole_utt:
             # random chunk
             chunk_len = num_frms = configs.get('num_frms', 200)
-            dataset = Processor(dataset, processor.random_chunk, chunk_len,
-                                'feat')
+            dataset = Processor(dataset, processor_time.random_chunk_timestamps, 
+                                chunk_len, 'feat')
     else:
         # resample
         resample_rate = configs.get('resample_rate', 16000)
@@ -296,8 +298,8 @@ def Dataset(data_type,
             frame_length = configs[frontend_args].get('frame_length', 25)
             chunk_len = ((num_frms - 1) * frame_shift +
                          frame_length) * resample_rate // 1000
-            dataset = Processor(dataset, processor.random_chunk, chunk_len,
-                                data_type)
+            dataset = Processor(dataset, processor_time.random_chunk_timestamps, 
+                                chunk_len, data_type)
             
         # process Rawboost:
         rawboost_flag = configs.get('rawboost', False)
@@ -318,14 +320,14 @@ def Dataset(data_type,
 
 
     # spk2id
-    dataset = Processor(dataset, processor.spk_to_id_timestamps, spk2id_dict)
+    dataset = Processor(dataset, processor_time.label_to_id_timestamps, spk2id_dict)
     # Convert timestamps to frame-level label vector
     # Put to the final step after all chunk/shuffle.
-    dataset = Processor(dataset, processor.timestamps_to_labelvec, 
+    dataset = Processor(dataset, processor_time.timestamps_to_labelvec, 
                         output_reso, spk2id_dict, utt2dur) #we use 0.01sec as unit.
 
     # keep timestamps will get error when collect.py:138 
-    dataset = Processor(dataset, processor.clean_batch) 
+    dataset = Processor(dataset, processor_time.clean_batch) 
 
     # !!!IMPORTANT NOTICE!!!
     # To support different frontends (including ssl pretrained models),

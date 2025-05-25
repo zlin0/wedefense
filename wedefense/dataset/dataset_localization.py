@@ -191,7 +191,8 @@ def Dataset(data_type,
             repeat_dataset=True,
             data_dur_file=None,
             reco2timestamps_dict=None,
-            block_shuffle_size = 0):
+            block_shuffle_size = 0,
+            output_reso = 0.01):
     """ Construct dataset from arguments
 
         We have two shuffle stage in the Dataset. The first is global
@@ -321,7 +322,7 @@ def Dataset(data_type,
     # Convert timestamps to frame-level label vector
     # Put to the final step after all chunk/shuffle.
     dataset = Processor(dataset, processor.timestamps_to_labelvec, 
-                        0.01, spk2id_dict, utt2dur) #we use 0.01sec as unit.
+                        output_reso, spk2id_dict, utt2dur) #we use 0.01sec as unit.
 
     # keep timestamps will get error when collect.py:138 
     dataset = Processor(dataset, processor.clean_batch) 

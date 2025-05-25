@@ -137,7 +137,8 @@ def train(config='conf/config.yaml', **kwargs):
                             noise_lmdb_file = configs.get('noise_data', None),
                             data_dur_file = train_dur,
                             reco2timestamps_dict = train_reco2timestamps_dict,
-                            block_shuffle_size = block_shuffle_size)
+                            block_shuffle_size = block_shuffle_size,
+                            output_reso = configs['dataset_args']['label_reso'])
 
     train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, **tmp_params_dataloader)
     if configs['dataset_args'].get('sample_num_per_epoch', 0) > 0:
@@ -185,7 +186,7 @@ def train(config='conf/config.yaml', **kwargs):
             configs['projection_args']['embed_dim'] = int(
                     configs['model_args']['feat_dim'] / 
                     pow(abs(configs['model_args']['embed_dim'])
-                    )
+                    ))
         else:
             configs['projection_args']['embed_dim'] = int(
                     configs['model_args']['feat_dim'] / 

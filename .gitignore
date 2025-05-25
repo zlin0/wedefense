@@ -11,6 +11,8 @@ egs/*/*/*/exp/
 egs/*/*/*/slurm-*
 debug*
 egs/*/*/*/logs*/
+*.err
+*.out
 
 tensorboard
 **/*build*

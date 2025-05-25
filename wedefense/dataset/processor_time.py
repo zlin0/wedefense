@@ -252,9 +252,7 @@ def random_chunk_timestamps(data, chunk_len, data_type='shard/raw/feat'):
             Iterable[{key, wav/feat, label}]
     """
     for sample in data:
-        print(sample['key'])
-        if(sample['key'] == 'LA_T_5795459'):
-            pass
+        # print(sample['key']) 
         assert 'key' in sample
         assert 'spk' in sample
         label = sample['spk']

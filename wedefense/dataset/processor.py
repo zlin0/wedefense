@@ -34,6 +34,7 @@ import torchaudio.compliance.kaldi as kaldi
 import torchaudio.transforms as torchaudio_T
 
 import wedefense.dataset.augmentation.rawboost_util as rawboost_util 
+import wedefense.dataset.augmentation.codec_util as codec_util 
 
 AUDIO_FORMAT_SETS = set(['flac', 'mp3', 'm4a', 'ogg', 'opus', 'wav', 'wma'])
 

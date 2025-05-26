@@ -57,6 +57,10 @@ def get_projection(conf):
                                  t=conf.get('t', 3),
                                  lanbuda=conf.get('lanbuda', 0.7),
                                  margin_type=conf.get('margin_type', 'C'))
+    elif conf['project_type'] == 'MSEp2sgrad':
+        projection = MSEp2sgrad(conf['embed_dim'], conf['num_class'])
+    elif conf['project_type'] == 'TanhLinear':
+        projection = TanhLinear(conf['embed_dim'], conf['num_class'])
     else:
         projection = Linear(conf['embed_dim'], conf['num_class'])
 
@@ -468,6 +472,45 @@ class SphereProduct(nn.Module):
             + ', margin=' + str(self.margin) + ')'
 
 
+class MSEp2sgrad(nn.Module):
+    r"""Implement of MSE loss with p2sgrad
+    P2sGrad: 
+    Zhang, X. et al. P2sgrad: Refined gradients for optimizing 
+    deep face models. in Proc. CVPR 9906-9914, 2019
+
+    Args:
+        in_features: size of each input sample
+        out_features: size of each output sample
+    """
+
+    def __init__(self, in_features, out_features):
+        super(MSEp2sgrad, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+
+        self.weight = nn.Parameter(torch.FloatTensor(out_features,
+                                                     in_features))
+        nn.init.xavier_uniform_(self.weight)
+        
+    def forward(self, input, label):
+        # ---------------- cos(theta) & phi(theta) ---------------
+        cosine = F.linear(F.normalize(input), F.normalize(self.weight))
+
+        # ---------------- convert label to one-hot ---------------
+        one_hot = input.new_zeros(cosine.size())
+        one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+        loss_val = F.mse_loss(cosine, one_hot)
+
+        # convert cosine score via logit
+        normed = torch.clamp((cosine + 1) / 2.0, 1e-05, 1 - 1e-05)
+        logits = torch.log(normed / (1.0 - normed))
+        return logits, loss_val
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(' \
+            + 'in_features=' + str(self.in_features) \
+            + ', out_features=' + str(self.out_features)  + ')'
+
 class Linear(nn.Module):
     """
     The linear transform for simple softmax loss
@@ -478,6 +521,22 @@ class Linear(nn.Module):
 
         self.trans = nn.Sequential(nn.BatchNorm1d(emb_dim),
                                    nn.ReLU(inplace=True),
+                                   nn.Linear(emb_dim, class_num))
+
+    def forward(self, input, label):
+        out = self.trans(input)
+        return out
+
+class TanhLinear(nn.Module):
+    """
+    The linear transform for simple softmax loss
+    
+    Simpler without batchnorm and ReLU
+    """
+    def __init__(self, emb_dim=512, class_num=1000):
+        super(TanhLinear, self).__init__()
+
+        self.trans = nn.Sequential(nn.Tanh(),
                                    nn.Linear(emb_dim, class_num))
 
     def forward(self, input, label):

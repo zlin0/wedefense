@@ -31,9 +31,9 @@ from scipy.io import wavfile
 import torch
 import torchaudio
 import torchaudio.compliance.kaldi as kaldi
+import torchaudio.transforms as torchaudio_T
 
 import wedefense.dataset.augmentation.rawboost_util as rawboost_util 
-from wedefense.utils.diarization.rttm_tool import get_rttm, rttm2vadvec
 
 AUDIO_FORMAT_SETS = set(['flac', 'mp3', 'm4a', 'ogg', 'opus', 'wav', 'wma'])
 
@@ -501,9 +501,61 @@ def compute_fbank(data,
                           dither=dither,
                           sample_frequency=sample_rate,
                           window_type='hamming',
-                          use_energy=False)
+                          use_energy=False) #[T, F]
         yield dict(key=sample['key'], label=sample['label'], feat=mat)
 
+def compute_lfcc_torchaudio(data,
+                  n_fft=512,
+                  n_lfcc=20,
+                  frame_length=20,
+                  frame_shift=10,
+                  use_delta=True):
+    """ Extract linear frequency cepstral coefficients
+
+        Args:
+            data: Iterable[{key, wav, label, sample_rate}]
+
+        Returns:
+            Iterable[{key, feat, label, sample_rate}]
+    """
+    compute_delta = torchaudio_T.ComputeDeltas()
+    # Initialize LFCC feature extractor (only once for efficiency)
+    # Assume all samples share the same sample rate; extract from the first sample
+    # data_lst = list(data) Too slow
+    # sample_rate = data_lst[0]['sample_rate']
+    from itertools import chain
+    first_sample = next(data)
+    data = chain([first_sample], data)
+    sample_rate = first_sample['sample_rate']
+    lfcc_extractor = torchaudio_T.LFCC(
+            sample_rate = sample_rate,
+            n_lfcc = n_lfcc,
+            speckwargs = {
+                "n_fft": n_fft,
+                "win_length": int(frame_length*sample_rate/1000), 
+                "hop_length": int(frame_shift*sample_rate/1000),
+                "center": False
+                }
+            )
+
+
+    for sample in data:
+        assert 'sample_rate' in sample
+        assert 'wav' in sample
+        assert 'key' in sample
+        assert 'label' in sample
+        sample_rate = sample['sample_rate']
+        waveform = sample['wav']
+        waveform = waveform * (1 << 15) ## Convert from float [-1.0, 1.0] to int16 [-32767, 32767]
+        # Only keep key, feat, label
+
+        mat = lfcc_extractor(waveform).squeeze(0).permute(1, 0) #doesn't support energy #[1, F, T] -> [T, F]
+        if(use_delta):
+            lfcc_delta = compute_delta(mat) 
+            lfcc_delta_delta = compute_delta(lfcc_delta) 
+            mat = torch.cat((mat, lfcc_delta, lfcc_delta_delta), 1)
+
+        yield dict(key=sample['key'], label=sample['label'], feat=mat)
 
 def apply_cmvn(data, norm_mean=True, norm_var=False):
     """ Apply CMVN
@@ -586,5 +638,35 @@ def rawboost(data,
         audio_len = audio.shape[0]
 
         sample['wav'] = rawboost_util.process_Rawboost_feature(audio, sample_rate, algo)
+        yield sample
+
+
+
+def codec(data, random_seed=42):
+    """ Process codec
+
+        Args:
+            data: Iterable[{key, wav, label, sample_rate}]
+            random_seed (int): random seed for random(), default 42
+
+        Returns:
+            Iterable[{key, wav, label, sample_rate}]
+    """
+    random.seed(random_seed)
+
+    
+    for sample in data:
+        assert 'sample_rate' in sample
+        assert 'wav' in sample
+        assert 'key' in sample
+        
+        sr = sample['sample_rate']
+        audio = sample['wav']
+
+        codec_name = random.choice(codec_util.SUPPORTED_CODEC_FOR_AUGMENTATION)
+        bitrate = random.choice(codec_util.SUPPORTED_CODEC_CONFIG[codec_name])
+
+        sample['wav'] = codec_util.codec_apply(audio, sr, codec_name, bitrate)
+        #print(codec_name, bitrate, audio.shape, sample['wav'].shape, type(audio), type(sample['wav']))
         yield sample
 

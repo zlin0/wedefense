@@ -41,7 +41,7 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
     model.train()
     # By default use average pooling
     loss_meter = tnt.meter.AverageValueMeter()
-    acc_meter = tnt.meter.ClassErrorMeter(accuracy=True)
+    acc_meter = tnt.meter.acc_meter = tnt.meter.AverageValueMeter()
 
     frontend_type = configs['dataset_args'].get('frontend', 'fbank')
     for i, batch in enumerate(dataloader):
@@ -73,6 +73,7 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
                 features = spec_aug(features,
                                     **configs['dataset_args']['spec_aug_args'])
 
+            num_class = configs['projection_args']['num_class']
             outputs = model(features)  # (B,T,D)  
             embeds = outputs[-1] if isinstance(outputs, tuple) else outputs
             # flatten to (batch_size * seq_length, feat_dim): 
@@ -80,6 +81,7 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
             feat_dim = embeds.shape[-1]
             outputs = model.module.projection(embeds.view(-1, feat_dim), targets) #(BxT,num_class)
             outputs = outputs.view(targets.shape[0], targets.shape[1] , -1) #->(B, T, num_class)
+
 
             if isinstance(outputs, tuple):
                 outputs, loss = outputs
@@ -90,20 +92,18 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
                     targets_one_hot.scatter_(2, targets.unsqueeze(2), 1)  # (B, T, 2)
                     loss = criterion(outputs, targets_one_hot)
                 else:
-                    loss = criterion(outputs, targets.unsqueeze(2)) #targets: (B, T) -> (B, T, 1)
+                    # outputs: (B, T, num_class = 2) -> (B*T, num_class)
+                    # targets: (B, T) -> (B*T)
+                    loss = criterion(outputs.view(-1, num_class), targets.view(-1))
 
 
         # loss, acc
         loss_meter.add(loss.item())
         # acc_meter.add(outputs.cpu().detach().numpy(), targets.cpu().numpy())
-        if isinstance(criterion, torch.nn.MSELoss):
-            # For MSE loss, using 0.5 as threshold
-            preds = (outputs > 0.5).float()
-            preds = preds.argmax(dim=2)  # (B, T)
-        else:
-            # For CE loss, using argmax
-            preds = outputs.argmax(dim=2)  # (B, T)
-        acc_meter.add(preds.cpu().detach().numpy(), targets.cpu().numpy())
+        correct = (preds == targets).float().sum()
+        total = len(targets.view(-1))
+        accuracy = (correct / total).item()
+        acc_meter.add(accuracy)
 
         # updata the model
         optimizer.zero_grad()

@@ -307,10 +307,18 @@ def Dataset(data_type,
             dataset = Processor(dataset, processor.add_reverb_noise,
                                 reverb_data, noise_data, resample_rate,
                                 aug_prob)
+        # codec
+        codec_flag = configs.get('codec_aug', False)
+        if codec_flag:
+            dataset = Processor(dataset, processor.codec)
+            
         # compute fbank
         if frontend_type == 'fbank':
             dataset = Processor(dataset, processor.compute_fbank,
                                 **configs['fbank_args'])
+        elif frontend_type == 'lfcc_torchaudio':
+            dataset = Processor(dataset, processor.compute_lfcc_torchaudio,
+                                **configs['lfcc_torchaudio_args'])
 
     # !!!IMPORTANT NOTICE!!!
     # To support different frontends (including ssl pretrained models),

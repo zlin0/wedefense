@@ -24,15 +24,12 @@ set -xe
 ASVspoof5_dir=$1
 data_dir=$2
 
-DSETs_download="T D E"
 DSETs=(T D E_eval)
 DSETs_full=(train dev eval)
 
 if [ ! -d ${ASVspoof5_dir} ]; then
     mkdir -p ${ASVspoof5_dir}
-    for dset in ${DSETs_download}; do
-        bash ./01_download_database.sh ${ASVspoof5_dir} ${dset}
-    done
+    bash ./01_download_database.sh ${ASVspoof5_dir} 
 fi
 
 for i in "${!DSETs[@]}"; do
@@ -83,6 +80,8 @@ for i in "${!DSETs[@]}"; do
 			 > ${data_dir}/flac_${dset}/${fname}
 	 fi
      done
+     ./tools/utt2spk_to_spk2utt.pl ${data_dir}/flac_${dset}/utt2cls \
+	  >${data_dir}/flac_${dset}/cls2utt
   fi
 done
 

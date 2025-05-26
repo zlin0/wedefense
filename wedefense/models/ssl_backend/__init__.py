@@ -1,2 +1,3 @@
-from .MHFA import *
+from .SLS import *
 from .multireso_post import *
+from .MHFA import *

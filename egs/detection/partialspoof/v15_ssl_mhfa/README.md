@@ -22,11 +22,10 @@ upstream=MHFA_wavlmplus
 #### 🔹 Full Fine-tuning on Top of a Frozen Model
 
 ```bash
-upstream=MHFA_wavlmplus
-./run_ft.sh --stage 8 --stop_stage 8 \
+upstream=MHFA_wavlmplus-FT-1stage
+./run.sh --stage 3 --stop_stage 7 \
             --config conf/${upstream}.yaml \
-            --ft_config conf/${upstream}-FT.yaml \
-            --exp_dir exp/${upstream}_frozen
+            --exp_dir exp/${upstream}_FT
 ```
 ---
 ### 🧪 SSL-based models (Frozen)
@@ -54,9 +53,18 @@ upstream=MHFA_wavlmplus
 | Front-end | Training | Dev-minDCF | Dev-EER | Dev-Cllr | Dev-actDCF | Eval-minDCF | Eval-EER | Eval-Cllr | Eval-actDCF |
 |:----------|:---------|:----------:|:--------:|:---------:|:------------:|:-------------:|:----------:|:-----------:|:-------------:|
 | WavLM-base+   | Frozen      | 0.04 | 1.56 | 0.12 | 0.06 | 0.06 | 2.68 | 0.31 | 0.13 |
-| WavLM-base+ | Full Finetuning | 0.02 | 0.71 | 0.05 | 0.03 | 0.04 | 1.59 | 0.20 | 0.08 |
+| WavLM-base+ | Full Finetuning (2 stages) | 0.02 | 0.71 | 0.05 | 0.03 | 0.04 | 1.59 | 0.20 | 0.08 |
+| WavLM-base+ | Full Finetuning (1 stage) | 0.01 | 0.39 | 0.04 | 0.01 | 0.03 | 1.43 | 0.17 | 0.05 |
+| WavLM-large   | Full Finetuning (1 stage)      |0.01 |	0.32|	0.02|	0.01|	0.02|	1.03|	0.08|	0.03|
+| XLSR53   | Full Finetuning (1 stage)      |0.01	|0.24	|0.01	|0.01	|0.02	|0.80	|0.05	|0.03|
 
 ---
+
+**Note:**
+- *Frozen*: SSL model is fixed (not updated) during training.
+- *Full Finetuning (2 stages)*: Model is first trained with a frozen frontend (SSL frozen + MHFA trainable), followed by end-to-end fine-tuning.
+- *Full Finetuning (1 stages)*: Model is directly trained end-to-end from the beginning.
+
 
 ## Citation
 

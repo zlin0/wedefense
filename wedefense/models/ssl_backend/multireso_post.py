@@ -161,7 +161,7 @@ class MaxPool1d_scales(nn.Module):
         super(MaxPool1d_scales, self).__init__()
         self.num_scale = num_scale
         self.Frame_shifts = Frame_shifts
-        assert len(multi_reso_active) > 0 
+        assert len(multi_reso_active) > 0
         self.multi_reso_active = multi_reso_active
         active_raw = set(str(k) for k in self.multi_reso_active)
         self.active_indices = self.convert_active_reso_to_index(active_raw)

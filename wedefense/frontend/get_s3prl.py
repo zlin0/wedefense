@@ -121,6 +121,10 @@ class S3prlFrontend(nn.Module):
                 return 1024
             elif "base" in self.upstream_name:
                 return 768
+            elif self.upstream_name == "xls_r_300m" or self.upstream_name == "xls_r_1b":
+                return 1024
+            elif self.upstream_name == "xls_r_2b":
+                return 1920
             else: #TODO for other models, 
                 raise ValueError(f"Unknown model size for: {self.upstream_name}")
         else:

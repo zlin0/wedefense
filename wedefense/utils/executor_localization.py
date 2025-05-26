@@ -100,6 +100,7 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
         # loss, acc
         loss_meter.add(loss.item())
         # acc_meter.add(outputs.cpu().detach().numpy(), targets.cpu().numpy())
+        preds = outputs.argmax(dim=2)
         correct = (preds == targets).float().sum()
         total = len(targets.view(-1))
         accuracy = (correct / total).item()

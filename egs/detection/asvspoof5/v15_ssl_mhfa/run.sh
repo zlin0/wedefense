@@ -41,10 +41,12 @@ fi
 #######################################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Covert train and test data to ${data_type}..."
-  
-  ln -s ${data}/train/flac_T ${data}/train
-  ln -s ${data}/train/flac_D ${data}/dev
-  ln -s ${data}/train/flac_E_eval ${data}/eval
+
+  cd ${data}
+  ln -s flac_T train
+  ln -s flac_D dev
+  ln -s flac_E_eval /eval
+  cd -
   # We don't use VAD here
 
   for dset in train dev eval;do

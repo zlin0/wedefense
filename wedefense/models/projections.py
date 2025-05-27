@@ -57,6 +57,8 @@ def get_projection(conf):
                                  t=conf.get('t', 3),
                                  lanbuda=conf.get('lanbuda', 0.7),
                                  margin_type=conf.get('margin_type', 'C'))
+    elif conf['project_type'] == 'OCSoftmax':
+        projection = OCSoftmax(conf['embed_dim'], m_real=conf['m_real'], m_fake=conf['m_fake'], alpha=conf['scale'], bonafide_label=0)
     elif conf['project_type'] == 'MSEp2sgrad':
         projection = MSEp2sgrad(conf['embed_dim'], conf['num_class'])
     elif conf['project_type'] == 'TanhLinear':
@@ -66,6 +68,61 @@ def get_projection(conf):
 
     return projection
 
+
+class OCSoftmax(nn.Module):
+    r"""Implement of one-class softmax loss with two different margins for bonafide and spoof class:
+        Reference:
+            One-Class Learning Towards Synthetic Voice Spoofing Detection
+            https://ieeexplore.ieee.org/document/9417604
+        Args: # TODO: revise more args
+            in_features: size of each input sample
+            m_real: margin for bonafide class
+            m_fake: margin for spoof class
+            alpha: scale factor
+        """
+    def __init__(self, in_features, m_real=0.9, m_fake=0.2, alpha=20.0, bonafide_label=0):
+        super(OCSoftmax, self).__init__()
+        self.in_features = in_features
+        self.m_real = m_real
+        self.m_fake = m_fake
+        self.alpha = alpha
+        self.bonafide_label = bonafide_label
+        self.spoof_label = 1 - bonafide_label
+        self.softplus = nn.Softplus()
+
+        self.center = nn.Parameter(torch.FloatTensor(1,
+                                                     in_features))
+        nn.init.kaiming_uniform_(self.center, 0.25)
+
+
+    def forward(self, x, labels):
+        """
+        Args:
+            x: feature matrix with shape (batch_size, feat_dim).
+            labels: ground truth labels with shape (batch_size).
+        """
+        w = F.normalize(self.center, p=2.0, dim=1)
+        x = F.normalize(x, p=2.0, dim=1)
+
+        # compute cosine similarity as scores
+        scores = x @ w.transpose(0,1) # cosine similarity
+        output_scores = scores.clone()
+        
+        # compute loss
+        scores[labels == self.bonafide_label] = self.m_real - scores[labels == self.bonafide_label]
+        scores[labels == self.spoof_label] = scores[labels == self.spoof_label] - self.m_fake
+
+        loss = self.softplus(self.alpha * scores).mean()
+
+        return torch.logit(1-(output_scores+1)/2), loss
+    
+    def __repr__(self):
+        return self.__class__.__name__ + '(' \
+            + 'in_features=' + str(self.in_features) \
+            + ', out_features=' + str(1) \
+            + ', real_margin=' + str(self.m_real) \
+            + ', fake_margin=' + str(self.m_fake) \
+            + ')'
 
 class SphereFace2(nn.Module):
     r"""Implement of sphereface2 for speaker verification:

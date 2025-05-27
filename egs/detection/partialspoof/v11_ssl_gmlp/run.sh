@@ -15,8 +15,8 @@ PS_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database
 data=data/partialspoof # data folder
 data_type="shard"  # shard/raw
 
-config=conf/debug_multireso_gmlp.yaml 
-exp_dir=exp/debug_multireso_gmlp
+config=conf/multireso_gmlp.yaml 
+exp_dir=exp/multireso_gmlp
 gpus="[0]"
 num_avg=10 # how many models you want to average
 checkpoint=

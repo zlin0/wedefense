@@ -38,7 +38,7 @@ count=${#data_name_array[@]}
 
 for i in $(seq 0 $(($count - 1))); do
   wavs_num=$(wc -l ${data_scp_path_array[$i]} | awk '{print $1}')
-  bash tools/extract_embedding.sh --exp_dir ${exp_dir} \
+  bash tools/extract_embedding_time.sh --exp_dir ${exp_dir} \
     --model_path $model_path \
     --data_type ${data_type} \
     --data_list ${data_list_path_array[$i]} \

@@ -193,7 +193,8 @@ def Dataset(data_type,
             data_dur_file=None,
             reco2timestamps_dict=None,
             block_shuffle_size = 0,
-            output_reso = 0.01):
+            output_reso = 0.01,
+            contain_label=True):
     """ Construct dataset from arguments
 
         We have two shuffle stage in the Dataset. The first is global
@@ -221,10 +222,11 @@ def Dataset(data_type,
     # lists of file
     lists = read_lists(data_list_file)
         
-    # Both block_fhuffle and localization require duration information.
-    assert data_dur_file is not None, "utt2dur is required"
-    # load duration
-    utt2dur = {x[0]:float(x[1]) for x in read_table(data_dur_file)}
+    if(block_shuffle_size > 0 or contain_label):
+        # Both block_fhuffle and localization require duration information.
+        assert data_dur_file is not None, "utt2dur is required"
+        # load duration
+        utt2dur = {x[0]:float(x[1]) for x in read_table(data_dur_file)}
     # block_shuffle is to be used, sort the file list based on duration
     if block_shuffle_size > 0:
         assert data_type == 'raw', "block shuffle requires raw data type"
@@ -256,7 +258,8 @@ def Dataset(data_type,
     else:
         dataset = Processor(dataset, processor.parse_feat)
 
-    dataset = Processor(dataset, processor_time.update_label_with_rttm, 
+    if(contain_label):
+        dataset = Processor(dataset, processor_time.update_label_with_rttm, 
                         reco2timestamps_dict)
 
     if configs.get('filter', True):
@@ -319,15 +322,18 @@ def Dataset(data_type,
                                 **configs['fbank_args'])
 
 
+    # TODO: move to make_shard/raw_list.py
+    # Then rttm and contain_label can be remove
     # spk2id
-    dataset = Processor(dataset, processor_time.label_to_id_timestamps, spk2id_dict)
-    # Convert timestamps to frame-level label vector
-    # Put to the final step after all chunk/shuffle.
-    dataset = Processor(dataset, processor_time.timestamps_to_labelvec, 
-                        output_reso, spk2id_dict, utt2dur) #we use 0.01sec as unit.
+    if(contain_label):
+        dataset = Processor(dataset, processor_time.label_to_id_timestamps, spk2id_dict)
+        # Convert timestamps to frame-level label vector
+        # Put to the final step after all chunk/shuffle.
+        dataset = Processor(dataset, processor_time.timestamps_to_labelvec, 
+                            output_reso, spk2id_dict, utt2dur) #we use 0.01sec as unit.
 
-    # keep timestamps will get error when collect.py:138 
-    dataset = Processor(dataset, processor_time.clean_batch) 
+        # keep timestamps will get error when collect.py:138 
+        dataset = Processor(dataset, processor_time.clean_batch) 
 
     # !!!IMPORTANT NOTICE!!!
     # To support different frontends (including ssl pretrained models),

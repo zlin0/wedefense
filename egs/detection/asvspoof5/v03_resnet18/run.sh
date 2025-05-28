@@ -1,24 +1,26 @@
 #!/bin/bash
+#
+# Copyright 2025 Johan Rohdin, Lin Zhang (rohdin@fit.vut.cz, partialspoof@gmail.com)
+#
 
-# Copyright 2022 Hongji Wang (jijijiang77@gmail.com)
-#           2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
-#           2025 Johan Rohdin, Lin Zhang (rohdin@fit.vut.cz, partialspoof@gmail.com)
-#           2025 Junyi Peng (pengjy@fit.vut.cz)
-
-# set -x
+set -x
 . ./path.sh || exit 1
 
 stage=3
 stop_stage=3
 
-ASVspoof5_dir=/gs/bs/tgh-25IAC/ud03523/DATA/ASVspoof5
+PS_dir=/gs/bs/tgh-25IAC/ud03523/DATA/ASVspoof5
 data=data/asvspoof5 # data folder
 data_type="shard"  # shard/raw
+#data_type="raw"  # shard/raw
 
-config=conf/MHFA_wav2vec2.yaml #wespeaker version 
-exp_dir=exp/W2V2baseFrozen-MHFA-TSTP-emb256-num_frms150-aug0-spFalse-saFalse-Softmax-SGD-epoch20
+config=conf/resnet.yaml #wespeaker version 
+exp_dir=exp/ResNet18-TSTP-emb256-fbank80-frms400-aug0-spFalse-saFalse-Softmax-SGD-epoch100
+#config=conf/resnet_wholeutt_noaug_nosampler.yaml 
+#exp_dir=exp/ResNet18-TSTP-emb256-fbank80-wholeutt_nosampler-aug0-spFalse-saFalse-Softmax-SGD-epoch100
+
 gpus="[0]"
-num_avg=2 # how many models you want to average
+num_avg=10 # how many models you want to average
 checkpoint=
 score_norm_method="asnorm"  # asnorm/snorm
 top_n=300
@@ -33,7 +35,7 @@ lm_config=conf/campplus_lm.yaml
 #######################################################################################
 if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
   echo "Prepare datasets ..."
-  ./local/prepare_data.sh ${ASVspoof5_dir} ${data}
+  ./local/prepare_data.sh ${PS_dir} ${data}
 fi
 
 #######################################################################################
@@ -41,14 +43,7 @@ fi
 #######################################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Covert train and test data to ${data_type}..."
-
-  cd ${data}
-  ln -s flac_T train
-  ln -s flac_D dev
-  ln -s flac_E_eval eval
-  cd -
-  # We don't use VAD here
-
+  # We don't use VAD here 
   for dset in train dev eval;do
       if [ $data_type == "shard" ]; then
           python tools/make_shard_list.py --num_utts_per_shard 1000 \
@@ -69,11 +64,11 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   #RIRs_dir=/export/fs05/arts/dataset/RIRS_NOISES/RIRS_NOISES
   #find ${RIRs_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
   # Convert all musan data to LMDB. But note that lmdb does not work on NFS!
-  # python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb 
-  # rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
+  python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb 
+  rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
   # Convert all rirs data to LMDB
-  # python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
-  # rsync -av ${HOME}/local_lmdb/rirs/lmdb data/rirs/lmdb
+  python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
+  rsync -av ${HOME}/local_lmdb/rirs/lmdb data/rirs/lmdb
 fi
 
 #######################################################################################
@@ -107,7 +102,6 @@ model_path=$avg_model
 # Stage 4. Averaging the model, and extract embeddings
 #######################################################################################
 if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
-
   echo "Do model average ..."
   python wedefense/bin/average_model.py \
     --dst_model $avg_model \
@@ -141,7 +135,6 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
 	  --out_path ${exp_dir}/posteriors/$dset
   done
 fi
-
 
 #######################################################################################
 # Stage 6. Convert logits to llr 
@@ -187,5 +180,6 @@ fi
 # 1. significant test
 # 2. boostrap testing
 # 3. embedding visulization
+
 exit 0
 

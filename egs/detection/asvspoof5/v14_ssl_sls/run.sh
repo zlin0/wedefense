@@ -11,12 +11,12 @@
 stage=3
 stop_stage=3
 
-ASVspoof5_dir=/gs/bs/tgh-25IAC/ud03523/DATA/ASVspoof5
+PS_dir=/gs/bs/tgh-25IAC/ud03523/DATA/ASVspoof5
 data=data/asvspoof5 # data folder
 data_type="shard"  # shard/raw
 
-config=conf/MHFA_wav2vec2.yaml #wespeaker version 
-exp_dir=exp/W2V2baseFrozen-MHFA-TSTP-emb256-num_frms150-aug0-spFalse-saFalse-Softmax-SGD-epoch20
+config=conf/SLS_xlsr.yaml #wespeaker version 
+exp_dir=exp/W2V2XLSRFrozen-SLS-TSTP-emb256-num_frms150-aug0-spFalse-saFalse-Softmax-SGD-epoch20
 gpus="[0]"
 num_avg=2 # how many models you want to average
 checkpoint=
@@ -33,7 +33,7 @@ lm_config=conf/campplus_lm.yaml
 #######################################################################################
 if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
   echo "Prepare datasets ..."
-  ./local/prepare_data.sh ${ASVspoof5_dir} ${data}
+  ./local/prepare_data.sh ${PS_dir} ${data}
 fi
 
 #######################################################################################
@@ -41,14 +41,7 @@ fi
 #######################################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Covert train and test data to ${data_type}..."
-
-  cd ${data}
-  ln -s flac_T train
-  ln -s flac_D dev
-  ln -s flac_E_eval eval
-  cd -
-  # We don't use VAD here
-
+  # We don't use VAD here 
   for dset in train dev eval;do
       if [ $data_type == "shard" ]; then
           python tools/make_shard_list.py --num_utts_per_shard 1000 \
@@ -69,11 +62,11 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   #RIRs_dir=/export/fs05/arts/dataset/RIRS_NOISES/RIRS_NOISES
   #find ${RIRs_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
   # Convert all musan data to LMDB. But note that lmdb does not work on NFS!
-  # python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb 
-  # rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
+  python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb 
+  rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
   # Convert all rirs data to LMDB
-  # python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
-  # rsync -av ${HOME}/local_lmdb/rirs/lmdb data/rirs/lmdb
+  python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
+  rsync -av ${HOME}/local_lmdb/rirs/lmdb data/rirs/lmdb
 fi
 
 #######################################################################################

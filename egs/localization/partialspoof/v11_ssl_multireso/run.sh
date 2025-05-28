@@ -23,8 +23,11 @@ checkpoint=
 score_norm_method="asnorm"  # asnorm/snorm
 top_n=300
 
-# setup for large margin fine-tuning
-lm_config=conf/campplus_lm.yaml
+# resolution for evaluation
+eval_reso=10
+
+# Not applied. # setup for large margin fine-tuning.
+# lm_config=conf/campplus_lm.yaml
 
 . tools/parse_options.sh || exit 1
 
@@ -89,13 +92,13 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
     ##num_gpus=$(echo $gpus | awk -F ',' '{print NF}')
     #python -m pdb \
     torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((RANDOM)) --nnodes=1 --nproc_per_node=$num_gpus \
-      wedefense/bin/train.py --config $config \
+      wedefense/bin/train_localization.py --config $config \
         --exp_dir ${exp_dir} \
         --gpus $gpus \
         --num_avg ${num_avg} \
         --data_type "${data_type}" \
         --train_data ${data}/train/${data_type}.list \
-        --train_label ${data}/train/utt2cls \
+        --train_label ${data}/train/rttm_localization \
         ${checkpoint:+--checkpoint $checkpoint}
         # Note, label was assigned in stage 2, 
 	# utt2cls here only for label2id.
@@ -123,6 +126,9 @@ if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
      gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
   fi
 
+  #TODO 
+  #1. currently too much layers to call the extracting script.
+  #2. not friend for slurm when spliting list
   local/extract_emb.sh \
      --exp_dir $exp_dir --model_path $model_path \
      --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}
@@ -136,7 +142,7 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   for dset in dev eval;do
       mkdir -p ${exp_dir}/posteriors/$dset 
       echo $dset
-      python wedefense/bin/infer.py --model_path $model_path \
+      python wedefense/bin/infer_by_utt.py --model_path $model_path \
 	  --config ${exp_dir}/config.yaml \
 	  --num_classes 2 \
 	  --embedding_scp_path ${exp_dir}/embeddings/$dset/embedding.scp \
@@ -146,18 +152,20 @@ fi
 
 
 #######################################################################################
-# Stage 6. Convert logits to llr 
+# Stage 6. Print logits to txt 
 #######################################################################################
 if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
   echo "Convert logits to llr ..."
   cut -f2 -d" " ${data}/train/utt2cls | sort | uniq -c | awk '{print $2 " " $1}' > ${data}/train/cls2num_utts
   for dset in dev eval; do
       echo $dset
-      python wedefense/bin/logits_to_llr.py \
+      python wedefense/utils/print_frame_logits.py \
 	  --logits_scp_path ${exp_dir}/posteriors/$dset/logits.scp \
-	  --training_counts ${data}/train/cls2num_utts \
-	  --train_label ${data}/train/utt2cls \
-	  --pi_spoof 0.05
+	  --score_reso 20 \
+	  --eval_reso ${eval_reso} \
+	  --train_label ${data}/train/rttm_localization \
+	  --eval_label ${data}/$dset/rttm_localization 
+      #comment out the last row for eval_label if you don't have the ground truth.
 
   done
 fi
@@ -169,16 +177,10 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
   echo "Measuring Performance ..."
   for dset in dev eval; do
     # Preparing trails
-    # filename        cm-label
-    echo "filename cm-label" > ${data}/${dset}/cm_key_file.txt	  
-    cat ${data}/${dset}/utt2cls >> ${data}/${dset}/cm_key_file.txt
-    sed -i "s/ /\t/g" ${data}/${dset}/cm_key_file.txt
 
     echo "Measuring " $dset
-    python wedefense/metrics/detection/evaluation.py  \
-	--m t1 \
-	--cm ${exp_dir}/posteriors/${dset}/llr.txt \
-	--cm_key ${data}/${dset}/cm_key_file.txt
+    python wedefense/metrics/localization/point_eer.py  \
+	--score_file ${exp_dir}/posteriors/${dset}/logits_frame_${eval_reso}ms.txt 
   done
 fi
 

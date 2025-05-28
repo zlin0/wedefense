@@ -163,8 +163,11 @@ class LCNN_LSTM(torch_nn.Module):
             torch_nn.Dropout(dropout)
         )
 
-
-        lcnn_out_dim = (feat_dim//16) * 32
+        # the ratio of down-sampling for both time and channel dim.
+        self.down_frac = 16
+        # the ratio of up-sampling for channel dims.
+        self.up_frac = 32
+        lcnn_out_dim = (feat_dim // self.down_frac) * self.up_frac
         
         self.m_lstm = torch_nn.Sequential(
             BLSTMLayer(lcnn_out_dim, lcnn_out_dim),
@@ -176,7 +179,24 @@ class LCNN_LSTM(torch_nn.Module):
         self.m_linear = torch_nn.Linear(self.m_pool.get_out_dim(), embed_dim)
 
         return
-    
+
+    def _pad_to_min_length(self, x):
+        """ lcnn part will down-sample x. The minimum length of x should be
+            self.down_frac. Otherwise, the data will be gone after maxpooling 
+            with stride 2
+
+            Args:
+                x: input, (batchsize, length, dim)
+            Returns:
+                y: output, (batchsize, length, dim)
+        """
+        if x.shape[1] < self.down_frac:
+            # equivalent to int(np.ceil(self.down_frac / x.shape[1]))
+            up_frac = -((-1 * self.down_frac) // x.shape[1])
+            return x.repeat(1, up_frac, 1)
+        else:
+            return x
+        
     def _get_frame_level_feat(self, x):
         """ compute frame-level feature
 
@@ -208,7 +228,7 @@ class LCNN_LSTM(torch_nn.Module):
     def forward(self, x):
 
         # compute segmental-level feature
-        x_ = self._get_frame_level_feat(x)
+        x_ = self._get_frame_level_feat(self._pad_to_min_length(x))
 
         # pooling (B, T, D) -> (B, D, T)
         x_ = self.m_pool(x_.permute(0, 2, 1))

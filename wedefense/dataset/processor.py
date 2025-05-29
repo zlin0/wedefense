@@ -639,8 +639,14 @@ def rawboost(data,
         sample_rate = sample['sample_rate']
         audio = sample['wav'].numpy()[0]
         audio_len = audio.shape[0]
+        
+        # TODO: rewrite RawBoost to support torch tensors natively
+	device = audio.device
+	processed = rawboost_util.process_Rawboost_feature(audio.numpy(), 
+			sample_rate, algo)
+        sample['wav'] = torch.from_numpy(processed).float().to(device)
 
-        sample['wav'] = rawboost_util.process_Rawboost_feature(audio, sample_rate, algo)
+        #sample['wav'] = rawboost_util.process_Rawboost_feature(audio, sample_rate, algo)
         yield sample
 
 

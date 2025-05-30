@@ -8,16 +8,18 @@
 set -x
 . ./path.sh || exit 1
 
-stage=3
-stop_stage=3
+stage=5
+stop_stage=7
 
-PS_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database
-data=data/partialspoof # data folder
+PS_dir=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database
+data=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database/partialspoof # data folder
 data_type="shard"  # shard/raw
 
-config=conf/debug_multireso_gmlp.yaml 
-exp_dir=exp/debug_multireso_gmlp
-gpus="[0]"
+config=conf/xlsr_53_ft.yaml
+exp_dir=exp/debug_multireso_gmlp_xlsr_53_ft
+# config=conf/wav2vec2_large_960_ft.yaml
+# exp_dir=exp/debug_multireso_gmlp
+gpus="[7]"
 num_avg=10 # how many models you want to average
 checkpoint=
 score_norm_method="asnorm"  # asnorm/snorm
@@ -62,11 +64,11 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   #RIRs_dir=/export/fs05/arts/dataset/RIRS_NOISES/RIRS_NOISES
   #find ${RIRs_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
   # Convert all musan data to LMDB. But note that lmdb does not work on NFS!
-  python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb 
-  rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
-  # Convert all rirs data to LMDB
-  python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
-  rsync -av ${HOME}/local_lmdb/rirs/lmdb data/rirs/lmdb
+  # python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb 
+  # rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
+  # # Convert all rirs data to LMDB
+  # python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
+  # rsync -av ${HOME}/local_lmdb/rirs/lmdb data/rirs/lmdb
 fi
 
 #######################################################################################
@@ -75,23 +77,50 @@ fi
 if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
   echo "Start training ..."
   num_gpus=1
-  if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then
-     gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
-  fi
-    ##num_gpus=$(echo $gpus | awk -F ',' '{print NF}')
-    #python -m pdb \
-    torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((RANDOM)) --nnodes=1 --nproc_per_node=$num_gpus \
-      wedefense/bin/train.py --config $config \
-        --exp_dir ${exp_dir} \
-        --gpus $gpus \
-        --num_avg ${num_avg} \
-        --data_type "${data_type}" \
-        --train_data ${data}/train/${data_type}.list \
-        --train_label ${data}/train/utt2cls \
-        ${checkpoint:+--checkpoint $checkpoint}
-        #--reverb_data data/rirs/lmdb \
-        #--noise_data data/musan/lmdb \
-	#TODO, currently also moved from local/extract_emb.sh, flexible to control musan/rirs.
+  # if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then
+  #    gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
+  # fi
+  #   ##num_gpus=$(echo $gpus | awk -F ',' '{print NF}')
+  #   #python -m pdb \
+  #   torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((RANDOM)) --nnodes=1 --nproc_per_node=$num_gpus \
+  #     wedefense/bin/train.py --config $config \
+  #       --exp_dir ${exp_dir} \
+  #       --gpus $gpus \
+  #       --num_avg ${num_avg} \
+  #       --data_type "${data_type}" \
+  #       --train_data ${data}/train/${data_type}.list \
+  #       --train_label ${data}/train/utt2cls \
+  #       ${checkpoint:+--checkpoint $checkpoint}
+  #       #--reverb_data data/rirs/lmdb \
+  #       #--noise_data data/musan/lmdb \
+	# #TODO, currently also moved from local/extract_emb.sh, flexible to control musan/rirs.
+
+  
+  #tc
+  find_free_port() {
+  for port in $(seq 12355 12455); do
+    (echo > /dev/tcp/localhost/$port) &>/dev/null || {
+      echo $port
+      return 0
+    }
+  done
+  echo "No free port found in range 12355–12455" >&2
+  exit 1
+  }
+  PORT=$(find_free_port)
+
+  PORT=$((12355 + RANDOM % 100))
+  torchrun --rdzv_backend=c10d --rdzv_endpoint=localhost:$PORT \
+  --nnodes=1 --nproc_per_node=$num_gpus \
+  wedefense/bin/train.py --config $config \
+    --exp_dir ${exp_dir} \
+    --gpus $gpus \
+    --num_avg ${num_avg} \
+    --data_type "${data_type}" \
+    --train_data ${data}/train/${data_type}.list \
+    --train_label ${data}/train/utt2cls \
+    ${checkpoint:+--checkpoint $checkpoint}
+
 fi
 
 avg_model=$exp_dir/models/avg_model.pt

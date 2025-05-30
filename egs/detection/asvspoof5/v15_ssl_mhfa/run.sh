@@ -86,8 +86,16 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
      gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
   fi
     ##num_gpus=$(echo $gpus | awk -F ',' '{print NF}')
-    #python -m pdb \
-    torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((RANDOM)) --nnodes=1 --nproc_per_node=$num_gpus \
+  # To avoid the randomly generated port is occuppied.
+  while :
+  do
+    port=$(( (RANDOM % 100) + 29500 ))
+    if ! lsof -i:$port >/dev/null; then
+      break
+    fi
+  done
+
+    torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((port)) --nnodes=1 --nproc_per_node=$num_gpus \
       wedefense/bin/train.py --config $config \
         --exp_dir ${exp_dir} \
         --gpus $gpus \

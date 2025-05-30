@@ -3,17 +3,19 @@
 ASVspoof5_dir=$1
 RED='\033[0;31m'
 
-if [ "$dset" = "E"  ]; then
-    FILE_NAMEs="a b c d e f g h i j"
-elif [ "$dset" = "D" ]; then
-    FILE_NAMEs="a b c"
-elif [ "$dset" = "T" ]; then
-    FILE_NAMEs="a b c d e"
-fi
 
 mkdir -p "${ASVspoof5_dir}"
 
 for dset in T D E; do
+
+    if [ "$dset" = "E"  ]; then
+        FILE_NAMEs="a b c d e f g h i j"
+    elif [ "$dset" = "D" ]; then
+        FILE_NAMEs="a b c"
+    elif [ "$dset" = "T" ]; then
+        FILE_NAMEs="a b c d e"
+    fi
+
     for name in ${FILE_NAMEs}; do    
         fname=flac_${dset}_a${name}.tar
         # if [ ! -d ${ASVspoof5_dir}/flac_${dset} ]; then

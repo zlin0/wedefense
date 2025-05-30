@@ -1,10 +1,23 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2025 Hieu-Thi Luong (contact@hieuthi.com)
-# MIT License
 
 """
-Fast calculating Range-based EER for spoof localization.
+A fast and efficient method for calculating Range-based EER.
+
+MIT License
+Copyright (c) 2025 Hieu-Thi Luong (contact@hieuthi.com)
+
+The original Range-based EER algorithm was proposed in the paper
+@inproceedings{zhang23v_interspeech,
+	title = {Range-Based Equal Error Rate for Spoof Localization},
+	author = {Lin Zhang and Xin Wang and Erica Cooper and Nicholas Evans and Junichi Yamagishi},
+	year = {2023},
+	booktitle = {Interspeech 2023},
+	pages = {3212--3216},
+	doi = {10.21437/Interspeech.2023-1214},
+	issn = {2958-1796},
+}
+
 """
 
 import os
@@ -18,7 +31,7 @@ from wedefense.utils.diarization.rttm_tool import get_rttm
 
 def _pad_score_array(sco, lab):
 	dur = lab[-1][-1]
-	for i in range(len(sco)-1,0):
+	for i in range(len(sco)-1,-1,-1):
 		if sco[i][1] <= dur:
 			sco = sco[:i+1]
 			break
@@ -36,7 +49,7 @@ def _calculate_eer(fpr, fnr):
 	margin = np.abs(fpr - fnr)
 	idxmin = np.argmin(margin)
 	eer       = (fpr[idxmin]+fnr[idxmin])/2
-	threshold = (idxmin+1) / margin.shape[0]
+	threshold = idxmin / (margin.shape[0]-1)
 	return eer, threshold, margin[idxmin]
 
 def _count_one_sample(counter, ref, hyp, resolution=8000, minval=-2.0, maxval=2.0):
@@ -94,7 +107,6 @@ def compute_rangeeer(labs, scos, resolution=8000, counter=None, minval=-2.0, max
 	eer, threshold, margin = _calculate_eer(fpr,fnr)
 	threshold = threshold * (maxval-minval) + minval
 	return eer, threshold, margin, fpr, fnr, counter
-
 
 def get_scores(score_file, score_index=1, score_duration=0.02, score_negative=False):
 	scos, minscore, maxscore = {}, math.inf, -math.inf

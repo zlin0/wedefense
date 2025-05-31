@@ -167,6 +167,11 @@ if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
 	  --eval_label ${data}/$dset/rttm_localization 
       #comment out the last row for eval_label if you don't have the ground truth.
 
+      python wedefense/utils/convert_frame_score_to_rttm.py \
+	  --logits_scp_path ${exp_dir}/posteriors/$dset/logits.scp \
+	  --score_reso 20 \
+	  --out_rttm_file ${exp_dir}/posteriors/${dset}/logits_rttm.txt \
+
   done
 fi
 

@@ -621,7 +621,7 @@ def spec_aug(data, num_t_mask=1, num_f_mask=1, max_t=10, max_f=8, prob=0.6):
         yield sample
 
 def rawboost(data, 
-             argo = 5):
+             algo = 5):
     """ Process Rawboost
 
         Args:
@@ -638,15 +638,20 @@ def rawboost(data,
         assert 'key' in sample
         sample_rate = sample['sample_rate']
         audio = sample['wav'].numpy()[0]
+        device = sample['wav'].device
         audio_len = audio.shape[0]
         
-        # TODO: rewrite RawBoost to support torch tensors natively
-	device = audio.device
-	processed = rawboost_util.process_Rawboost_feature(audio.numpy(), 
-			sample_rate, algo)
-        sample['wav'] = torch.from_numpy(processed).float().to(device)
+        args = rawboost_util.get_args_for_rawboost()
+        # args = argparse.Namespace(
+        #        nBands=5, minF=20, maxF=8000, minBW=100, maxBW=1000,
+        #        minCoeff=10, maxCoeff=100, minG=0, maxG=0,
+        #        minBiasLinNonLin=5, maxBiasLinNonLin=20, N_f=5,
+        #        P=10, g_sd=2, SNRmin=10, SNRmax=40)
+        
+        out_audio = rawboost_util.process_Rawboost_feature(audio, sample_rate, args, algo)
+        #sample['wav'] = torch.from_numpy(out_audio).float().to(device)
+        sample['wav'] = torch.from_numpy(out_audio).unsqueeze(0).to(device)
 
-        #sample['wav'] = rawboost_util.process_Rawboost_feature(audio, sample_rate, algo)
         yield sample
 
 

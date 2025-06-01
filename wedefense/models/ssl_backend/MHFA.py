@@ -65,7 +65,8 @@ class SSL_BACKEND_MHFA(nn.Module):
         # Define a fully connected layer for final output
         self.pooling_fc = nn.Linear(self.head_nb * self.cmp_dim, self.ous_dim)
 
-    def forward(self, x):
+
+    def get_frame_kv(self, x):
         # Input x has shape: [Batch, Dim, Frame_len, Nb_Layer]
         x = GradMultiply.apply(x, self.feature_grad_mult)
 
@@ -86,7 +87,17 @@ class SSL_BACKEND_MHFA(nn.Module):
         v = v.unsqueeze(-2) # B, T, 1
 
         # Compute attention output by taking weighted sum of values using softmaxed attention weights
-        pooling_outs = torch.sum(v.mul(nn.functional.softmax(att_k, dim=1).unsqueeze(-1)), dim=1)
+        att_out = v.mul(nn.functional.softmax(att_k, dim=1).unsqueeze(-1))
+
+        return att_out
+
+
+    def forward(self, x):
+
+        att_out = get_frame_kv(x)
+
+        # Compute attention output by taking weighted sum of values using softmaxed attention weights
+        pooling_outs = torch.sum(att_out, dim=1)
 
         # Reshape the tensor before passing through the fully connected layer
         b, h, f = pooling_outs.shape

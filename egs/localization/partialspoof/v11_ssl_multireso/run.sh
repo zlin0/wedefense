@@ -167,10 +167,12 @@ if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
 	  --eval_label ${data}/$dset/rttm_localization 
       #comment out the last row for eval_label if you don't have the ground truth.
 
-      python wedefense/utils/convert_frame_score_to_rttm.py \
-	  --logits_scp_path ${exp_dir}/posteriors/$dset/logits.scp \
-	  --score_reso 20 \
-	  --out_rttm_file ${exp_dir}/posteriors/${dset}/logits_rttm.txt \
+      # TODO
+#      python wedefense/utils/diatization/convert_frame_score_to_rttm.py \
+#	  --logits_scp_path ${exp_dir}/posteriors/$dset/logits.scp \
+#	  --score_reso 20 \
+#	  --output_rttm ${exp_dir}/posteriors/${dset}/logits_rttm.txt \
+#	  --frame_index True --label_exist True
 
   done
 fi
@@ -185,7 +187,16 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
 
     echo "Measuring " $dset
     python wedefense/metrics/localization/point_eer.py  \
+	--score_file ${exp_dir}/posteriors/${dset}/logits_frame_${eval_reso}ms.txt \
+	--score_reso ${eval_reso} 
+
+    #TODO Unify variable names and usage 
+    frame_dur=$(echo "scale=3; ${eval_reso} / 1000" | bc)  #convert ms to sec.
+    python wedefense/metrics/localization/rangeeer.py  \
 	--score_file ${exp_dir}/posteriors/${dset}/logits_frame_${eval_reso}ms.txt 
+	--score_index 3 \
+	--rttm_file ${data}/$dset/rttm_localization \
+	--frame_duration ${frame_dur}
   done
 fi
 

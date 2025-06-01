@@ -36,7 +36,7 @@ dataset_args:
   frontend: "s3prl" # fbank, s3prl
   s3prl_args:
     upstream_args:
-      name: "xlsr53"
+      name: "xlsr_53"
     download_dir: ./s3prl_hub
     multilayer_feature: True
     layerwise_feature: False #False for weighted sum

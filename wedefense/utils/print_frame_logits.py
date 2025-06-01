@@ -85,11 +85,11 @@ def main(logits_scp_path, score_reso, eval_reso, train_label, eval_label=None):
 
     # Create a map from label to the index in the logits
     if(os.path.basename(train_label).startswith('rttm')):
-        _, lab2id_dict = get_rttm(train_label)
+        _, label2id_dict = get_rttm(train_label)
     else:
         raise NotImplementedError("Other types of label is not supported yet.")
     # Got index of bonafide and spoof.
-    bonafide_idx, spoof_idx = lab2id_dict['bonafide'], lab2id_dict['spoof']
+    bonafide_idx, spoof_idx = label2id_dict['bonafide'], label2id_dict['spoof']
 
     if(eval_label):
         if(os.path.basename(eval_label).startswith('rttm')):
@@ -114,7 +114,7 @@ def main(logits_scp_path, score_reso, eval_reso, train_label, eval_label=None):
                     label_frame = "unknown"
                     for seg_label, st, et in label_segments:
                         if st <= t_sec < et:
-                            label_frame = lab2id_dict[seg_label]
+                            label_frame = label2id_dict[seg_label]
                             # label_frame = seg_label  # save bonafide/spoof
                             break
                     line += f"\t{label_frame}"    

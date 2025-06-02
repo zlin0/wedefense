@@ -28,7 +28,6 @@ import numpy as np
 
 from wedefense.utils.diarization.rttm_tool import get_rttm
 
-
 def _pad_score_array(sco, lab):
 	dur = lab[-1][-1]
 	for i in range(len(sco)-1,-1,-1):
@@ -136,12 +135,13 @@ def normalize_labs(labs, label2id):
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Calculate Range EER')
-	parser.add_argument('--score_file', type=str, help="Path to the score file.")
+	parser.add_argument('--score_file', type=str, required=True, help="Path to the score file.")
 	parser.add_argument('--score_index', type=int, default=1, help="Index of the score value.")
 	parser.add_argument('--score_negative', action="store_true", help="Score value if of the negative class")
-	parser.add_argument('--rttm_file', type=str, help="Path to the ground-truth timestamp annotations file in the rttm format.")
+	parser.add_argument('--rttm_file', type=str, required=True, help="Path to the ground-truth timestamp annotations file in the rttm format.")
 	parser.add_argument('--frame_duration', type=float, default=0.02, help="Duration (s) of one frame.")
 	parser.add_argument('--resolution', type=int, default=100000, help="Threshold resolution")
+	parser.add_argument('--save_path', type=str, default=None, help="Path to directory tp save computed data.")
 	args = parser.parse_args()
 
 	labs, label2id = get_rttm(args.rttm_file)
@@ -152,3 +152,25 @@ if __name__ == "__main__":
 
 	eer, threshold, margin, fpr, fnr, counter = compute_rangeeer(labs, scos, resolution=args.resolution, minval=minval, maxval=maxval)
 	print(f"rangeeer={eer*100:.3f}% margin={margin*100:.3f}% threshold={threshold:.3f} minscore={minscore:.3f} maxscore={maxscore:.3f} negative_class={args.score_negative}\n")
+
+
+	if args.save_path is not None:
+		os.makedirs(args.save_path, exist_ok=True)
+		np.save(f"{args.save_path}/fpr.npy", fpr)
+		np.save(f"{args.save_path}/fnr.npy", fnr)
+		np.save(f"{args.save_path}/counter.npy", counter)
+		with open(f"{args.save_path}/result.txt", "w") as f:
+			f.write(f"rangeeer={eer}\n")
+			f.write(f"threshold={threshold}\n")
+			f.write(f"margin={margin}\n")
+			f.write(f"frame_duration={args.frame_duration}\n")
+			f.write(f"minscore={minscore}\n")
+			f.write(f"maxscore={maxscore}\n")
+			f.write(f"minval={minval}\n")
+			f.write(f"maxval={maxval}\n")
+			f.write(f"score_file={args.score_file}\n")
+			f.write(f"score_index={args.score_index}\n")
+			f.write(f"score_negative={args.score_negative}\n")
+			f.write(f"rttm_file={args.rttm_file}\n")
+			f.write(f"resolution={args.resolution}\n")
+		print(f"Saved results to {args.save_path}")

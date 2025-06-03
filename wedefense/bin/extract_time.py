@@ -114,7 +114,7 @@ def extract(config='conf/config.yaml', **kwargs):
                     features = spec_aug(features, **test_conf['spec_aug_args'])
 
                 # Forward through model
-                if hasattr(model, 'module') and hasattr(model.module, 'get_frame_emb'):
+                if hasattr(model, 'get_frame_emb'):
                     outputs = model.module.get_frame_emb(features)
                 else:
                     outputs = model(features)  # (B,T,D)  

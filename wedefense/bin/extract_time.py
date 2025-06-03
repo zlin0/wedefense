@@ -115,7 +115,7 @@ def extract(config='conf/config.yaml', **kwargs):
 
                 # Forward through model
                 if hasattr(model, 'get_frame_emb'):
-                    outputs = model.module.get_frame_emb(features)
+                    outputs = model.get_frame_emb(features)
                 else:
                     outputs = model(features)  # (B,T,D)  
                 embeds = outputs[-1] if isinstance(outputs, tuple) else outputs

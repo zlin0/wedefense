@@ -1,76 +1,104 @@
 import argparse
 import pickle
 import os
-
+import math
 def time_to_frame(time, shift=0, max_length=99999):
-    return min(max(int((time * 1000 - 5) // 20 + shift), 0), max_length)
+    # mapping, 10 -> consider the window. wav2vec2 -> 20ms/frame
+    return min(max(int((time * 1000 - 10) // 20 + shift), 0), max_length)
 
-def main(pkl_path, vad_path, class_for_grad=2):
+def main(set_name, pkl_path, vad_path):
     with open(pkl_path, 'rb') as f:
         items = pickle.load(f)
 
-    n_times_list = [0] * 7
-    n_frames_list = [0] * 7
-    values_list = [0.0] * 7
+    # Index: 0real, 1fake, 2mix, 3slireal, 4slifake
+    index_type = ['Bona fide Speech (BS)    ', 
+                  'Spoofed Speech (SS)      ', 
+                  'Tansition Region (TR)    ',
+                  'Bona fide Non-speech (BN)',
+                  'Spoofed Non-speech (SN)  ']
+    n_times_list = [0] * 5
+    n_frames_list = [0] * 5
+    values_list = [0.0] * 5
 
     for item in items:
-        n_frames = len(item) - 2
-        item = item[1:]
         filename = item[0][0]
+        data = item[1]
+        n_frames = len(data) - 2
+        
+        if filename[:3] == 'CON':  # partial spoof samples only
+            with open(os.path.join(vad_path, set_name, filename + '.vad'), "r") as f_vad:
+                vads = f_vad.readlines()
 
-        if filename[:3] != 'CON':  # Only fake samples (you can reverse this)
-            continue
+            # To avoid #frame mismatches with VAD labels.
+            parts = vads[-1].strip().split(' ')
+            end_time = float(parts[1])    
+            num_frames = math.ceil(float(end_time)*1000/20)
+            if len(data)-num_frames>0:
+                data = data[len(data)-num_frames:]
 
-        with open(os.path.join(vad_path, filename + '.vad'), 'r') as f:
-            vads = f.readlines()
+            # follow the interspeech paper, this is for the data to draw the figure.
+            if filename == "CON_E_0033629": 
+                print("For the visualization of CON_E_0033629: GradCam Scores:", data, 'labels:', vads)
 
-        values_list[5] += float(item[0][class_for_grad])  # start
-        values_list[6] += float(item[-1][class_for_grad])  # end
-        n_frames_list[5] += 1
-        n_frames_list[6] += 1
+            for line in vads:
+                parts = line.strip().split(' ')
+                st_time = float(parts[0])
+                end_time = float(parts[1])
+                label = int(parts[-1])
+                
+                st_frame = time_to_frame(st_time, shift=0, max_length=n_frames)
+                end_frame = time_to_frame(end_time, shift=0, max_length=n_frames)
 
-        for line in vads:
-            parts = line.strip().split()
-            start_time, end_time, label = float(parts[0]), float(parts[1]), int(parts[2])
-            st_frame = time_to_frame(start_time, max_length=n_frames)
-            end_frame = time_to_frame(end_time, max_length=n_frames)
+                if label == 1:
+                    n_times_list[0] += 1
+                    n_frames_list[0] += max(end_frame - st_frame - 1, 0)
+                    for i in range(st_frame + 1, end_frame):
+                        values_list[0] += float(data[i])
 
-            label_to_index = {
-                1: 0,                     # fake
-                range(2, 21): 1,          # spoof
-                100: 2,                  # mix
-                101: 3,                  # slireal
-                range(102, 121): 4       # slifake
-            }
+                elif 2 <= label <= 20:
+                    n_times_list[1] += 1
+                    n_frames_list[1] += max(end_frame - st_frame - 1, 0)
+                    for i in range(st_frame + 1, end_frame):
+                        values_list[1] += float(data[i])
 
-            for label_range, idx in label_to_index.items():
-                if isinstance(label_range, range):
-                    if label in label_range:
-                        break
-                elif label == label_range:
-                    break
-            else:
-                print(f"Unknown label: {label}")
-                continue
+                elif label == 100:
+                    n_times_list[2] += 1
+                    n_frames_list[2] += max(end_frame - st_frame - 1, 0)
+                    for i in range(st_frame + 1, end_frame):
+                        values_list[2] += float(data[i])
 
-            n_times_list[idx] += 1
-            frame_count = max(end_frame - st_frame - (0 if idx == 2 else 1), 0)
-            n_frames_list[idx] += frame_count
-            for i in range(st_frame + (0 if idx == 2 else 1), end_frame + (1 if idx == 2 else 0)):
-                values_list[idx] += float(item[i][class_for_grad])
+                elif label == 101:
+                    n_times_list[3] += 1
+                    n_frames_list[3] += max(end_frame - st_frame + 1, 0)
+                    for i in range(st_frame, end_frame + 1):
+                        values_list[3] += float(data[i])
 
-    avg_values = [v / f if f > 0 else 0.0 for v, f in zip(values_list, n_frames_list)]
-    for i, val in enumerate(avg_values):
-        print(f"Type {i}: {val:.4f}")
+                elif 102 <= label <= 120:
+                    n_times_list[4] += 1
+                    n_frames_list[4] += max(end_frame - st_frame + 1, 0)
+                    for i in range(st_frame, end_frame + 1):
+                        values_list[4] += float(data[i])
 
-    overall_avg = sum(values_list[:5]) / sum(n_frames_list[:5]) if sum(n_frames_list[:5]) > 0 else 0.0
-    print(f"Overall avg: {overall_avg:.4f}")
+                else:
+                    print(f"Unknown label: {label}")
 
+    f = [(v / n if n > 0 else 0.0) for v, n in zip(values_list, n_frames_list)]
+
+    avg = sum(values_list[0:5]) / sum(n_frames_list[0:5])
+    print('--------------------{}---------------------'.format(set_name))
+    print('Relative Contribution Quantification (RCQ):')
+    for i in range(len(f)):
+        print('{}: {:.2f}%'.format(index_type[i], (f[i] - avg) / avg * 100))
+    print('-----------------------------------------')
+
+    # print('avg: {:.4f}'.format(avg))
+
+    
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--set', required=True, help='eval or dev')
     parser.add_argument('--pkl_path', required=True, help='Path to the grad-CAM score .pkl file')
     parser.add_argument('--vad_path', required=True, help='Directory containing .vad files')
-    parser.add_argument('--class_for_grad', type=int, default=2, help='Column index of grad score in the item')
     args = parser.parse_args()
 
-    main(args.pkl_path, args.vad_path, args.class_for_grad)
+    main(args.set, args.pkl_path, args.vad_path)

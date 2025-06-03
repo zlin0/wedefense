@@ -8,8 +8,8 @@
 set -x
 . ./path.sh || exit 1
 
-stage=9
-stop_stage=9
+stage=10
+stop_stage=10
 
 PS_dir=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database
 data=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database/partialspoof # data folder
@@ -26,6 +26,9 @@ num_avg=10 # how many models you want to average
 checkpoint=
 score_norm_method="asnorm"  # asnorm/snorm
 top_n=300
+
+# for XAI (vad_20sil.tar.gz from zlin)
+VAD_PATH=/home/tianchiliu/workspace/wedefense/PartialSpoof/vad_20sil
 
 # setup for large margin fine-tuning
 # lm_config=conf/campplus_lm.yaml
@@ -215,23 +218,13 @@ fi
 #######################################################################################
 if [ ${stage} -le 9 ] && [ ${stop_stage} -ge 9 ]; then
   echo "XAI"
-
-  # for dset in dev eval;do
-  #     mkdir -p ${exp_dir}/posteriors/$dset 
-  #     echo $dset
-  #     python wedefense/bin/XAI_GradCam_infer.py --model_path $model_path \
-	#   --config ${exp_dir}/config.yaml \
-	#   --num_classes 2 \
-	#   --embedding_scp_path ${exp_dir}/embeddings/$dset/embedding.scp \
-	#   --out_path ${exp_dir}/posteriors/$dset
-  # done
   mkdir -p ${exp_dir}/xai_scores/
   data_name_array=("dev" "eval")
 
   for dset in "${data_name_array[@]}"; do
     data_list=${data}/${dset}/${data_type}.list
-
-    python wedefense/bin/XAI_GradCam_infer.py \
+    gpu_id=$(echo $gpus | tr -d '[]')
+    CUDA_VISIBLE_DEVICES=$gpu_id python wedefense/bin/XAI_GradCam_infer.py \
       --config ${exp_dir}/config.yaml \
       --model_path $exp_dir/models/avg_model.pt \
       --data_type ${data_type} \
@@ -243,7 +236,7 @@ if [ ${stage} -le 9 ] && [ ${stop_stage} -ge 9 ]; then
       --aug_prob 0.0 \
       --num_classes 2 \
       --gpus ${gpus} \
-      --xai_scores_path ${exp_dir}/xai_scores/{dset}.pkl
+      --xai_scores_path ${exp_dir}/xai_scores/$dset.pkl
   done
 fi
 
@@ -252,17 +245,15 @@ fi
 #######################################################################################
 if [ ${stage} -le 10 ] && [ ${stop_stage} -ge 10 ]; then
   data_name_array=("dev" "eval")
+  PKL_PATH=${exp_dir}/xai_scores/$dset.pkl
 
   for dset in "${data_name_array[@]}"; do
-
-PKL_PATH="your_pickle_path.pkl"
-VAD_PATH="/your/vad_dir"
-CLASS_IDX=2
-
-python3 gradcam_eval_clean.py \
-    --pkl_path ${exp_dir}/xai_scores/{dset}.pkl \
-    --vad_path "$VAD_PATH" \
-    --class_for_grad "$CLASS_IDX"
+    python3 wedefense/bin/XAI_Score_analysis.py \
+        --set $dset \
+        --pkl_path ${exp_dir}/xai_scores/$dset.pkl \
+        --vad_path "$VAD_PATH" 
+  done
+fi
 
 exit 0
 

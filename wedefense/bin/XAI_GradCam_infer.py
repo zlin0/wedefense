@@ -83,24 +83,7 @@ def main(config='conf/config.yaml', **kwargs):
     batch_size = configs['batch_size']
     assert batch_size == 1
     num_workers = configs['num_workers']
-    # embedding_scp_path = configs['embedding_scp_path']
-    # out_path = configs['out_path']
-    # print(configs)
-    # print("model_path {}".format( model_path  ) )
-    # print("config {}".format( config ) )
-    # print("embedding_scp_path {}".format( embedding_scp_path ) )
-    # print("out_path {}".format( out_path ) )
 
-    # parse configs first
-    # configs = parse_config_or_kwargs(config, **kwargs)
-    # configs = config    
-    # model_path = configs['model_path']
-    # embed_ark = configs['embed_ark']
-    # batch_size = configs.get('batch_size', 1)
-    # num_workers = configs.get('num_workers', 1)
-
-    # Since the input length is not fixed, we set the built-in cudnn
-    # auto-tuner to False
     torch.backends.cudnn.benchmark = False
 
     test_conf = copy.deepcopy(configs['dataset_args'])
@@ -119,26 +102,14 @@ def main(config='conf/config.yaml', **kwargs):
     device = torch.device("cuda")
     model.to(device).eval()
 
-
-    
-    # utt  = []
-    # embd = []
-    # for k, v in kaldiio.load_scp_sequential( embedding_scp_path ):
-    #     utt.append( k )
-    #     embd.append( v )
-    # embd = np.vstack( embd )    
+   
  
 
     checkpoint = torch.load(model_path, map_location='cpu')
 
-    # configs = parse_config_or_kwargs(config)
 
-    # projection layer
-    if(configs['model_args']['embed_dim'] < 0): #TODO check
-        # #if emb_dim <0, we will reduce dim by emb_dim. like -2 will be dim/2
+    if(configs['model_args']['embed_dim'] < 0):
         if 'multireso' in configs['model'] and configs['model_args']['num_scale'] > 0:
-            # If we are using multireso structure, dim will reduced by 
-            #['embed_dim'] in ['num_scale'] times.
             configs['projection_args']['embed_dim'] = int(
                     configs['model_args']['feat_dim'] / 
                     pow(abs(configs['model_args']['embed_dim']), 
@@ -156,7 +127,6 @@ def main(config='conf/config.yaml', **kwargs):
     configs['projection_args']['do_lm'] = configs.get('do_lm', False)
     if data_type != 'feat' and configs['dataset_args'][
             'speed_perturb']:
-        # diff speed is regarded as diff spk
         configs['projection_args']['num_class'] *= 3
         if configs.get('do_lm', False):
             logger.info(
@@ -176,7 +146,6 @@ def main(config='conf/config.yaml', **kwargs):
     if (len(unexpected_keys)>0):
         print( "WARNING: {} unexpected_keys.".format( len(unexpected_keys)  ))
 
-    # device = torch.device("cpu")
     projection.to(device).eval()
 
     full_model = FullModel(model, projection, test_conf).to(device).eval()
@@ -197,25 +166,13 @@ def main(config='conf/config.yaml', **kwargs):
                             num_workers=num_workers,
                             prefetch_factor=4)
     
-    # wavs = torch.rand(1, 1, 160000).to(device)     # (B, 1, W)
-    # wavs = wavs.squeeze(1).float().to(device)      # (B, W)
-
-    # with torch.no_grad():
-    #     output = full_model(wavs, test_conf)
-    # print('output', output)
-    # x = input('?')
-
     save_list = []  
-    save_dir = xai_scores_path  
 
     targets = [ClassifierOutputTarget(1)]
     target_layer = [full_model.encoder.fc]
     cam = GradCAM(model=full_model, target_layers=target_layer)
 
-    # with torch.no_grad():
 
-        # with kaldiio.WriteHelper('ark,scp:' + embed_ark + "," +
-        #                         embed_scp) as writer:
     for _, batch in tqdm(enumerate(dataloader)):
         utt = batch['key'][0] # during inference, batch size shall be 1
         if frontend_type == 'fbank' or frontend_type.startswith('lfcc'):
@@ -224,67 +181,13 @@ def main(config='conf/config.yaml', **kwargs):
         else:  # 's3prl'
             wavs = batch['wav']  # (B,1,W)
             wavs = wavs.squeeze(1).float().to(device)  # (B,W)
-            # wavs_len = torch.LongTensor([wavs.shape[1]]).repeat(
-                # wavs.shape[0]).to(device)  # (B).
-            
 
         out_cam = cam(input_tensor=wavs, targets=targets)
         save_list.append([[utt], out_cam.squeeze(0).tolist()])
-        # print('utt', utt, 'out_cam.shape', out_cam.shape)
 
-            # output = full_model(wavs, test_conf)
-
-            # print('output', output)
-            # apply cmvn
-            # if test_conf.get('cmvn', True):
-            #     features = apply_cmvn(features,
-            #                         **test_conf.get('cmvn_args', {}))
-            # # spec augmentation
-            # if test_conf.get('spec_aug', False):
-            #     features = spec_aug(features, **test_conf['spec_aug_args'])
-
-            # Forward through model
-            # outputs = model(features)  # embed or (embed_a, embed_b)
-            # embeds = outputs[-1] if isinstance(outputs, tuple) else outputs
-            # embeds = embeds.cpu().detach().numpy()  # (B,F)
-
-            # for i, utt in enumerate(utts):
-            #     embed = embeds[i]
-            #     writer(utt, embed)
     with open(xai_scores_path, 'wb') as f:
         pickle.dump(save_list, f)
-    print(f"Saved XAI Grad-CAM scores to {save_path}")
 
-    # wavs = torch.rand(1, 1, 160000).to(device)     # (B, 1, W)
-    # wavs = wavs.squeeze(1).float().to(device)      # (B, W)
-
-    # with torch.no_grad():
-    #     output = full_model(wavs, test_conf)
-
-
-    # Need to add something here to set margin to zero in case of margin based losses
-    # Also a dummy label need to be provided below
-
-    # with torch.no_grad():
-    #     output = projection(torch.from_numpy(embd), torch.from_numpy(np.zeros(embd.shape[0])))
-    #     if isinstance(output, tuple):
-    #         # some projection layers return output and loss
-    #         output = output[0].detach().numpy()
-    #     else:
-    #         output = output.detach().numpy()
-    
-    # print(output.shape)
-    # #print(output)
-
-    # # out_path = os.path.dirname(embedding_scp_path)
-    # print(out_path)
-    # with kaldiio.WriteHelper('ark,scp:' + out_path + "/logits.ark," + out_path + "/logits.scp") as writer:
-    #     for i, utt in enumerate(utt):
-    #         writer(utt, output[i])
-
-    # with kaldiio.WriteHelper('ark,scp:' + out_path + "/posteriors.ark," + out_path + "/posteriors.scp") as writer:
-    #     for i, utt in enumerate(utt):
-    #         writer(utt, softmax(output[i]))
 
 if __name__ == "__main__":
     fire.Fire(main)

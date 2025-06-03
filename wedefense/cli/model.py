@@ -122,6 +122,29 @@ class Model:
         embeds = outputs[-1] if isinstance(outputs, tuple) else outputs
         return embeds
 
+    def logits_to_rttm(self, logits, rttm_file, utt, score_reso=20, bonafide_idx=0):
+        fout = open(rttm_file, 'w', encoding='utf-8')
+        frame_shift = score_reso / 1000.0  # Convert ms to seconds
+        preds = logits.argmax(axis=1)  # Frame-level predictions (0 or 1)
+        if len(preds) == 0:
+            return []
+        start_idx = 0
+        current_label = preds[0]
+        for idx in range(1, len(preds)):
+            if preds[idx] != current_label:
+                start_time = start_idx * frame_shift
+                duration = (idx - start_idx) * frame_shift
+                label = 'bonafide' if current_label == bonafide_idx else 'spoof'
+                fout.write(f"SPEAKER {utt} 1 {start_time:.3f} {duration:.3f} <NA> <NA> {label} <NA> <NA>\n")
+                start_idx = idx
+                current_label = preds[idx]
+
+        start_time = start_idx * frame_shift
+        duration = (len(preds) - start_idx) * frame_shift
+        label = 'bonafide' if current_label == bonafide_idx else 'spoof'
+        fout.write(f"SPEAKER {utt} 1 {start_time:.3f} {duration:.3f} <NA> <NA> {label} <NA> <NA>\n")
+        fout.close()
+
     def detection(self, audio_path: str):
         embeds = self.compute_embeds(audio_path)
         outputs = self.model.projection(embeds)
@@ -131,11 +154,11 @@ class Model:
 
 
 
-    def localization(self, audio_path: str):
+    def localization(self, audio_path: str, rttm_file: str):
         embeds = self.compute_embeds(audio_path)
         outputs = self.model.projection(embeds.squeeze(0))
         outputs = outputs[0] if isinstance(outputs, tuple) else outputs
-        print(outputs)
+        self.logits_to_rttm(outputs, rttm_file, os.path.basename(audio_path).split('.')[0])
         return outputs
 
 def load_model(model_id: str=None, model_dir: str=None):
@@ -143,4 +166,3 @@ def load_model(model_id: str=None, model_dir: str=None):
         model_dir = Hub.get_model(model_id)
 
     return Model(model_dir)
-

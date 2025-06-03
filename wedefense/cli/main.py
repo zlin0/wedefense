@@ -25,6 +25,7 @@ def get_args():
     parser.add_argument('--device', type=str, default='cpu', help='Device to use for computation (e.g., cpu, cuda:0)')
     parser.add_argument('--resample_rate', type=int, default=16000, help='Resample rate for audio processing')
     parser.add_argument('--audio_file', type=str, help='Path to the audio file')
+    parser.add_argument('--rttm_file', type=str, help='Path to the RTTM file')
     args = parser.parse_args()
     return args
 
@@ -41,7 +42,7 @@ def main():
     if args.task == 'detection':
         model.detection(args.audio_file)
     elif args.task == 'localization':
-        model.localization(args.audio_file)
+        model.localization(args.audio_file, args.rttm_file)
 
 
 if __name__ == "__main__":

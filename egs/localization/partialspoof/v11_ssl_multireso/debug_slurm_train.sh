@@ -9,24 +9,29 @@
 #SBATCH --mail-user="lzhan268@jh.edu"  #email for reporting
 #SBATCH --mail-type=END,FAIL  #report types
 #SBATCH --output=./logs/slurm-%A_%a.out
-#SBATCH --array=0-1
+#SBATCH --array=1
 
 #unset PYTHONPATH
 #unset PYTHONHOME
 #
+#
 source ~/.bashrc
+export TMPDIR=/tmp/$USER_$SLURM_JOB_ID
+mkdir -p $TMPDIR
 conda activate wedefense_pip
 #conda activate /homes/kazi/isilnova/.conda/envs/wespeaker
 #which python
 
 echo "[$(date)] Starting Job ID: $SLURM_JOB_ID" > logs/debug_$SLURM_JOB_ID.txt
 
-CONFIGs=(multireso_FTxlsr53_gmlp_scale2_CE
- 	multireso_FTxlsr53_gmlp_scale2_p2sgrad)
+CONFIGs=(
+	FTxlsr_53_gmlp_reso20_CE
+	FTxlsr_53_gmlp_reso20_P2Sgrad
+)
 config_name=${CONFIGs[$SLURM_ARRAY_TASK_ID]} 
 
 
-./run.sh --stage 3 --stop_stage 3 \
+./run.sh --stage 3 --stop_stage 7 \
     --config conf/${config_name}.yaml \
     --exp_dir exp/${config_name}
 

@@ -66,7 +66,7 @@ class SSL_BACKEND_MHFA(nn.Module):
         self.pooling_fc = nn.Linear(self.head_nb * self.cmp_dim, self.ous_dim)
 
 
-    def get_frame_kv(self, x):
+    def get_frame_att_emb(self, x):
         # Input x has shape: [Batch, Dim, Frame_len, Nb_Layer]
         x = GradMultiply.apply(x, self.feature_grad_mult)
 
@@ -87,14 +87,23 @@ class SSL_BACKEND_MHFA(nn.Module):
         v = v.unsqueeze(-2) # B, T, 1
 
         # Compute attention output by taking weighted sum of values using softmaxed attention weights
-        att_out = v.mul(nn.functional.softmax(att_k, dim=1).unsqueeze(-1))
+        att_out = v.mul(nn.functional.softmax(att_k, dim=1).unsqueeze(-1)) # [B, T, H, D]
+
 
         return att_out
 
+    def get_frame_emb(self, x):
+
+        att_out = self.get_frame_att_emb(x)
+
+        # Average over heads [B, T, D]
+        att_out_mean = att_out.mean(dim=2)
+
+        return att_out_mean 
 
     def forward(self, x):
 
-        att_out = get_frame_kv(x)
+        att_out = self.get_frame_att_emb(x)
 
         # Compute attention output by taking weighted sum of values using softmaxed attention weights
         pooling_outs = torch.sum(att_out, dim=1)

@@ -94,7 +94,7 @@ class Model:
             feat = feat - torch.mean(feat, 0)
         return feat
 
-    def compute_features(self, audio_path: str):
+    def compute_embeds(self, audio_path: str):
         wavform, sample_rate = torchaudio.load(audio_path,
                                                normalize=self.wavform_normalize)
         print(wavform.shape)
@@ -119,23 +119,24 @@ class Model:
             features = apply_cmvn(features, **self.cmvn_args)
 
         outputs = self.model(features)
-        # print(outputs)
         embeds = outputs[-1] if isinstance(outputs, tuple) else outputs
+        return embeds
+
+    def detection(self, audio_path: str):
+        embeds = self.compute_embeds(audio_path)
         outputs = self.model.projection(embeds)
         outputs = outputs[0] if isinstance(outputs, tuple) else outputs
-
+        print(outputs)
         return outputs
 
 
 
-    def detection(self, audio_path: str):
-        logits = self.compute_features(audio_path)
-        print(logits)
-
-
     def localization(self, audio_path: str):
-        pass
-
+        embeds = self.compute_embeds(audio_path)
+        outputs = self.model.projection(embeds.squeeze(0))
+        outputs = outputs[0] if isinstance(outputs, tuple) else outputs
+        print(outputs)
+        return outputs
 
 def load_model(model_id: str=None, model_dir: str=None):
     if model_dir is None:

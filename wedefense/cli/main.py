@@ -41,7 +41,7 @@ def main():
     if args.task == 'detection':
         model.detection(args.audio_file)
     elif args.task == 'localization':
-        model.localization()
+        model.localization(args.audio_file)
 
 
 if __name__ == "__main__":

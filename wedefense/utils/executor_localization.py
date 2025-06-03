@@ -74,7 +74,10 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
                                     **configs['dataset_args']['spec_aug_args'])
 
             num_class = configs['projection_args']['num_class']
-            outputs = model(features)  # (B,T,D)  
+            if hasattr(model, 'module') and hasattr(model.module, 'get_frame_emb'):
+                outputs = model.module.get_frame_emb(features)
+            else:
+                outputs = model(features)  # (B,T,D)  
             embeds = outputs[-1] if isinstance(outputs, tuple) else outputs
             # flatten to (batch_size * seq_length, feat_dim): 
             batch_size = embeds.shape[0]

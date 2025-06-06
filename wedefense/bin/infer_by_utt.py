@@ -94,14 +94,15 @@ def main(model_path, config, num_classes, embedding_scp_path, out_path, data_typ
                 utts_lst.append(utt)
                 embds_lst.append(emb)
     
-                output = projection(torch.from_numpy(emb.copy()), 
-                                    torch.from_numpy(np.zeros(emb.shape[0])))
+                # output = projection(torch.from_numpy(emb.copy()), 
+                #                     torch.from_numpy(np.zeros(emb.shape[0])))
+                output = emb.copy()
 
-                if isinstance(output, tuple):
-                    # some projection layers return output and loss
-                    output = output[0].detach().numpy()
-                else:
-                    output = output.detach().numpy()
+                # if isinstance(output, tuple):
+                #     # some projection layers return output and loss
+                #     output = output[0].detach().numpy()
+                # else:
+                #     output = output.detach().numpy()
 
 
                 writer_logit(utt, output)

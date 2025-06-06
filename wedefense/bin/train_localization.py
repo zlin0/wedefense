@@ -244,7 +244,7 @@ def train(config='conf/config.yaml', **kwargs):
 
     # ddp_model
     model.cuda()
-    ddp_model = torch.nn.parallel.DistributedDataParallel(model)
+    ddp_model = torch.nn.parallel.DistributedDataParallel(model, find_unused_parameters=True)
     device = torch.device("cuda")
 
     criterion = getattr(torch.nn, configs['loss'])(**configs['loss_args'])

@@ -15,8 +15,8 @@ PS_dir=/data/neil/PartialSpoof/database
 data=data/partialspoof # data folder
 data_type="shard"  # shard/raw
 
-config=conf/multireso_FTwav2vec2_large960_gmlp_reso20_CE.yaml 
-exp_dir=exp/debug_multireso_gmlp
+config=conf/XLSR_BAM_reso160.yaml
+exp_dir=exp/debug_xlsr_bam
 gpus="[0]"
 num_avg=10 # how many models you want to average
 checkpoint=
@@ -167,13 +167,12 @@ if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
 	  --eval_label ${data}/$dset/rttm_localization 
       #comment out the last row for eval_label if you don't have the ground truth.
 
-      #TODO Convert logits to rttm, based on argmax only for now.
-      python wedefense/utils/diarization/convert_frame_score_to_rttm.py \
-	  --logits_scp_path ${exp_dir}/posteriors/$dset/logits.scp \
-	  --score_reso 20 \
-	  --output_rttm ${exp_dir}/posteriors/${dset}/logits_rttm.txt \
-	  --label2id_file ${data}/train/label2id
-	  #--frame_index True --label_exist True
+      # TODO
+#      python wedefense/utils/diatization/convert_frame_score_to_rttm.py \
+#	  --logits_scp_path ${exp_dir}/posteriors/$dset/logits.scp \
+#	  --score_reso 20 \
+#	  --output_rttm ${exp_dir}/posteriors/${dset}/logits_rttm.txt \
+#	  --frame_index True --label_exist True
 
   done
 fi

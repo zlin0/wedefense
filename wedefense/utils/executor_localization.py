@@ -19,6 +19,7 @@ import tableprint as tp
 import torch
 import torchnet as tnt
 from wedefense.dataset.dataset_utils import apply_cmvn, spec_aug
+from wedefense.models.loss.loss import MaskCrossEnrtopyLoss, BalanceBCELoss
 
 ##TODO add
 #def lab_in_scale(self, labvec, shift):
@@ -78,26 +79,65 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
                 outputs = model.module.get_frame_emb(features)
             else:
                 outputs = model(features)  # (B,T,D)  
-            embeds = outputs[-1] if isinstance(outputs, tuple) else outputs
-            # flatten to (batch_size * seq_length, feat_dim): 
-            batch_size = embeds.shape[0]
-            feat_dim = embeds.shape[-1]
-            outputs = model.module.projection(embeds.view(-1, feat_dim), targets) #(BxT,num_class)
-            outputs = outputs.view(targets.shape[0], targets.shape[1] , -1) #->(B, T, num_class)
+            if model.module.name == "BAM":
+                # print("successfully get the two outputs from BAM, let's bypass the next!")
+                outputs, b_pred = outputs
+                # print("output shape: ", output.shape, "b_pred shape: ", b_pred.shape)
+                # print("targets shape: ", targets.shape)
 
+                ce_loss_fn = MaskCrossEnrtopyLoss()
+                bce_loss_fn = BalanceBCELoss()
 
-            if isinstance(outputs, tuple):
-                outputs, loss = outputs
+                loss1 = ce_loss_fn(outputs.transpose(-1,-2), targets.to(torch.long), mask=torch.ones_like(targets))  # (B, T)
+                
+                # boundary_labels = []
+                # for target in targets:
+                #     pos = []
+                #     for i, label in enumerate(target):
+                #         if i == 0:
+                #             last = label
+                #         if label != last:
+                #             splice_index = i if label==0 else i-1 
+                #             pos.append(splice_index)
+                #             last = label
+                        
+                #     pos = list(set(pos))
+                #     boundary_label= torch.zeros_like(target)
+                #     boundary_label[pos] = 1.0
+                #     boundary_labels.append(boundary_label)
+                # boundary_label = torch.stack(boundary_labels).to(device)  # (B, T)
+
+                # Vectorized approach to compute boundary labels
+                boundary_label = (targets[:, 1:] != targets[:, :-1]).to(torch.float32)  # Compare adjacent elements for boundary detection
+                boundary_label = torch.cat([torch.zeros_like(boundary_label[:, :1]), boundary_label], dim=1)  # Add zero padding at the start
+                boundary_label = boundary_label.to(device)
+
+                # print("boundary_label shape: ", boundary_label.shape)
+
+                loss2 = bce_loss_fn(b_pred.float(), boundary_label, mask=torch.ones_like(targets).float())  # (B, T)
+                loss = loss1 + 0.5 * loss2
+                
             else:
-                if isinstance(criterion, torch.nn.MSELoss):
-                    # For MSE, we need to convert targets to one-hot
-                    targets_one_hot = torch.zeros_like(outputs)
-                    targets_one_hot.scatter_(2, targets.unsqueeze(2), 1)  # (B, T, 2)
-                    loss = criterion(outputs, targets_one_hot)
+                embeds = outputs[-1] if isinstance(outputs, tuple) else outputs
+                # flatten to (batch_size * seq_length, feat_dim): 
+                batch_size = embeds.shape[0]
+                feat_dim = embeds.shape[-1]
+                outputs = model.module.projection(embeds.view(-1, feat_dim), targets) #(BxT,num_class)
+                outputs = outputs.view(targets.shape[0], targets.shape[1] , -1) #->(B, T, num_class)
+
+
+                if isinstance(outputs, tuple):
+                    outputs, loss = outputs
                 else:
-                    # outputs: (B, T, num_class = 2) -> (B*T, num_class)
-                    # targets: (B, T) -> (B*T)
-                    loss = criterion(outputs.view(-1, num_class), targets.view(-1))
+                    if isinstance(criterion, torch.nn.MSELoss):
+                        # For MSE, we need to convert targets to one-hot
+                        targets_one_hot = torch.zeros_like(outputs)
+                        targets_one_hot.scatter_(2, targets.unsqueeze(2), 1)  # (B, T, 2)
+                        loss = criterion(outputs, targets_one_hot)
+                    else:
+                        # outputs: (B, T, num_class = 2) -> (B*T, num_class)
+                        # targets: (B, T) -> (B*T)
+                        loss = criterion(outputs.view(-1, num_class), targets.view(-1))
 
 
         # loss, acc

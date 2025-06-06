@@ -115,9 +115,13 @@ def extract(config='conf/config.yaml', **kwargs):
 
                 # Forward through model
                 if hasattr(model, 'get_frame_emb'):
-                    outputs = model.module.get_frame_emb(features)
+                    outputs = model.get_frame_emb(features)
                 else:
                     outputs = model(features)  # (B,T,D)  
+                if model.name == "BAM":
+                # print("successfully get the two outputs from BAM, let's bypass the next!")
+                    outputs, b_pred = outputs
+                
                 embeds = outputs[-1] if isinstance(outputs, tuple) else outputs
                 embeds = embeds.cpu().detach().numpy()  # (B,F)
 

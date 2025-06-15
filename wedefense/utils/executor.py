@@ -56,7 +56,7 @@ def train_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
 
         targets = batch['label']
         targets = targets.long().to(device)  # (B)
-        if frontend_type == 'fbank':
+        if frontend_type == 'fbank' or frontend_type.startswith('lfcc'):
             features = batch['feat']  # (B,T,F)
             features = features.float().to(device)
         else:  # 's3prl'
@@ -139,7 +139,7 @@ def val_epoch(val_dataloader, val_iter, model, criterion, device, configs):
         for i, batch in enumerate(val_dataloader):
             targets = batch['label']
             targets = targets.long().to(device)  # (B)
-            if frontend_type == 'fbank':
+            if frontend_type == 'fbank' or frontend_type.startswith('lfcc'):
                 features = batch['feat']  # (B,T,F)
                 features = features.float().to(device)
             else:  # 's3prl'

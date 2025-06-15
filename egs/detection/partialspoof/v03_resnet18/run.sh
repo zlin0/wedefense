@@ -62,8 +62,10 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   find ${RIRs_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
   # Convert all musan data to LMDB. But note that lmdb does not work on NFS!
   python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb 
+  rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
   # Convert all rirs data to LMDB
   python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
+  rsync -av ${HOME}/local_lmdb/rirs/lmdb data/rirs/lmdb
 fi
 
 #######################################################################################
@@ -77,7 +79,7 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
     #python -m pdb \
     #torchrun --standalone --nnodes=1 --nproc_per_node=$num_gpus \
     torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((RANDOM)) --nnodes=1 --nproc_per_node=$num_gpus \
-      wedefense/bin/train_new.py --config $config \
+      wedefense/bin/train.py --config $config \
         --exp_dir ${exp_dir} \
         --gpus $gpus \
         --num_avg ${num_avg} \
@@ -113,7 +115,7 @@ if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
 
   local/extract_emb.sh \
      --exp_dir $exp_dir --model_path $model_path \
-     --nj 4 --gpus $gpus --data_type $data_type --data ${data}
+     --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}
 fi
 
 #######################################################################################

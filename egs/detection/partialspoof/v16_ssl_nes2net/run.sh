@@ -15,13 +15,10 @@ PS_dir=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database
 data=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database/partialspoof # data folder
 data_type="shard"  # shard/raw
 
-config=conf/xlsr_53_ft_backend_Nes2Net.yaml
-exp_dir=exp/xlsr_53_ft_backend_Nes2Net_SE4
+config=conf/0613_xlsr53_Nes2Net8_ASTP_num_frms150_epoch30_bz64_2e4_1e6_adam_warm3.yaml
+exp_dir=exp/0613_xlsr53_Nes2Net8_ASTP_num_frms150_epoch30_bz64_2e4_1e6_adam_warm3
 
-# config=conf/wav2vec2_large_960_ft_backend_Nes2Net.yaml
-# exp_dir=exp/wav2vec2_large_960_ft_backend_Nes2Net
-
-gpus="[6]"
+gpus="[7]"
 num_avg=10 # how many models you want to average
 checkpoint=
 score_norm_method="asnorm"  # asnorm/snorm
@@ -130,6 +127,8 @@ model_path=$avg_model
 # Stage 4. Averaging the model, and extract embeddings
 #######################################################################################
 if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
+  avg_model=$exp_dir/models/avg_model.pt
+  model_path=$avg_model
   echo "Do model average ..."
   python wedefense/bin/average_model.py \
     --dst_model $avg_model \

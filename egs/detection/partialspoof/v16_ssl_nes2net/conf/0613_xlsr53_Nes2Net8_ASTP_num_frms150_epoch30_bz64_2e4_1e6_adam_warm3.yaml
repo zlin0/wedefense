@@ -1,18 +1,18 @@
 ### train configuraton
 
-exp_dir: exp/W2V2xlsr-TSTP-emb256-fbank80-num_frms400-aug0-spFalse-saFalse-ArcMargin-SGD-epoch100
+exp_dir: exp/0613_xlsr53_Nes2Net8_ASTP_num_frms150_epoch30_bz64_2e4_1e6_adam_warm3
 gpus: "[0,1]"
 num_avg: 10
 enable_amp: False # whether enable automatic mixed precision training
 
 seed: 42
-num_epochs: 20
+num_epochs: 30
 save_epoch_interval: 5 # save model every 5 epochs
 log_batch_interval: 100 # log every 100 batchs
 
 dataloader_args:
-  batch_size: 32
-  num_workers: 6
+  batch_size: 64
+  num_workers: 4
   pin_memory: False
   prefetch_factor: 8 
   drop_last: True
@@ -88,7 +88,7 @@ optimizer_args:
 
 scheduler: ExponentialDecrease
 scheduler_args:
-  initial_lr: 0.00001
+  initial_lr: 0.0002
   final_lr: 0.000001
-  warm_up_epoch: 6
+  warm_up_epoch: 3
   warm_from_zero: True

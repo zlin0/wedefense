@@ -30,7 +30,8 @@ importlib-metadata
 whisper
 pandas==2.2.3
 
+# For wandb logging
+wandb
 
-# For umap
-kaldiio
+# For umap visualizing embedding
 umap-learn

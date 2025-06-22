@@ -33,4 +33,4 @@ pandas==2.2.3
 
 # For umap
 kaldiio
-umap
+umap-learn

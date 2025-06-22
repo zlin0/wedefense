@@ -1,0 +1,12 @@
+#!/bin/bash 
+
+#SBATCH --job-name=download_data #job name
+#SBATCH --nodes=1  #number of nodes requested
+#SBATCH --partition=cpu   #queue
+#SBATCH --mail-user="lzhan268@jh.edu"  #email for reporting
+#SBATCH --mail-type=END,FAIL  #report types
+
+
+huggingface-cli download --repo-type dataset jungjee/spoofceleb #\
+	#--local-dir /export/fs05/arts/dataset/SpoofCeleb 
+

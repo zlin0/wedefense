@@ -29,4 +29,10 @@ umap-learn==0.5.6
 importlib-metadata
 whisper
 pandas==2.2.3
+
+# For wandb logging
 wandb
+
+# For umap visualizing embedding
+umap-learn
+

@@ -32,7 +32,7 @@ from wedefense.postprocessing.models import LogisticRegression
 pd.set_option('future.no_silent_downcasting', True)
 
 
-def main(model_load_path, score_dir, new_scores_file):
+def main(model_load_path, score_dir, new_scores_file, method='LR'):
 
     # Search for scores
     print("Using scores in {} for calibration / fusion.".format(score_dir))
@@ -63,14 +63,19 @@ def main(model_load_path, score_dir, new_scores_file):
     df = df.to_numpy().astype(np.float32)
 
     # Initialize and load the model. TODO: Code should support more models.
-    device = T.device("cpu")
-    model = LogisticRegression(n_sys=n_sys, p_tar=0.5).to(device)
-    model.load_state_dict(T.load(model_load_path))
-    model.eval()
+    if method == 'LR':
+        device = T.device("cpu")
+        model = LogisticRegression(n_sys=n_sys, p_tar=0.5).to(device)
+        model.load_state_dict(T.load(model_load_path))
+        model.eval()
 
-    # Creat the scores. Setting p_tar=0.5 means we will get LLRs. It overrides
-    # the p_tar of the model.
-    llr = model(T.tensor(df), p_tar=0.5).detach().numpy()
+        # Creat the scores. Setting p_tar=0.5 means we will get LLRs. It
+        # overrides the p_tar of the model.
+        llr = model(T.tensor(df), p_tar=0.5).detach().numpy()
+
+    elif method == 'min_max_avg':
+        aff_trans = np.load(model_load_path, allow_pickle=False)
+        llr = df.dot(aff_trans[0:-1]) + aff_trans[-1]
 
     with open(new_scores_file, "w") as g:
         g.write("filename\tcm-score\n")

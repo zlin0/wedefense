@@ -356,7 +356,7 @@ def train(config='conf/config.yaml', **kwargs):
 
     if dist.is_initialized():
         dist.destroy_process_group()
-    wandb_log.finish()    
+    wandb_run.finish()    
 
 
 if __name__ == '__main__':

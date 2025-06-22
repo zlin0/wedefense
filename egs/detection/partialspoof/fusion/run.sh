@@ -29,8 +29,8 @@
 #set -x
 . ./path.sh || exit 1
 
-stage=3
-stop_stage=3
+stage=1
+stop_stage=5
 
 
 # Nothing will be written here so this path can be set to one of data dirs of
@@ -55,7 +55,7 @@ c_fa=10
 # only used for evaluation.
 # Having the scores organizeed like this makes it easy to try different
 # combinations for fusion.
-
+#
 # Dev scores.
 declare -A dev_scores=(
     ["PS_v03"]="/mnt/matylda6/rohdin/software/wedefense/scores_from_xin/detection/partialspoof/v03_resnet18/exp/resnet.yaml/posteriors/dev/llr.txt"
@@ -64,7 +64,6 @@ declare -A dev_scores=(
     ["A5_v14"]="/mnt/matylda6/rohdin/software/wedefense/scores_from_xin/cross-database/detection/partialspoof/v14_ssl_sls/exp/asvspoof5_v14_ssl_sls_SLS_w2v.yaml_4125427/posteriors/dev/llr.txt"
     ["A5_v15"]="/mnt/matylda6/pengjy/shared_model_weights/lin/wedefense/egs/detection/partialspoof/v15_ssl_mhfa/exp/MHFA_wav2vec2_large_960-FT-1stage_baseline_cross/posteriors/dev/llr.txt"
 )
-
 
 # Eval scores. Keys must be the systems defined above.
 declare -A eval_scores=(
@@ -76,43 +75,46 @@ declare -A eval_scores=(
 )
 
 
+# Specify the systems you want to test in current fusion here. Only these
+# systems will be used. If you specify only one system, it will result in
+# calibration.
+#
+# Below are the combinations used for the paper submitted to ASRU 2025
+# describing the Wedefense toolkit (and some more).
+#
 # Since here we evaluate partialspoof (PS), using EMBEDDING EXTRACTORS trained
 # on asvspoof5 (A5) will result in cross-database fusion. Note that this refers
 # to embedding extractor training data. THE CALIBRATION / FUSION MODELS ARE
 # ALWAYS TRAINED ON INDOMAIN (PS) IN THESE EXPERIMENTS.
 
+# declare -a systems=('PS_v03') 
+# fusion_name=fusion-PS_v03
 
-# Specify the systems you want to test in current fusion here. Only these
-# systems will be used. If you specify only one system, it will result in
-# calibration.
+# declare -a systems=('PS_v13') 
+# fusion_name=fusion-PS_v13
 
-# Below are the combinations used for the paper submitted to ASRU 2025
-# describing the Wedefense toolkit.
+### Table V, row 1 (although calibration is not needed for EER reported there)
+# declare -a systems=('PS_v15') 
+# fusion_name=fusion-PS_v13
 
-#Calibration, Table 1, Row 2
-#declare -a systems=('PS_v03') 
-#fusion_name=fusion-PS_v03
+# declare -a systems=('A5_v14') 
+# fusion_name=fusion-A5_v14
 
-#declare -a systems=('PS_v13') 
-#fusion_name=fusion-PS_v13
+### Table V, row 2 (although calibration is not needed for EER reported there)
+# declare -a systems=('A5_v15') 
+# fusion_name=fusion-A5_v15
 
-#declare -a systems=('PS_v15') 
-#fusion_name=fusion-PS_v13
+### Table V, row 6
+# declare -a systems=('PS_v13' 'PS_v15') 
+# fusion_name=fusion-PS_v13-PS_v15
 
-#declare -a systems=('A5_v14') 
-#fusion_name=fusion-A5_v14
+### Table V, row 7
+# declare -a systems=('A5_v14' 'A5_v15') 
+# fusion_name=fusion-A5_v14-A5_v15
 
-#declare -a systems=('A5_v15') 
-#fusion_name=fusion-A5_v15
-
-declare -a systems=('PS_v13' 'PS_v15') 
-fusion_name=fusion-PS_v13-PS_v15
-
-#declare -a systems=('A5_v14' 'A5_v15') 
-#fusion_name=fusion-A5_v14-A5_v15
-
-#declare -a systems=('PS_v15' 'A5_v15') 
-#fusion_name=fusion-PS_v15-A5_v15
+### Table V, row 8
+declare -a systems=('PS_v15' 'A5_v15') 
+fusion_name=fusion-PS_v15-A5_v15
 
 
 exp_dir=exp/${fusion_name}_p_tar-${p_tar}_c_fr-${c_fr}_c_fa_${c_fa}

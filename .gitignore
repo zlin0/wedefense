@@ -3,6 +3,7 @@
 data/
 data
 exp/
+wandb/
 s3prl_hub/
 .nfs*
 note

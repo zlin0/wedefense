@@ -39,6 +39,8 @@ from wedefense.utils.utils import get_logger, parse_config_or_kwargs, set_seed, 
 
 import wedefense.dataset.customize_collate_fn as nii_collate_fn
 
+import wandb
+import time
 
 def train(config='conf/config.yaml', **kwargs):
     """Trains a model on the given features and spk labels.
@@ -48,6 +50,21 @@ def train(config='conf/config.yaml', **kwargs):
     :returns: None
     """
     configs = parse_config_or_kwargs(config, **kwargs)
+
+    #wandb info
+    model_dir = os.getcwd()             # current dir: model dir
+    egs_dir = model_dir.split('/egs/')[0] + '/egs'       # /path/to/<task>/<database>/<model>
+
+    project_name = os.path.relpath(model_dir, egs_dir)  # <task>/<database>/<model>
+    run_name = f"{configs['exp_dir']}_{time.strftime('%Y%m%d_%H%M%S')}".replace("exp/", "")
+    wandb_run = wandb.init(
+        entity = "wedefense",
+        project = project_name.replace(os.sep, "_"),
+        name = run_name,
+        config={
+                "model": configs['model'],},
+    )
+
     checkpoint = configs.get('checkpoint', None)
     # dist configs
     local_rank = int(os.environ.get('LOCAL_RANK', 0))
@@ -312,11 +329,11 @@ def train(config='conf/config.yaml', **kwargs):
 
         train_epoch(
             train_dataloader, epoch_iter, ddp_model, criterion, optimizer, scheduler,
-            margin_scheduler, epoch, logger, scaler, device, configs
+            margin_scheduler, epoch, logger, scaler, device, configs, wandb_log=wandb_run
         )
 
         if val_dataloader is not None and (epoch-1) % val_interval == 0:
-            val_loss, val_acc = val_epoch(val_dataloader, val_iter, ddp_model, criterion, device, configs)
+            val_loss, val_acc = val_epoch(val_dataloader, val_iter, ddp_model, criterion, device, configs, wandb_log=wandb_run)
             if rank == 0:
                 logger.info(f"Validation - Epoch: {epoch}, Loss: {val_loss:.4f}, Acc: {val_acc:.4f}")
 
@@ -339,6 +356,7 @@ def train(config='conf/config.yaml', **kwargs):
 
     if dist.is_initialized():
         dist.destroy_process_group()
+    wandb_log.finish()    
 
 
 if __name__ == '__main__':

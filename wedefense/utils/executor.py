@@ -23,7 +23,7 @@ from wedefense.dataset.dataset_utils import apply_cmvn, spec_aug
 
 
 def train_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
-                margin_scheduler, epoch, logger, scaler, device, configs):
+                margin_scheduler, epoch, logger, scaler, device, configs, wandb_log=None):
     """Train the model for one epoch.
 
     Args:
@@ -96,6 +96,10 @@ def train_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
         scaler.step(optimizer)
         scaler.update()
 
+        if (wandb_log):
+            wandb_log.log({"learning_rate": scheduler.get_lr(),
+                           "train/loss": loss_meter.value()[0],
+                           "train/acc": acc_meter.value()[0]})
         # log
         if (i + 1) % configs['log_batch_interval'] == 0:
             logger.info(
@@ -117,7 +121,7 @@ def train_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
             style='grid'))
 
 
-def val_epoch(val_dataloader, val_iter, model, criterion, device, configs):
+def val_epoch(val_dataloader, val_iter, model, criterion, device, configs, wandb_log=None):
     """Validate the model on the validation set.
 
     Args:
@@ -167,6 +171,10 @@ def val_epoch(val_dataloader, val_iter, model, criterion, device, configs):
             # loss, acc
             val_loss_meter.add(loss.item())
             val_acc_meter.add(outputs.cpu().detach().numpy(), targets.cpu().numpy())
+            if (wandb_log):
+                wandb_log.log({"val/loss": val_loss_meter.value()[0],
+                               "val/acc": val_acc_meter.value()[0]})
+
             if (i + 1) == val_iter:
                 break
 

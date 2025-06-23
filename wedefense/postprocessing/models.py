@@ -15,7 +15,7 @@
 """
 logistic_regression.py
 A logistic regression model for calibration and/or fusion of binary
-classifers.
+classifiers.
 Reference:
 * "Fusion of Heterogeneous Speaker Recognition Systems in the STBU Submission
    for the NIST Speaker Recognition Evaluation 2006" By Niko Brummer et al.

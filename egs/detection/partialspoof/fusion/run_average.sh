@@ -125,7 +125,7 @@ if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
 
     rm -r $exp_dir/input_scores/eval/
     for sys in ${systems[@]};do
-	mkdir -p $exp_dir/input_scores//eval/$sys
+	mkdir -p $exp_dir/input_scores/eval/$sys
         cp ${eval_scores[$sys]} $exp_dir/input_scores/eval/$sys/llr.txt
     done
 fi

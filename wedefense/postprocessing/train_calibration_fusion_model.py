@@ -52,7 +52,7 @@ def train_with_BFGS(model, train_set, p_tar=-1, max_iter=20, lr=0.01):
 
     print("Starting L-BFGS training")
     for itr in range(0, 50):
-        # The loss for all bathces of the iteration will be accumulated here.
+        # The loss for all batches of the iteration will be accumulated here.
         itr_loss = 0.0
 
         # Note that the data loader as set up above puts all data in one batch

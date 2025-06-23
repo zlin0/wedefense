@@ -203,7 +203,7 @@ def main(score_dir, cm_key, model_save_path,
         T.save(model.state_dict(), model_save_path)
 
     elif method == 'min_max_avg':
-        print("Estimating normaliztion / fusion parameters with"
+        print("Estimating normalization / fusion parameters with"
               "min-max (0-1) normalization")
         # The last two columns are label and weight which are not needed for
         # this method so discard them.

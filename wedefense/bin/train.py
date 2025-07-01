@@ -55,14 +55,14 @@ def train(config='conf/config.yaml', **kwargs):
     model_dir = os.getcwd()             # current dir: model dir
     egs_dir = model_dir.split('/egs/')[0] + '/egs'       # /path/to/<task>/<database>/<model>
 
-    project_name = os.path.relpath(model_dir, egs_dir)  # <task>/<database>/<model>
-    run_name = f"{configs['exp_dir']}_{time.strftime('%Y%m%d_%H%M%S')}".replace("exp/", "")
+    project_name = f"wedefense/{os.path.relpath(model_dir, egs_dir)}"  # wedefense/<task>/<database>/<model>
+    model_name = os.path.basename(project_name) #<model>
+    run_name = f"{model_name}/{configs['exp_dir']}_{time.strftime('%Y%m%d_%H%M%S')}".replace("exp/", "")
+
     wandb_run = wandb.init(
-        entity = "wedefense",
-        project = project_name.replace(os.sep, "_"),
+        project = os.path.dirname(project_name).replace(os.sep, "_"),
         name = run_name,
-        config={
-                "model": configs['model'],},
+        config={"model": configs['model'],},
     )
 
     checkpoint = configs.get('checkpoint', None)

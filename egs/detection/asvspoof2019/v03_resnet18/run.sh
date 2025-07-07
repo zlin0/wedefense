@@ -39,7 +39,7 @@ fi
 # Stage 2. Preapring shard data for partialspoof and musan/rirs 
 #######################################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
-  echo "Covert train and test data to ${data_type}..."
+  echo "Convert train and test data to ${data_type}..."
   # We don't use VAD here 
   for dset in train dev eval;do
       if [ $data_type == "shard" ]; then
@@ -102,11 +102,12 @@ model_path=$best_model
 # Stage 4. Averaging the model, and extract embeddings
 #######################################################################################
 if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
-  echo "Do model average ..."
-  python wedefense/bin/average_model.py \
-    --dst_model $avg_model \
-    --src_path $exp_dir/models \
-    --num ${num_avg}
+  # Remove comments if you want to use averaged model
+  #echo "Do model average ..."
+  #python wedefense/bin/average_model.py \
+  #  --dst_model $avg_model \
+  #  --src_path $exp_dir/models \
+  #  --num ${num_avg}
 
   echo "Extract embeddings ..."
   if [[ $(hostname -f) == *fit.vutbr.cz ]]; then

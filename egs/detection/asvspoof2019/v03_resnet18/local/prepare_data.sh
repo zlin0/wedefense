@@ -31,7 +31,7 @@ data=$2
 
 bash ./local/01_download_database.sh ${ASVspoof2019_dir}
 
-for dset in eval; do
+for dset in train dev eval; do
   if [ ! -d ${data}/${dset} ]; then
      mkdir -p ${data}/${dset}
   fi

@@ -21,6 +21,8 @@ else
     pip install -r requirements.txt
 fi
 
+# For managing and maintaining multi-language pre-commit hooks.
+pre-commit install
 
 ## You may consider to to use pip to install your env
 ## Note that this version can not support codec augmentation because of version issue.
@@ -40,6 +42,7 @@ fi
 
 # For users in BUT's server.
 if [[ $(hostname -f) == *fit.vutbr.cz ]]; then
+    echo "You are working on BUT server, we will install safe_gpu."
     pip install safe_gpu
 fi
 

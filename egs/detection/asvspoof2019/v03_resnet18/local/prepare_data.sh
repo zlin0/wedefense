@@ -21,6 +21,7 @@ Download ASVspoof2019 database,
 and prepare data dir for partial spoof: wav.scp, utt2cls, cls2utt, utt2dur, dur2utt
 Note that we only implemented LA
 """
+set -ex
 
 #
 # 1. download data
@@ -30,7 +31,7 @@ data=$2
 
 bash ./local/01_download_database.sh ${ASVspoof2019_dir}
 
-for dset in train dev eval; do
+for dset in eval; do
   if [ ! -d ${data}/${dset} ]; then
      mkdir -p ${data}/${dset}
   fi

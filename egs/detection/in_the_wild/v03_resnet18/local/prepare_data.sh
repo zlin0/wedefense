@@ -21,19 +21,24 @@
 
 set -xe
 
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 ITW_dir data_dir"
+    exit 1
+fi
+
 ITW_dir=$1 #/Path/to/spoofceleb
 data_dir=$2
 
-if [ ! -d ${ITW_dir} ]; then
-    mkdir -p ${ITW_dir}
-    bash ./01_download_database.sh ${ITW_dir} 
+if [ ! -d "${ITW_dir}" ]; then
+    mkdir -p "${ITW_dir}"
+    bash ./01_download_database.sh "${ITW_dir}" 
 fi
 
-if [ ! -d ${data_dir} ]; then
-    mkdir -p ${data_dir}
+if [ ! -d "${data_dir}" ]; then
+    mkdir -p "${data_dir}"
 fi
 
-find ${ITW_dir} -name "*.wav" | awk -v prefix="${ITW_dir}/" '{
+find "${ITW_dir}" -name "*.wav" | awk -v prefix="${ITW_dir}/" '{
   uttid = $0; sub(prefix, "", uttid);
   print uttid, $0
   }' |\

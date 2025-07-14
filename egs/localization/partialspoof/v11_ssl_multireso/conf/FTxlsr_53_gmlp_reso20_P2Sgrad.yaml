@@ -12,14 +12,15 @@ log_batch_interval: 100 # log every 100 batchs
 
 dataloader_args:
   batch_size: 32
-  num_workers: 0
+  num_workers: 6
   pin_memory: False
-  prefetch_factor:  
+  prefetch_factor: 8 
   drop_last: True
 
 dataset_args:
   # the sample number which will be traversed within one epoch, if the value equals to 0,
   # the utterance number in the dataset will be used as the sample_num_per_epoch.
+  label_reso: 0.02 #in second. to get corresponding labels.
   sample_num_per_epoch: 0
   shuffle: True
   shuffle_args:
@@ -60,15 +61,15 @@ model_init: null
 model_args:
   num_scale: 6 # {2, 4, 8, 16, 32 ,64}
   feat_dim: 768 #-1 #768
-  embed_dim: -2 #-2 #768/pow(2,num_scale)
+  embed_dim: 384 # 1 for 2 only #-2 #768/pow(2,num_scale)
   seq_len: 2001
   flag_pool: 'ap' #TODO changeto the one exist in pooling layers.
   gmlp_layers: 5
   #nb_layer: 13
-  multi_reso_active: ['utt'] #How many reso will be frozen during training.
+  multi_reso_active: ['2'] #How many reso will be active during training. (others will be frozen)
   #Frame_shifts = [2,4,8,16,32,64]
 projection_args:
-  project_type: "softmax" # add_margin, arc_margin, sphere, sphereface2, softmax, arc_margin_intertopk_subcenter
+  project_type: "MSEp2sgrad" # add_margin, arc_margin, sphere, sphereface2, softmax, arc_margin_intertopk_subcenter
   scale: 32.0
   easy_margin: False
 
@@ -81,19 +82,16 @@ margin_update:
   update_margin: True
   increase_type: "exp" # exp, linear
 
-loss: CrossEntropyLoss
+loss: MSELoss
 loss_args: {} 
-  #multi_scale_active: ['utt'] # ['2', '4','8','16', '32', '64', 'utt']
 
-optimizer: SGD
+optimizer: Adam
 optimizer_args:
-  momentum: 0.9
-  nesterov: True
-  weight_decay: 0.0001
+  amsgrad: False
 
 scheduler: ExponentialDecrease
 scheduler_args:
   initial_lr: 0.00001
-  final_lr: 0.0000005
+  final_lr: 0.000001
   warm_up_epoch: 6
   warm_from_zero: True

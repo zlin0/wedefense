@@ -15,6 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+wedefense/bin/infer_by_utt.py
+
+The predicted logits and posteriors are generated from the embeddings. 
+The inference is conducted by iterating through each utterance and 
+saving the results (logits and posteriors) in ark and scp formats. 
+
+"""
 
 import fire
 import kaldiio

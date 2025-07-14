@@ -14,6 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+python local/map_rttm.py \
+    --input_rttm data/partialspoof/${dset}/rttm \
+    --map_file data/partialspoof/map_rttm_localization \
+    --output_rttm data/partialspoof/${dset}/rttm_localization
+
+Map rttm file according to map_file
+"""
 
 #TODO merge with make_rttm.py
 import argparse

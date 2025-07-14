@@ -140,7 +140,7 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   echo "Extract logits and posteriors ..."
   for dset in dev eval;do
       mkdir -p ${exp_dir}/posteriors/$dset 
-      echo $dset
+      echo "Working on $dset..."
       python wedefense/bin/infer_by_utt.py --model_path $model_path \
 	  --config ${exp_dir}/config.yaml \
 	  --num_classes 2 \
@@ -184,18 +184,18 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
   for dset in dev eval; do
     # Preparing trails
 
-    echo "Measuring " $dset
+    echo "Measuring $dset..."
     python wedefense/metrics/localization/point_eer.py  \
 	--score_file ${exp_dir}/posteriors/${dset}/logits_frame_${eval_reso}ms.txt \
 	--score_reso ${eval_reso} 
 
-    #TODO Unify variable names and usage 
-    frame_dur=$(echo "scale=3; ${eval_reso} / 1000" | bc)  #convert ms to sec.
-    python wedefense/metrics/localization/rangeeer.py  \
-	--score_file ${exp_dir}/posteriors/${dset}/logits_frame_${eval_reso}ms.txt 
-	--score_index 3 \
-	--rttm_file ${data}/$dset/rttm_localization \
-	--frame_duration ${frame_dur}
+#    #TODO Unify variable names and usage, check RangeEER 
+#    frame_dur=$(echo "scale=3; ${eval_reso} / 1000" | bc)  #convert ms to sec.
+#    python wedefense/metrics/localization/rangeeer.py  \
+#	--score_file ${exp_dir}/posteriors/${dset}/logits_frame_${eval_reso}ms.txt 
+#	--score_index 3 \
+#	--rttm_file ${data}/$dset/rttm_localization \
+#	--frame_duration ${frame_dur}
   done
 fi
 

@@ -34,7 +34,7 @@ import torchaudio.compliance.kaldi as kaldi
 import torchaudio.transforms as torchaudio_T
 
 import wedefense.dataset.augmentation.rawboost_util as rawboost_util
-import wedefense.dataset.augmentation.codec_util as codec_util
+import wedefense.dataset.augmentation.codec_util as codec_util 
 
 AUDIO_FORMAT_SETS = set(['flac', 'mp3', 'm4a', 'ogg', 'opus', 'wav', 'wma'])
 
@@ -229,7 +229,7 @@ def spk_to_id(data, spk2id):
 
         Args:
             data: Iterable[{key, wav/feat, spk}]
-            spk2id: Dict[str, int] e.g.:{'bonafide': 1, 'spoof': 0}
+            spk2id: Dict[str, int] i.e.:{'bonafide': 1, 'spoof': 0}
 
         Returns:
             Iterable[{key, wav/feat, label}]
@@ -372,6 +372,7 @@ def filter(data,
 
         yield sample
 
+
 def random_chunk(data, chunk_len, data_type='shard/raw/feat'):
     """ Random chunk the data into chunk_len
 
@@ -396,6 +397,7 @@ def random_chunk(data, chunk_len, data_type='shard/raw/feat'):
             wav = get_random_chunk(wav, chunk_len)
             sample['wav'] = wav.unsqueeze(0)
         yield sample
+
 
 def add_reverb_noise(data,
                      reverb_source,
@@ -533,7 +535,7 @@ def compute_lfcc_torchaudio(data,
             n_lfcc = n_lfcc,
             speckwargs = {
                 "n_fft": n_fft,
-                "win_length": int(frame_length*sample_rate/1000),
+                "win_length": int(frame_length*sample_rate/1000), 
                 "hop_length": int(frame_shift*sample_rate/1000),
                 "center": False
                 }
@@ -552,8 +554,8 @@ def compute_lfcc_torchaudio(data,
 
         mat = lfcc_extractor(waveform).squeeze(0).permute(1, 0) #doesn't support energy #[1, F, T] -> [T, F]
         if(use_delta):
-            lfcc_delta = compute_delta(mat)
-            lfcc_delta_delta = compute_delta(lfcc_delta)
+            lfcc_delta = compute_delta(mat) 
+            lfcc_delta_delta = compute_delta(lfcc_delta) 
             mat = torch.cat((mat, lfcc_delta, lfcc_delta_delta), 1)
 
         yield dict(key=sample['key'], label=sample['label'], feat=mat)
@@ -618,8 +620,8 @@ def spec_aug(data, num_t_mask=1, num_f_mask=1, max_t=10, max_f=8, prob=0.6):
             sample['feat'] = y
         yield sample
 
-def rawboost(data,
-             argo = 5):
+def rawboost(data, 
+             algo = 5):
     """ Process Rawboost
 
         Args:
@@ -636,9 +638,20 @@ def rawboost(data,
         assert 'key' in sample
         sample_rate = sample['sample_rate']
         audio = sample['wav'].numpy()[0]
+        device = sample['wav'].device
         audio_len = audio.shape[0]
+        
+        args = rawboost_util.get_args_for_rawboost()
+        # args = argparse.Namespace(
+        #        nBands=5, minF=20, maxF=8000, minBW=100, maxBW=1000,
+        #        minCoeff=10, maxCoeff=100, minG=0, maxG=0,
+        #        minBiasLinNonLin=5, maxBiasLinNonLin=20, N_f=5,
+        #        P=10, g_sd=2, SNRmin=10, SNRmax=40)
+        
+        out_audio = rawboost_util.process_Rawboost_feature(audio, sample_rate, args, algo)
+        #sample['wav'] = torch.from_numpy(out_audio).float().to(device)
+        sample['wav'] = torch.from_numpy(out_audio).unsqueeze(0).to(device)
 
-        sample['wav'] = rawboost_util.process_Rawboost_feature(audio, sample_rate, algo)
         yield sample
 
 
@@ -655,12 +668,12 @@ def codec(data, random_seed=42):
     """
     random.seed(random_seed)
 
-   
+    
     for sample in data:
         assert 'sample_rate' in sample
         assert 'wav' in sample
         assert 'key' in sample
-       
+        
         sr = sample['sample_rate']
         audio = sample['wav']
 
@@ -670,4 +683,11 @@ def codec(data, random_seed=42):
         sample['wav'] = codec_util.codec_apply(audio, sr, codec_name, bitrate)
         #print(codec_name, bitrate, audio.shape, sample['wav'].shape, type(audio), type(sample['wav']))
         yield sample
+
+
+    
+#TODO
+# codec
+# Rawboost
+
 

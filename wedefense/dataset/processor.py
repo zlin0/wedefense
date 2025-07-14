@@ -33,8 +33,8 @@ import torchaudio
 import torchaudio.compliance.kaldi as kaldi
 import torchaudio.transforms as torchaudio_T
 
-import wedefense.dataset.augmentation.rawboost_util as rawboost_util 
-import wedefense.dataset.augmentation.codec_util as codec_util 
+import wedefense.dataset.augmentation.rawboost_util as rawboost_util
+import wedefense.dataset.augmentation.codec_util as codec_util
 
 AUDIO_FORMAT_SETS = set(['flac', 'mp3', 'm4a', 'ogg', 'opus', 'wav', 'wma'])
 
@@ -533,7 +533,7 @@ def compute_lfcc_torchaudio(data,
             n_lfcc = n_lfcc,
             speckwargs = {
                 "n_fft": n_fft,
-                "win_length": int(frame_length*sample_rate/1000), 
+                "win_length": int(frame_length*sample_rate/1000),
                 "hop_length": int(frame_shift*sample_rate/1000),
                 "center": False
                 }
@@ -552,8 +552,8 @@ def compute_lfcc_torchaudio(data,
 
         mat = lfcc_extractor(waveform).squeeze(0).permute(1, 0) #doesn't support energy #[1, F, T] -> [T, F]
         if(use_delta):
-            lfcc_delta = compute_delta(mat) 
-            lfcc_delta_delta = compute_delta(lfcc_delta) 
+            lfcc_delta = compute_delta(mat)
+            lfcc_delta_delta = compute_delta(lfcc_delta)
             mat = torch.cat((mat, lfcc_delta, lfcc_delta_delta), 1)
 
         yield dict(key=sample['key'], label=sample['label'], feat=mat)
@@ -618,7 +618,7 @@ def spec_aug(data, num_t_mask=1, num_f_mask=1, max_t=10, max_f=8, prob=0.6):
             sample['feat'] = y
         yield sample
 
-def rawboost(data, 
+def rawboost(data,
              argo = 5):
     """ Process Rawboost
 
@@ -655,12 +655,12 @@ def codec(data, random_seed=42):
     """
     random.seed(random_seed)
 
-    
+   
     for sample in data:
         assert 'sample_rate' in sample
         assert 'wav' in sample
         assert 'key' in sample
-        
+       
         sr = sample['sample_rate']
         audio = sample['wav']
 

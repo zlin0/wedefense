@@ -196,7 +196,6 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
 #	--score_index 3 \
 #	--rttm_file ${data}/$dset/rttm_localization \
 #	--frame_duration ${frame_dur}
-
   done
 fi
 

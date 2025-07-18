@@ -14,7 +14,7 @@ from wedefense.dataset.augmentation.rawboost import ISD_additive_noise,LnL_convo
 
 #--------------RawBoost data augmentation algorithms---------------------------##
 
-def process_Rawboost_feature(feature, sr,args,algo):
+def process_Rawboost_feature(feature, sr, args, algo):
     
     # Data process by Convolutive noise (1st algo)
     if algo==1:
@@ -126,7 +126,7 @@ def get_args_for_rawboost():
                     help='Maximum SNR value for coloured additive noise.[defaul=40]')
     
     ##===================================================Rawboost data augmentation ======================================================================#
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
     
     return args
 

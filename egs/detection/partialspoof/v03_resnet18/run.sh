@@ -7,28 +7,25 @@ set -x
 . ./path.sh || exit 1
 
 stage=3
-stop_stage=3
+stop_stage=7
 
 PS_dir=/gs/bs/tgh-25IAC/ud03523/DATA/PartialSpoof/database
 data=data/partialspoof # data folder
 #data_type="shard"  # shard/raw
 data_type="raw"  # shard/raw
 
-config=conf/resnet.yaml #wespeaker version 
-exp_dir=exp/ResNet18-TSTP-emb256-fbank80-frms400-aug0-spFalse-saFalse-Softmax-SGD-epoch100
-#config=conf/resnet_wholeutt_noaug_nosampler.yaml 
-#exp_dir=exp/ResNet18-TSTP-emb256-fbank80-wholeutt_nosampler-aug0-spFalse-saFalse-Softmax-SGD-epoch100
+config=conf/resnet.yaml
+exp_dir=exp/ResNet18-i5p5-smallWeightDecay-earlystop
 
-gpus="[0]"
-num_avg=10 # how many models you want to average
+gpus="[0,1]"
+num_avg=2 # how many models you want to average
 checkpoint=
 score_norm_method="asnorm"  # asnorm/snorm
 top_n=300
 
-# setup for large margin fine-tuning
-lm_config=conf/campplus_lm.yaml
-
 . tools/parse_options.sh || exit 1
+
+num_gpus=$(echo $gpus | awk -F ',' '{print NF}')
 
 #######################################################################################
 # Stage 1. Preparing data folder for partialspoof: wav.scp, utt2cls, cls2utt, reco2dur
@@ -59,10 +56,10 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   done
 
   #TODO: wespeaker doesn't support multi-channel wavs.
-  #MUSAN_dir=/export/fs05/arts/dataset/musan
-  #find ${MUSAN_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/musan/wav.scp
-  #RIRs_dir=/export/fs05/arts/dataset/RIRS_NOISES/RIRS_NOISES
-  #find ${RIRs_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
+  MUSAN_dir=/share/workspace/shared_datasets/speechdata/14_musan/
+  find ${MUSAN_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/musan/wav.scp
+  RIRs_dir=/share/workspace/shared_datasets/speechdata/21_RIRS_NOISES/RIRS_NOISES/
+  find ${RIRs_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
   # Convert all musan data to LMDB. But note that lmdb does not work on NFS!
   python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb 
   rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
@@ -76,12 +73,11 @@ fi
 #######################################################################################
 if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
   echo "Start training ..."
-  num_gpus=1
   if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then
      gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
   fi
-    ##num_gpus=$(echo $gpus | awk -F ',' '{print NF}')
     #python -m pdb \
+    #torchrun --standalone --nnodes=1 --nproc_per_node=$num_gpus \
     torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((RANDOM)) --nnodes=1 --nproc_per_node=$num_gpus \
       wedefense/bin/train.py --config $config \
         --exp_dir ${exp_dir} \
@@ -90,14 +86,18 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         --data_type "${data_type}" \
         --train_data ${data}/train/${data_type}.list \
         --train_label ${data}/train/utt2cls \
+        --val_data ${data}/dev/${data_type}.list \
+        --val_label ${data}/dev/utt2cls \
         ${checkpoint:+--checkpoint $checkpoint}
         #--reverb_data data/rirs/lmdb \
         #--noise_data data/musan/lmdb \
 	#TODO, currently also moved from local/extract_emb.sh, flexible to control musan/rirs.
 fi
 
-avg_model=$exp_dir/models/avg_model.pt
-model_path=$avg_model
+#avg_model=$exp_dir/models/avg_model.pt
+#model_path=$avg_model
+best_model=$exp_dir/models/best_model.pt
+model_path=$best_model
 #######################################################################################
 # Stage 4. Averaging the model, and extract embeddings
 #######################################################################################
@@ -108,10 +108,8 @@ if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
     --src_path $exp_dir/models \
     --num ${num_avg}
 
-
   echo "Extract embeddings ..."
-  num_gpus=1
-  if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then
+  if [[ $(hostname -f) == *fit.vutbr.cz ]]; then
      gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
   fi
 
@@ -167,9 +165,9 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
 
     echo "Measuring " $dset
     python wedefense/metrics/detection/evaluation.py  \
-	--m t1 \
-	--cm ${exp_dir}/posteriors/${dset}/llr.txt \
-	--cm_key ${data}/${dset}/cm_key_file.txt
+        --m t1 \
+        --cm ${exp_dir}/posteriors/${dset}/llr.txt \
+        --cm_key ${data}/${dset}/cm_key_file.txt 2>&1 | tee ${exp_dir}/results_${dset}.txt
   done
 fi
 
@@ -182,4 +180,6 @@ fi
 # 3. embedding visulization
 
 exit 0
+
+
 

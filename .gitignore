@@ -3,6 +3,7 @@
 data/
 data
 exp/
+wandb/
 s3prl_hub/
 .nfs*
 note
@@ -13,6 +14,10 @@ debug*
 egs/*/*/*/logs*/
 *.err
 *.out
+
+# For umap
+embs/
+figs/
 
 tensorboard
 **/*build*

@@ -228,7 +228,6 @@ class MaxPool1d_scales(nn.Module):
                 active_indices.add(k)  # assume already scale index
         return active_indices
 
-
     def freeze_unused_para(self):
         """
         Freeze blocks(downsampling) and post_nets_seg that are not in self.multi_reso_active.

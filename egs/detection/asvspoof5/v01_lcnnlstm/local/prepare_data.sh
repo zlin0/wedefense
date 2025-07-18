@@ -14,37 +14,75 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-local/prepare_data.sh [PS_dir] [data]
-
-Download partialspoof database,
-and prepare data dir for partial spoof: wav.scp, utt2cls, cls2utt, utt2dur, dur2utt
-"""
-
+#local/prepare_data.sh [ASVspoof5_dir] [data_dir]
 #
-# 1. download data
-# 2. wav.scp
-PS_dir=$1
-data=$2
+#Download ASVspoof5 database,
+#and prepare data dir for partial spoof: wav.scp, utt2cls, cls2utt, utt2dur
 
-bash ./01_download_database.sh ${PS_dir}
+set -xe
 
-for dset in train dev eval; do
-  if [ ! -d ${data}/${dset} ]; then
-     mkdir -p ${data}/${dset}
+ASVspoof5_dir=$1
+data_dir=$2
+
+DSETs=(T D E_eval)
+DSETs_full=(train dev eval)
+
+if [ ! -d ${ASVspoof5_dir} ]; then
+    mkdir -p ${ASVspoof5_dir}
+    bash ./01_download_database.sh ${ASVspoof5_dir} 
+fi
+
+for i in "${!DSETs[@]}"; do
+  dset=${DSETs[$i]}	
+  dset_full=${DSETs_full[$i]}
+
+  if [ ! -d ${data_dir}/flac_${dset}_all ]; then
+     mkdir -p ${data_dir}/flac_${dset}_all
   fi
 
-  find ${PS_dir}/${dset}/con_wav -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort >${data}/${dset}/wav.scp
-  sed -i 's/\.wav / /g' ${data}/${dset}/wav.scp
+  find ${ASVspoof5_dir}/flac_${dset}/ -name "*.flac" | awk -F"/" '{print $NF,$0}' |\
+          sort > ${data_dir}/flac_${dset}_all/wav.scp
+  sed -i 's/\.flac / /g' ${data_dir}/flac_${dset}_all/wav.scp
   # check row number.
 
-  # produce utt2cls from protocols
-  cut -d' ' -f2,5 ${PS_dir}/protocols/PartialSpoof_LA_cm_protocols/PartialSpoof.LA.cm.${dset}.trl.txt > ${data}/${dset}/utt2cls
 
-  ./tools/utt2spk_to_spk2utt.pl ${data}/${dset}/utt2cls >${data}/${dset}/cls2utt
+  # produce utt2cls from protocols
+  if [ "$dset" = "T"  ]; then
+    cut -d' ' -f2,9 ${ASVspoof5_dir}/ASVspoof5.${dset_full}.tsv \
+	    > ${data_dir}/flac_${dset}_all/utt2cls
+  else
+    cut -d' ' -f2,9 ${ASVspoof5_dir}/ASVspoof5.${dset_full}.track_1.tsv \
+	    > ${data_dir}/flac_${dset}_all/utt2cls
+  fi
+
+  ./tools/utt2spk_to_spk2utt.pl ${data_dir}/flac_${dset}_all/utt2cls \
+	  >${data_dir}/flac_${dset}_all/cls2utt
 
   #we are using wav2dur.py, but quite slow. 
-  python tools/wav2dur.py ${data}/${dset}/wav.scp ${data}/${dset}/utt2dur
+  python tools/wav2dur.py ${data_dir}/flac_${dset}_all/wav.scp ${data_dir}/flac_${dset}_all/utt2dur
+
+
+  # Extract list for track1 - deepfake detection
+  if [ "$dset" = "T"  ]; then
+      if [ ! -e ${data_dir}/flac_${dset} ]; then
+          ln -s flac_${dset}_all ${data_dir}/flac_${dset}
+      fi
+  else 
+      if [ ! -d ${data_dir}/flac_${dset} ]; then
+            mkdir -p ${data_dir}/flac_${dset}
+      fi
+     for fname in wav.scp utt2cls cls2utt utt2dur; do
+         if [ ! -f ${data_dir}/flac_${dset}/${fname} ]; then
+		 awk '(NR==FNR){FILE[$2]}(NR!=FNR){
+			 if($1 in FILE){print}
+		 }' ${ASVspoof5_dir}/ASVspoof5.${dset_full}.track_1.tsv \
+			 ${data_dir}/flac_${dset}_all/${fname} \
+			 > ${data_dir}/flac_${dset}/${fname}
+	 fi
+     done
+     ./tools/utt2spk_to_spk2utt.pl ${data_dir}/flac_${dset}/utt2cls \
+	  >${data_dir}/flac_${dset}/cls2utt
+  fi
 done
 
 echo "Prepared data folder for partialspoof, including wav.scp, utt2cls, cls2utt"

@@ -93,7 +93,7 @@ optimizer_args:
 
 scheduler: ExponentialDecrease
 scheduler_args:
-  initial_lr: 0.01
-  final_lr: 0.00005
+  initial_lr: 0.00001
+  final_lr: 0.0000005
   warm_up_epoch: 6
   warm_from_zero: True

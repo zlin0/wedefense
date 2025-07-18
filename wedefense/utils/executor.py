@@ -1,6 +1,7 @@
 # Copyright (c) 2021 Hongji Wang (jijijiang77@gmail.com)
 #               2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
 #               2025 Lin Zhang (partialspoof@gmail.com)
+#                    Shuai Wang (wsstriving@gmail.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,13 +16,33 @@
 # limitations under the License.
 
 import tableprint as tp
-
 import torch
 import torchnet as tnt
+
 from wedefense.dataset.dataset_utils import apply_cmvn, spec_aug
 
-def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
-              margin_scheduler, epoch, logger, scaler, device, configs):
+
+def train_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
+                margin_scheduler, epoch, logger, scaler, device, configs, wandb_log=None):
+    """Train the model for one epoch.
+
+    Args:
+        dataloader: Training dataloader
+        epoch_iter: Number of iterations per epoch
+        model: Model to train
+        criterion: Loss criterion
+        optimizer: Optimizer
+        scheduler: Learning rate scheduler
+        margin_scheduler: Margin scheduler
+        epoch: Current epoch number
+        logger: Logger
+        scaler: Gradient scaler for mixed precision training
+        device: Device to run training on
+        configs: Configuration dictionary
+
+    Returns:
+        tuple: (training loss, training accuracy, last batch index)
+    """
     model.train()
     # By default use average pooling
     loss_meter = tnt.meter.AverageValueMeter()
@@ -33,7 +54,6 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
         scheduler.step(cur_iter)
         margin_scheduler.step(cur_iter)
 
-        utts = batch['key']
         targets = batch['label']
         targets = targets.long().to(device)  # (B)
         if frontend_type == 'fbank' or frontend_type.startswith('lfcc'):
@@ -45,7 +65,7 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
             wavs_len = torch.LongTensor([wavs.shape[1]]).repeat(
                 wavs.shape[0]).to(device)  # (B)
             with torch.cuda.amp.autocast(enabled=configs['enable_amp']):
-                features, _ = model.module.frontend(wavs, wavs_len) 
+                features, _ = model.module.frontend(wavs, wavs_len)
 
         with torch.cuda.amp.autocast(enabled=configs['enable_amp']):
             # apply cmvn
@@ -69,13 +89,17 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
         loss_meter.add(loss.item())
         acc_meter.add(outputs.cpu().detach().numpy(), targets.cpu().numpy())
 
-        # updata the model
+        # update the model
         optimizer.zero_grad()
         # scaler does nothing here if enable_amp=False
         scaler.scale(loss).backward()
         scaler.step(optimizer)
         scaler.update()
 
+        if (wandb_log):
+            wandb_log.log({"learning_rate": scheduler.get_lr(),
+                           "train/loss": loss_meter.value()[0],
+                           "train/acc": acc_meter.value()[0]})
         # log
         if (i + 1) % configs['log_batch_interval'] == 0:
             logger.info(
@@ -88,9 +112,70 @@ def run_epoch(dataloader, epoch_iter, model, criterion, optimizer, scheduler,
         if (i + 1) == epoch_iter:
             break
 
+    # Final log for this epoch
     logger.info(
         tp.row(
             (epoch, i + 1, scheduler.get_lr(), margin_scheduler.get_margin()) +
             (loss_meter.value()[0], acc_meter.value()[0]),
             width=10,
             style='grid'))
+
+
+def val_epoch(val_dataloader, val_iter, model, criterion, device, configs, wandb_log=None):
+    """Validate the model on the validation set.
+
+    Args:
+        val_dataloader: Validation dataloader
+        model: Model to validate
+        criterion: Loss criterion
+        device: Device to run validation on
+        configs: Configuration dictionary
+
+    Returns:
+        tuple: (validation loss, validation accuracy)
+    """
+    model.eval()
+    val_loss_meter = tnt.meter.AverageValueMeter()
+    val_acc_meter = tnt.meter.ClassErrorMeter(accuracy=True)
+
+    frontend_type = configs['dataset_args'].get('frontend', 'fbank')
+    with torch.no_grad():
+        for i, batch in enumerate(val_dataloader):
+            targets = batch['label']
+            targets = targets.long().to(device)  # (B)
+            if frontend_type == 'fbank' or frontend_type.startswith('lfcc'):
+                features = batch['feat']  # (B,T,F)
+                features = features.float().to(device)
+            else:  # 's3prl'
+                wavs = batch['wav']  # (B,1,W)
+                wavs = wavs.squeeze(1).float().to(device)  # (B,W)
+                wavs_len = torch.LongTensor([wavs.shape[1]]).repeat(
+                    wavs.shape[0]).to(device)  # (B)
+                with torch.cuda.amp.autocast(enabled=configs['enable_amp']):
+                    features, _ = model.module.frontend(wavs, wavs_len)
+
+            with torch.cuda.amp.autocast(enabled=configs['enable_amp']):
+                # apply cmvn
+                if configs['dataset_args'].get('cmvn', True):
+                    features = apply_cmvn(
+                        features, **configs['dataset_args'].get('cmvn_args', {}))
+
+                outputs = model(features)  # (embed_a,embed_b) in most cases
+                embeds = outputs[-1] if isinstance(outputs, tuple) else outputs
+                outputs = model.module.projection(embeds, targets)
+                if isinstance(outputs, tuple):
+                    outputs, loss = outputs
+                else:
+                    loss = criterion(outputs, targets)
+
+            # loss, acc
+            val_loss_meter.add(loss.item())
+            val_acc_meter.add(outputs.cpu().detach().numpy(), targets.cpu().numpy())
+            if (wandb_log):
+                wandb_log.log({"val/loss": val_loss_meter.value()[0],
+                               "val/acc": val_acc_meter.value()[0]})
+
+            if (i + 1) == val_iter:
+                break
+
+    return val_loss_meter.value()[0], val_acc_meter.value()[0]

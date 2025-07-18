@@ -94,10 +94,11 @@ def train(config='conf/config.yaml', **kwargs):
         raise NotImplementedError("Other label type is not implemented yet.")
 
     # Save label2id:
-    if not os.path.exists("label2id.txt"):
-        with open(os.path.join(os.path.dirname(train_label), "label2id"), "w") as f:
-            for k, v in label2id.items():
-            f.write(f"{k}\t{v}\n")
+    label2id_path=os.path.join(os.path.dirname(train_label), "label2id") 
+    if not os.path.exists(label2id_path):
+        with open(label2id_path, "w") as f:
+            for k, v in label2id_dict.items():
+                f.write(f"{k}\t{v}\n")
 
     num_class = len(label2id_dict.keys()) 
     if rank == 0:

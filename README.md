@@ -4,7 +4,7 @@
 
 >  ⚠️ **Warning / Disclaimer**⚠️ 
 >
-> This repository is released for **academic research purposes only**. While the goal of this toolkit is to promote progress in fake detection, we acknowledge that any open-source software may be misused by malicious actors.
+> Although the goal of this toolkit is to promote progress in fake detection, we acknowledge that any open-source software may be misused by malicious actors.
 > **We strongly discourage any use of the models or code for harmful purposes**, such as:
 >
 > * Bypassing biometric authentication

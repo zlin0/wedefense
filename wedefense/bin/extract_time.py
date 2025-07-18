@@ -114,7 +114,10 @@ def extract(config='conf/config.yaml', **kwargs):
                     features = spec_aug(features, **test_conf['spec_aug_args'])
 
                 # Forward through model
-                outputs = model(features)  # (B, T, D) 
+                if hasattr(model, 'get_frame_emb'):
+                    outputs = model.get_frame_emb(features)
+                else:
+                    outputs = model(features)  # (B,T,D)  
                 embeds = outputs[-1] if isinstance(outputs, tuple) else outputs
                 embeds = embeds.cpu().detach().numpy()  # (B,F)
 

@@ -19,16 +19,34 @@ from wedefense.cli.model import load_model
 
 def get_args():
     parser = argparse.ArgumentParser(description='WeDefense CLI')
-    parser.add_argument('-t', '--task', choices=['detection', 'localization'], default='detection', help='Task type')
-    parser.add_argument('-m', '--model_dir', default=None, help='Specify your own model directory')
-    parser.add_argument('-i', '--model_id', choices=["MHFA_wav2vec2_large"], default='MHFA_wav2vec2_large', help='')
-    parser.add_argument('--device', type=str, default='cpu', help='Device to use for computation (e.g., cpu, cuda:0)')
-    parser.add_argument('--resample_rate', type=int, default=16000, help='Resample rate for audio processing')
+    parser.add_argument('-t',
+                        '--task',
+                        choices=['detection', 'localization'],
+                        default='detection',
+                        help='Task type')
+    parser.add_argument('-m',
+                        '--model_dir',
+                        default=None,
+                        help='Specify your own model directory')
+    parser.add_argument(
+        '-i',
+        '--model_id',
+        choices=["localization_MFHA_xlsr", "detection_MHFA_wav2vec2_large"],
+        default='localization_MFHA_xlsr',
+        help='')
+    parser.add_argument(
+        '--device',
+        type=str,
+        default='cpu',
+        help='Device to use for computation (e.g., cpu, cuda:0)')
+    parser.add_argument('--resample_rate',
+                        type=int,
+                        default=16000,
+                        help='Resample rate for audio processing')
     parser.add_argument('--audio_file', type=str, help='Path to the audio file')
     parser.add_argument('--rttm_file', type=str, help='Path to the RTTM file')
     args = parser.parse_args()
     return args
-
 
 
 def main():

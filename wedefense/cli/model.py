@@ -24,18 +24,20 @@ from wedefense.models.projections import get_projection
 from wedefense.models.get_model import get_model
 from wedefense.utils.checkpoint import load_checkpoint
 from wedefense.dataset.dataset_utils import apply_cmvn
+from wedefense.cli.hub import Hub
 
 
 class Model:
-    def __init__(self, model_dir: str,
-                 config_name: str="config.yaml",
-                 model_name: str="avg_model.pt"):
+
+    def __init__(self,
+                 model_dir: str,
+                 config_name: str = "config.yaml",
+                 model_name: str = "avg_model.pt"):
 
         config_path = os.path.join(model_dir, config_name)
         model_path = os.path.join(model_dir, model_name)
         with open(config_path, 'r') as fin:
             configs = yaml.load(fin, Loader=yaml.FullLoader)
-        print(configs)
 
         self.model = self.init_model(configs, model_path)
         self.resample_rate = 16000
@@ -45,10 +47,11 @@ class Model:
         self.cmvn = configs['dataset_args'].get('cmvn', True)
         self.cmvn_args = configs['dataset_args'].get('cmvn_args', {})
 
-
     def init_model(self, configs, model_path):
-        self.frontend_type = configs['dataset_args'].get('frontend', 'fbank') #TODO support other features
-        if self.frontend_type != "fbank" and not self.frontend_type.startswith('lfcc'):
+        self.frontend_type = configs['dataset_args'].get(
+            'frontend', 'fbank')  #TODO support other features
+        if self.frontend_type != "fbank" and not self.frontend_type.startswith(
+                'lfcc'):
             frontend_args = self.frontend_type + "_args"
             frontend = frontend_class_dict[self.frontend_type](
                 **configs['dataset_args'][frontend_args],
@@ -64,7 +67,6 @@ class Model:
         load_checkpoint(model, model_path)
         model.eval()
         return model
-
 
     def set_resample_rate(self, resample_rate: int):
         self.resample_rate = resample_rate
@@ -93,10 +95,9 @@ class Model:
             feat = feat - torch.mean(feat, 0)
         return feat
 
-    def compute_embeds(self, audio_path: str):
+    def compute_embeds(self, audio_path: str, detection=False):
         wavform, sample_rate = torchaudio.load(audio_path,
                                                normalize=self.wavform_normalize)
-        print(wavform.shape)
         if sample_rate != self.resample_rate:
             wavform = torchaudio.transforms.Resample(
                 orig_freq=sample_rate, new_freq=self.resample_rate)(wavform)
@@ -109,7 +110,6 @@ class Model:
             wavform_len = torch.LongTensor([wavform.shape[1]]).repeat(
                 wavform.shape[0]).to(self.device)  # (B)
             features, _ = self.model.frontend(wavform, wavform_len)
-            print(wavform_len)
         else:
             raise NotImplementedError("Unsupported frontend type: {}".format(
                 self.frontend_type))
@@ -117,12 +117,20 @@ class Model:
         if self.cmvn:
             features = apply_cmvn(features, **self.cmvn_args)
 
-        outputs = self.model(features)
+        if not detection and hasattr(self.model, 'get_frame_emb'):
+            outputs = self.model.get_frame_emb(features)
+        else:
+            outputs = self.model(features)  # (B,T,D)
+
         embeds = outputs[-1] if isinstance(outputs, tuple) else outputs
         return embeds
 
-    def logits_to_rttm(self, logits, rttm_file, utt, score_reso=20, bonafide_idx=0):
-        fout = open(rttm_file, 'w', encoding='utf-8')
+    def logits_to_rttm(self,
+                       logits,
+                       utt="test_audio",
+                       score_reso=20,
+                       bonafide_idx=0):
+        rttm = []
         frame_shift = score_reso / 1000.0  # Convert ms to seconds
         preds = logits.argmax(axis=1)  # Frame-level predictions (0 or 1)
         if len(preds) == 0:
@@ -134,33 +142,50 @@ class Model:
                 start_time = start_idx * frame_shift
                 duration = (idx - start_idx) * frame_shift
                 label = 'bonafide' if current_label == bonafide_idx else 'spoof'
-                fout.write(f"SPEAKER {utt} 1 {start_time:.3f} {duration:.3f} <NA> <NA> {label} <NA> <NA>\n")
+                rttm.append(
+                    f"Wedefense {utt} 1 {start_time:.3f} {duration:.3f} <NA> <NA> {label} <NA> <NA>"
+                )
                 start_idx = idx
                 current_label = preds[idx]
 
         start_time = start_idx * frame_shift
         duration = (len(preds) - start_idx) * frame_shift
         label = 'bonafide' if current_label == bonafide_idx else 'spoof'
-        fout.write(f"SPEAKER {utt} 1 {start_time:.3f} {duration:.3f} <NA> <NA> {label} <NA> <NA>\n")
-        fout.close()
+        rttm.append(
+            f"Wedefense {utt} 1 {start_time:.3f} {duration:.3f} <NA> <NA> {label} <NA> <NA>"
+        )
+        return rttm
 
-    def detection(self, audio_path: str):
-        embeds = self.compute_embeds(audio_path)
+    def detection_probs(self, audio_path: str):
+        embeds = self.compute_embeds(audio_path, detection=True)
         outputs = self.model.projection(embeds)
         outputs = outputs[0] if isinstance(outputs, tuple) else outputs
-        print(outputs)
+        outputs = torch.nn.functional.softmax(outputs, dim=-1)  # [B, 2]
         return outputs
 
+    def detection(self, audio_path: str):
+        outputs = self.detection_probs(audio_path).squeeze(0)  # [2]
+        if outputs[0] > outputs[1]:
+            print(f"The audio is {outputs[0]*100:.2f}% bonafide")
+        else:
+            print(f"The audio is {outputs[1]*100:.2f}% spoof")
 
-
-    def localization(self, audio_path: str, rttm_file: str):
+    def localization_logits(self, audio_path: str):
         embeds = self.compute_embeds(audio_path)
         outputs = self.model.projection(embeds.squeeze(0))
         outputs = outputs[0] if isinstance(outputs, tuple) else outputs
-        self.logits_to_rttm(outputs, rttm_file, os.path.basename(audio_path).split('.')[0])
         return outputs
 
-def load_model(model_id: str=None, model_dir: str=None):
+    def localization(self, audio_path: str, rttm_file: str):
+        outputs = self.localization_logits(audio_path)
+        rttm = self.logits_to_rttm(outputs,
+                                   os.path.basename(audio_path).split('.')[0])
+        with open(rttm_file, 'w', encoding='utf-8') as fout:
+            fout.write("\n".join(rttm))
+        return outputs
+
+
+def load_model(model_id: str = None, model_dir: str = None):
     if model_dir is None:
         model_dir = Hub.get_model(model_id)
 

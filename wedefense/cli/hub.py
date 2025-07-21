@@ -45,12 +45,15 @@ def download(url: str, dest: str, only_child=True):
     # *.tar.gz
     name = url.split("?")[0].split("/")[-1]
     file_path = os.path.join(dest, name)
-    with tqdm.tqdm(
-        unit="B", unit_scale=True, unit_divisor=1024, miniters=1, desc=(name)
-    ) as t:
-        urlretrieve(
-            url, filename=file_path, reporthook=progress_hook(t), data=None
-        )
+    with tqdm.tqdm(unit="B",
+                   unit_scale=True,
+                   unit_divisor=1024,
+                   miniters=1,
+                   desc=(name)) as t:
+        urlretrieve(url,
+                    filename=file_path,
+                    reporthook=progress_hook(t),
+                    data=None)
         t.total = t.n
 
     if name.endswith((".tar.gz", ".tar")):
@@ -72,21 +75,27 @@ def download(url: str, dest: str, only_child=True):
                 zip_ref.extractall(dest)
             else:
                 for member in zip_ref.namelist():
-                    member_path = os.path.relpath(
-                        member, start=os.path.commonpath(zip_ref.namelist())
-                    )
-                    if "/" not in member_path:
+                    member_path = os.path.relpath(member,
+                                                  start=os.path.commonpath(
+                                                      zip_ref.namelist()))
+                    if member_path == "." or member_path == "":
                         continue
                     name = os.path.basename(member_path)
-                    with zip_ref.open(member_path) as source, open(
-                        os.path.join(dest, name), "wb"
-                    ) as target:
+                    with zip_ref.open(member) as source, open(
+                            os.path.join(dest, name), "wb") as target:
                         target.write(source.read())
 
 
 class Hub(object):
     Assets = {
-        "chinese": "cnceleb_resnet34.tar.gz",
+        "localization_MFHA_xlsr": "localization_MFHA_xlsr.zip",
+        "detection_MHFA_wav2vec2_large": "detection_MHFA_wav2vec2_large.zip"
+    }
+    ModelURLs = {
+        "localization_MFHA_xlsr.zip":
+        "https://www.modelscope.cn/datasets/wenet/wedefense_pretrained_model/resolve/master/localization_MFHA_xlsr.zip",
+        "detection_MHFA_wav2vec2_large.zip":
+        "https://www.modelscope.cn/datasets/wenet/wedefense_pretrained_model/resolve/master/detection_MHFA_wav2vec2_large.zip",
     }
 
     def __init__(self) -> None:
@@ -97,23 +106,18 @@ class Hub(object):
         if model_id not in Hub.Assets.keys():
             print("ERROR: Unsupported model {} !!!".format(model_id))
             sys.exit(1)
-        model = Hub.Assets[model_id]
+        model_name = Hub.Assets[model_id]
         model_dir = os.path.join(Path.home(), ".wedefense", model_id)
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
-        if set(["avg_model.pt", "config.yaml"]).issubset(
-            set(os.listdir(model_dir))
-        ):
+        if set(["avg_model.pt",
+                "config.yaml"]).issubset(set(os.listdir(model_dir))):
             return model_dir
         else:
-            response = requests.get(
-                "https://modelscope.cn/api/v1/datasets/wenet/wespeaker_pretrained_models/oss/tree"  # noqa
-            )
-            model_info = next(
-                data
-                for data in response.json()["Data"]
-                if data["Key"] == model
-            )
-            model_url = model_info["Url"]
-            download(model_url, model_dir)
-            return model_dir
+            if model_name in Hub.ModelURLs:
+                model_url = Hub.ModelURLs[model_name]
+                download(model_url, model_dir)
+                return model_dir
+            else:
+                print(f"ERROR: No URL found for model {model_name}")
+                return None

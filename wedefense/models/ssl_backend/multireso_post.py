@@ -5,7 +5,7 @@
 
 '''
     implement multi-reso CM
-    Title: The PartialSpoof Database and Countermeasures for the Detection of 
+    Title: The PartialSpoof Database and Countermeasures for the Detection of
            Short Fake Speech Segments Embedded in an Utterance
            https://ieeexplore.ieee.org/document/10003971
     Author: Lin Zhang, Xin Wang, Erica Cooper, Junichi Yamagishi, Nicholas Evans
@@ -32,7 +32,7 @@ def set_freeze_by_names(model, layer_names, freeze=True):
         for param in child.parameters():
             param.requires_grad = not freeze
 
-            
+
 def freeze_by_names(model, layer_names):
     set_freeze_by_names(model, layer_names, True)
 
@@ -99,16 +99,16 @@ class SELayer_TF(nn.Module):
 class Branch(nn.Module):
     def __init__(self, dim, embed_dim=64, flag_pool="None", blstm_layers=0):
         """
-        Input: 
+        Input:
           dim: input_features dim of input.
           embed_dim: int. the dim of output (out_features).
             >0: the fixed vaule
-            <0: the reduced multiple value, like -2 for reduce by half. 
+            <0: the reduced multiple value, like -2 for reduce by half.
           flag_pool: for utt Branch. pooling layer used to transfer embeeding from segment level to utterance level.
           blstm_layers: blstm number in postnet. >=0
 
         For Branch:
-          Input: hidden feature: B x T x H 
+          Input: hidden feature: B x T x H
           Output: B x T x embed_dim for segment, or B x T for utterance.
         """
         super(Branch, self).__init__()
@@ -140,7 +140,7 @@ class Branch(nn.Module):
         if(self.use_blstm):
             x = self.layers(x) + x
 
-        #Pooling layer in postnet, for utterance only.    
+        #Pooling layer in postnet, for utterance only.
         if(self.flag_pool == "ap"): #average pooling
             x = x.mean(1)
             #nn.AdaptiveAvgPool2d(1)(x)
@@ -150,13 +150,13 @@ class Branch(nn.Module):
             pass
 
         #FC in postnet.
-        x = self.fc(x)    
+        x = self.fc(x)
         return x
 
 
 class MaxPool1d_scales(nn.Module):
     # The main modules for multi-reso structure. Most modules are Inherits this class.
-    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 64,flag_pool = 'ap', 
+    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 64,flag_pool = 'ap',
             multi_reso_active = ['utt'], Frame_shifts = [2,4,8,16,32,64] ):
         super(MaxPool1d_scales, self).__init__()
         self.num_scale = num_scale
@@ -165,7 +165,7 @@ class MaxPool1d_scales(nn.Module):
         self.multi_reso_active = multi_reso_active
         active_raw = set(str(k) for k in self.multi_reso_active)
         self.active_indices = self.convert_active_reso_to_index(active_raw)
-        
+
         # Set up downsampling module (from (0)20ms -> (5)640ms -> (6)utt, 7 in total)
         self.blocks=nn.ModuleDict()
         self.blocks['0']= nn.Sequential(
@@ -182,13 +182,13 @@ class MaxPool1d_scales(nn.Module):
             nn.Dropout(0.7)
             )
 
-        # Set up Branch (scoring modules), 
+        # Set up Branch (scoring modules),
         self.post_nets_seg = nn.ModuleDict()
         for i in range(num_scale):
-            dim = feat_dim // pow(2,i) 
+            dim = feat_dim // pow(2,i)
             self.post_nets_seg[f"disc_{i}"] = Branch(dim=dim, embed_dim=embed_dim, flag_pool="None")
 
-        #utt    
+        #utt
         self.post_nets_utt = Branch(dim=dim, embed_dim=embed_dim, flag_pool=flag_pool)
         self.freeze_unused_para()
 
@@ -209,7 +209,7 @@ class MaxPool1d_scales(nn.Module):
         o_utt = self.post_nets_utt(in_utt)
 
         if('utt' in self.active_indices):
-            outs.append(o_utt)  
+            outs.append(o_utt)
 
         return outs[0] if len(outs) == 1 else outs
 
@@ -226,8 +226,7 @@ class MaxPool1d_scales(nn.Module):
                 active_indices.add(frame_shift_to_index[k])
             elif k.isdigit():
                 active_indices.add(k)  # assume already scale index
-        return active_indices         
-
+        return active_indices
 
     def freeze_unused_para(self):
         """
@@ -235,7 +234,7 @@ class MaxPool1d_scales(nn.Module):
         support ['2', '4', ..., 'utt'] in multi_reso_active
         """
 
-        # Freeze block (downsampling modules) 
+        # Freeze block (downsampling modules)
         # Generate those require updated downsampling module(block) based on their dependency:
         # e.g., scale 2 requires downsampling blocks 0 and 1.
         required_block_keys = set()
@@ -255,18 +254,18 @@ class MaxPool1d_scales(nn.Module):
                  for param in module.parameters():
                      param.requires_grad_(False)
 
-        # Freeze post_nets_seg:             
+        # Freeze post_nets_seg:
         for key, module in self.post_nets_seg.items():
             idx_str = key.replace("disc_", "")  # e.g., "disc_1" -> "1"
             if(idx_str not in self.active_indices):
                 for param in module.parameters():
                     param.requires_grad_(False)
-        
+
         # Freeze utt scoring module:
         if('utt' not in self.active_indices):
             for param in self.post_nets_utt.parameters():
                 param.requires_grad_(False)
-        
+
         #debug
         for name, param in self.named_parameters():
             if not param.requires_grad:
@@ -275,11 +274,11 @@ class MaxPool1d_scales(nn.Module):
 
 
 class SSL_BACKEND_multireso_MaxPool1d_blstmlinear(MaxPool1d_scales):
-    def __init__(self, num_scale=6, feat_dim=60, embed_dim = 64, blstm_layers=1, flag_pool = 'ap', 
+    def __init__(self, num_scale=6, feat_dim=60, embed_dim = 64, blstm_layers=1, flag_pool = 'ap',
             multi_reso_active = ['utt'], Frame_shifts = [2,4,8,16,32,64] ):
         super(MaxPool1d_scales, self).__init__()
 
-        self.blocks=MaxPool1d_scales(num_scale, feat_dim, embed_dim, flag_pool).blocks 
+        self.blocks=MaxPool1d_scales(num_scale, feat_dim, embed_dim, flag_pool).blocks
         self.Frame_shifts = Frame_shifts
         self.multi_reso_active = multi_reso_active
         active_raw = set(str(k) for k in self.multi_reso_active)
@@ -287,11 +286,11 @@ class SSL_BACKEND_multireso_MaxPool1d_blstmlinear(MaxPool1d_scales):
 
         self.post_nets_seg = nn.ModuleDict()
         for i in range(num_scale):
-            dim = feat_dim // pow(2,i) 
-            self.post_nets_seg[f"disc_{i}"] = Branch(dim = dim, embed_dim = embed_dim, 
+            dim = feat_dim // pow(2,i)
+            self.post_nets_seg[f"disc_{i}"] = Branch(dim = dim, embed_dim = embed_dim,
                     flag_pool = "None", blstm_layers = blstm_layers)
-        #utt    
-        self.post_nets_utt = Branch(dim = dim, embed_dim = embed_dim, 
+        #utt
+        self.post_nets_utt = Branch(dim = dim, embed_dim = embed_dim,
                 flag_pool = flag_pool, blstm_layers = blstm_layers)
         self.freeze_unused_para()
 
@@ -324,9 +323,9 @@ class SSL_BACKEND_multireso_MaxPool1dLin(MaxPool1d_scales):
 
         self.post_nets_seg = nn.ModuleDict()
         for i in range(num_scale):
-            dim = feat_dim // pow(2,i) 
+            dim = feat_dim // pow(2,i)
             self.post_nets_seg[f"disc_{i}"] = Branch(dim, embed_dim, "None")
-        #utt    
+        #utt
         self.post_nets_utt = Branch(dim, embed_dim, flag_pool)
         self.freeze_unused_para()
 
@@ -356,8 +355,8 @@ class gMLP(nn.Module):
         gmlp_layer: number of gmlp layers
         d_model: dim(d) of input [n * d]
         d_ffn: dim of hidden feature
-        seq_len: the max of input n. for mask 
-        batch_first: 
+        seq_len: the max of input n. for mask
+        batch_first:
 
         """
         super().__init__()
@@ -402,11 +401,11 @@ class gMLP(nn.Module):
 
         x = self.fc(x)
 
-        return x    
+        return x
 
 class SSL_BACKEND_multireso_MaxPool1d_gmlp(MaxPool1d_scales):
     # Inherits MaxPool1d_scales
-    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 256, seq_len = 2001, 
+    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 256, seq_len = 2001,
                  gmlp_layers=1, batch_first=True, flag_pool = 'ap',
             multi_reso_active = [''], Frame_shifts = [2,4,8,16,32,64] ):
 
@@ -421,17 +420,17 @@ class SSL_BACKEND_multireso_MaxPool1d_gmlp(MaxPool1d_scales):
 
         self.post_nets_seg = nn.ModuleDict()
         for i in range(num_scale):
-            dim = feat_dim // pow(2,i) 
-            self.post_nets_seg[f"disc_{i}"] = gMLP(dim, embed_dim, seq_len // pow(2,i) , 
-                                                   gmlp_layers = gmlp_layers, 
+            dim = feat_dim // pow(2,i)
+            self.post_nets_seg[f"disc_{i}"] = gMLP(dim, embed_dim, seq_len // pow(2,i) ,
+                                                   gmlp_layers = gmlp_layers,
                                                    batch_first=batch_first, flag_pool='None')
-        #utt    
-        self.post_nets_utt = gMLP(dim, embed_dim, seq_len // pow(2,i) , gmlp_layers = gmlp_layers, 
+        #utt
+        self.post_nets_utt = gMLP(dim, embed_dim, seq_len // pow(2,i) , gmlp_layers = gmlp_layers,
                                                    batch_first=batch_first, flag_pool=flag_pool)
         self.freeze_unused_para()
 
 class SSL_BACKEND_multireso_MaxPool1dLin_gmlp(MaxPool1d_scales):
-    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 256, seq_len = 2001, 
+    def __init__(self, num_scale=5, feat_dim=60, embed_dim = 256, seq_len = 2001,
                  gmlp_layers=1, batch_first=True, flag_pool = 'ap',
             multi_reso_active = [''], Frame_shifts = [2,4,8,16,32,64] ):
 
@@ -446,12 +445,12 @@ class SSL_BACKEND_multireso_MaxPool1dLin_gmlp(MaxPool1d_scales):
 
         self.post_nets_seg = nn.ModuleDict()
         for i in range(num_scale):
-            dim = feat_dim // pow(2,i) 
-            self.post_nets_seg[f"disc_{i}"] = gMLP(dim, embed_dim, seq_len // pow(2,i) , 
-                                                   gmlp_layers = gmlp_layers, 
+            dim = feat_dim // pow(2,i)
+            self.post_nets_seg[f"disc_{i}"] = gMLP(dim, embed_dim, seq_len // pow(2,i) ,
+                                                   gmlp_layers = gmlp_layers,
                                                    batch_first=batch_first, flag_pool='None')
-        #utt    
-        self.post_nets_utt = gMLP(dim, embed_dim, seq_len // pow(2,i) , gmlp_layers = gmlp_layers, 
+        #utt
+        self.post_nets_utt = gMLP(dim, embed_dim, seq_len // pow(2,i) , gmlp_layers = gmlp_layers,
                                                    batch_first=batch_first, flag_pool=flag_pool)
         self.freeze_unused_para()
 

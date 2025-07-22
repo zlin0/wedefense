@@ -8,13 +8,11 @@
 # set -x
 . ./path.sh || exit 1
 
-stage=1
-stop_stage=1
+stage=3
+stop_stage=3
 
 ASVspoof5_dir=/gs/bs/tgh-25IAC/ud03523/DATA/ASVspoof5
 data=data/asvspoof5 # data folder
-ASVspoof5_dir=/home/tianchiliu/workspace/wedefense/ASVspoof5
-data=/home/tianchiliu/workspace/wedefense/ASVspoof5/ASVspoof5 # data folder
 data_type="shard"  # shard/raw
 
 config=conf/MHFA_wav2vec2.yaml #wespeaker version 

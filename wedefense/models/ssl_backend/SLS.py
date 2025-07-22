@@ -82,6 +82,26 @@ class SSL_BACKEND_SLS(nn.Module):
         self.sig = nn.Sigmoid()
         self.fc1 = nn.Linear((feat_dim // kernel_size) * (frame_length // kernel_size), embed_dim)
 
+    def get_frame_emb(self, x):
+        # Get attention features from the input tensor
+        y0, fullfeature = getAttenF(x) # [B, Nb, D], [B, Nb, T, D], 
+
+        # Process attention output through fully connected layers
+        y0 = self.fc0(y0) # [B, Nb, 1]
+        y0 = self.sig(y0) # [B, Nb, 1]
+        y0 = y0.view(y0.shape[0], y0.shape[1], y0.shape[2], -1) # [B, Nb, 1, 1]
+
+        # Apply the attention weights to the full feature tensor
+        fullfeature = fullfeature * y0 # [B, Nb, T, D]
+        fullfeature = torch.sum(fullfeature, 1) # [B, T, D] 
+        fullfeature = fullfeature.unsqueeze(dim=1) # [B, 1, T, D]
+
+        # Apply batch normalization and activation
+        x = self.first_bn(fullfeature) # [B, 1, T, D]
+        x = self.selu(x) # [B, 1, T, D]
+
+        return x.squeeze(1)
+
     def forward(self, x):
         """
         Forward pass through the network.
@@ -96,25 +116,11 @@ class SSL_BACKEND_SLS(nn.Module):
 
         # print("x.shape", x.shape) # 128, 768, 150, 13 for wav2vec2_base_960 # 128, 1024, 150, 25 for xlsr_53
 
-        # Get attention features from the input tensor
-        y0, fullfeature = getAttenF(x)
 
-        # Process attention output through fully connected layers
-        y0 = self.fc0(y0)
-        y0 = self.sig(y0)
-        y0 = y0.view(y0.shape[0], y0.shape[1], y0.shape[2], -1)
-
-        # Apply the attention weights to the full feature tensor
-        fullfeature = fullfeature * y0
-        fullfeature = torch.sum(fullfeature, 1)
-        fullfeature = fullfeature.unsqueeze(dim=1)
-
-        # Apply batch normalization and activation
-        x = self.first_bn(fullfeature)
-        x = self.selu(x)
+        x = self.get_frame_emb(x).unsqueeze(1)
 
         # Pooling operation
-        x = F.max_pool2d(x, (self.kernel_size, self.kernel_size))
+        x = F.max_pool2d(x, (self.kernel_size, self.kernel_size))  # [B, 1, T/kernal_size, D/kernal_size]
 
         # Flatten the tensor and pass through the final fully connected layer
         x = torch.flatten(x, 1)

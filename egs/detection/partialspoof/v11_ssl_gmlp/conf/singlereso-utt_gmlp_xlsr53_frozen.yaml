@@ -40,7 +40,7 @@ dataset_args:
     multilayer_feature: True
     layerwise_feature: False #False for weighted sum
     layer: -1
-    frozen: False
+    frozen: True
     frame_shift: 20
     frame_length: 20
   cmvn: True
@@ -93,7 +93,7 @@ optimizer_args:
 
 scheduler: ExponentialDecrease
 scheduler_args:
-  initial_lr: 0.00001
-  final_lr: 0.0000005
+  initial_lr: 0.01
+  final_lr: 0.00005
   warm_up_epoch: 6
   warm_from_zero: True

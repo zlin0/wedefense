@@ -1,7 +1,6 @@
 # Copyright (c) 2021 Hongji Wang (jijijiang77@gmail.com)
 #               2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
 #               2025 Lin Zhang (partialspoof@gmail.com)
-#                    Shuai Wang (wsstriving@gmail.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,20 +26,19 @@ import yaml
 from torch.utils.data import DataLoader
 
 import wedefense.utils.schedulers as schedulers
-from wedefense.dataset.dataset import Dataset
+from wedefense.dataset.dataset_localization import Dataset
 from wedefense.frontend import *
 from wedefense.models.projections import get_projection
 from wedefense.models.get_model import get_model
 from wedefense.utils.checkpoint import load_checkpoint, save_checkpoint
-from wedefense.utils.executor import train_epoch, val_epoch
-from wedefense.utils.file_utils import read_table
+from wedefense.utils.executor_localization import run_epoch
+from wedefense.utils.file_utils import read_table, read_seglab_npy
 from wedefense.utils.utils import get_logger, parse_config_or_kwargs, set_seed, \
     spk2id
+from wedefense.utils.diarization.rttm_tool import get_rttm 
 
 import wedefense.dataset.customize_collate_fn as nii_collate_fn
-
-import wandb
-import time
+import wedefense.dataset.customize_sampler as nii_sampler_fn
 
 def train(config='conf/config.yaml', **kwargs):
     """Trains a model on the given features and spk labels.
@@ -50,21 +48,6 @@ def train(config='conf/config.yaml', **kwargs):
     :returns: None
     """
     configs = parse_config_or_kwargs(config, **kwargs)
-
-    #wandb info
-    model_dir = os.getcwd()             # current dir: model dir
-    egs_dir = model_dir.split('/egs/')[0] + '/egs'       # /path/to/<task>/<database>/<model>
-
-    project_name = f"wedefense/{os.path.relpath(model_dir, egs_dir)}"  # wedefense/<task>/<database>/<model>
-    model_name = os.path.basename(project_name) #<model>
-    run_name = f"{model_name}/{configs['exp_dir']}_{time.strftime('%Y%m%d_%H%M%S')}".replace("exp/", "")
-
-    wandb_run = wandb.init(
-        project = os.path.dirname(project_name).replace(os.sep, "_"),
-        name = run_name,
-        config={"model": configs['model'],},
-    )
-
     checkpoint = configs.get('checkpoint', None)
     # dist configs
     local_rank = int(os.environ.get('LOCAL_RANK', 0))
@@ -101,15 +84,30 @@ def train(config='conf/config.yaml', **kwargs):
 
     # train data
     train_label = configs['train_label']
-    train_utt_cls_list = read_table(train_label)
-    spk2id_dict = spk2id(train_utt_cls_list)
+    if(os.path.basename(train_label).startswith('rttm')):
+        train_reco2timestamps_dict, label2id_dict = get_rttm(train_label)
+    elif(train_label.endswith('.npy')):
+        raise NotImplementedError("seglab vec is not checked yet.")
+        train_reco2timestamps_dict = read_seglab_npy(train_label)
+        #label2id_dict
+    else:
+        raise NotImplementedError("Other label type is not implemented yet.")
+
+    # Save label2id:
+    label2id_path=os.path.join(os.path.dirname(train_label), "label2id") 
+    if not os.path.exists(label2id_path):
+        with open(label2id_path, "w") as f:
+            for k, v in label2id_dict.items():
+                f.write(f"{k}\t{v}\n")
+
+    num_class = len(label2id_dict.keys()) 
     if rank == 0:
         logger.info("<== Data statistics ==>")
         logger.info("train data num: {}, class num: {}".format(
-            len(train_utt_cls_list), len(spk2id_dict)))
+            len(train_reco2timestamps_dict.keys()), num_class))
 
     batch_size = configs['dataloader_args']['batch_size']
-    whole_utt = configs['dataset_args'].get('whole_utt', False)  # set as True after debugging.
+    whole_utt = configs['dataset_args'].get('whole_utt', False) #set as True after debugging.
     sampler = configs['dataset_args'].get('sampler', None)
 
     # collate function
@@ -120,73 +118,50 @@ def train(config='conf/config.yaml', **kwargs):
     else:
         collate_fn = None
 
-    # TODO sampler to support building mini-batch according to length.
     tmp_params_dataloader = configs['dataloader_args'].copy()
-    if sampler == 'block_shuffle_by_length' and batch_size > 1:
-        # load utterance duration
-        train_dur = os.path.join(os.path.dirname(train_label), 'utt2dur')
-        assert os.path.isfile(train_dur), f"utt2dur file not found: {train_dur}"
+    # load utterance duration
+    # duration info is used by both block_shuffle_by_length and 
+    train_dur = os.path.join(os.path.dirname(train_label),'utt2dur') 
+    assert os.path.isfile(train_dur), f"utt2dur file not found: {train_dur}"
+
+    if sampler=='block_shuffle_by_length' and batch_size >1:
         # size of block shuffle
         block_shuffle_size = world_size * batch_size
     else:
-        train_dur = None
         block_shuffle_size = 0
+    
+    # read rttm file to get label in timestamps.
+    # TODO move rttm to make_raw/shard_list.py
+    # train_rttm = os.path.join(configs['rttm_file']) 
 
     # dataset and dataloader
     train_dataset = Dataset(configs['data_type'],
                             configs['train_data'],
                             configs['dataset_args'],
-                            spk2id_dict,
-                            whole_utt=configs['dataset_args'].get('whole_utt'),
-                            reverb_lmdb_file=configs.get('reverb_data', None),
-                            noise_lmdb_file=configs.get('noise_data', None),
-                            data_dur_file=train_dur,
-                            block_shuffle_size=block_shuffle_size)
+                            label2id_dict,
+                            whole_utt = configs['dataset_args'].get('whole_utt'),
+                            reverb_lmdb_file = configs.get('reverb_data', None),
+                            noise_lmdb_file = configs.get('noise_data', None),
+                            data_dur_file = train_dur,
+                            reco2timestamps_dict = train_reco2timestamps_dict,
+                            block_shuffle_size = block_shuffle_size,
+                            output_reso = configs['dataset_args']['label_reso'])
 
     train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, **tmp_params_dataloader)
     if configs['dataset_args'].get('sample_num_per_epoch', 0) > 0:
         sample_num_per_epoch = configs['dataset_args']['sample_num_per_epoch']
     else:
-        sample_num_per_epoch = len(train_utt_cls_list)
+        sample_num_per_epoch = len(train_reco2timestamps_dict.keys())
     epoch_iter = sample_num_per_epoch // world_size // batch_size
-
-    # validation data
-    val_dataloader = None
-    if configs.get('val_label'):
-        val_label = configs['val_label']
-        val_utt_cls_list = read_table(val_label)
-        val_lines = len(val_utt_cls_list)
-        val_iter = val_lines // 2 // world_size // batch_size
-
-        if rank == 0:
-            logger.info("validation data num: {}".format(len(val_utt_cls_list)))
-
-        val_dur = os.path.join(os.path.dirname(val_label), 'utt2dur')
-
-        val_dataset = Dataset(configs['data_type'],
-                              configs['val_data'],
-                              configs['dataset_args'],
-                              spk2id_dict,
-                              whole_utt=configs['dataset_args'].get('whole_utt'),
-                              reverb_lmdb_file=configs.get('reverb_data', None),
-                              noise_lmdb_file=configs.get('noise_data', None),
-                              data_dur_file=val_dur,
-                              block_shuffle_size=block_shuffle_size)
-
-        val_dataloader = DataLoader(val_dataset, collate_fn=collate_fn, **tmp_params_dataloader)
-
     if rank == 0:
         logger.info("<== Dataloaders ==>")
         logger.info("train dataloaders created")
-        logger.info('Train epoch iteration number: {}'.format(epoch_iter))
-        if val_dataloader is not None:
-            logger.info('validation dataloaders created')
-            logger.info('Validation iteration number: {}'.format(val_iter))
+        logger.info('epoch iteration number: {}'.format(epoch_iter))
 
     # model: frontend (optional) => speaker model => projection layer
     logger.info("<== Model ==>")
     frontend_type = configs['dataset_args'].get('frontend', 'fbank')
-    if frontend_type != "fbank" and not frontend_type.startswith('lfcc'):
+    if frontend_type != "fbank":
         frontend_args = frontend_type + "_args"
         frontend = frontend_class_dict[frontend_type](
             **configs['dataset_args'][frontend_args],
@@ -206,27 +181,31 @@ def train(config='conf/config.yaml', **kwargs):
     elif checkpoint is None:
         logger.info('Train model from scratch ...')
     # projection layer
-    if (configs['model_args']['embed_dim'] < 0):  # TODO check
+    if(configs['model_args']['embed_dim'] < 0): 
         # #if emb_dim <0, we will reduce dim by emb_dim. like -2 will be dim/2
         if 'multireso' in configs['model'] and configs['model_args']['num_scale'] > 0:
-            # If we are using multireso structure, dim will reduced by
-            # ['embed_dim'] in ['num_scale'] times.
+            # If we are using multireso structure, dim will reduced by 
+            #['embed_dim'] in ['num_scale'] times.
+            # @Lin TODO, support multi-reso.
+            #for idx, scale in enumerate(configs['model_args']['num_scale']):
+            #    configs['projection'{idx}'_args']['embed_dim'] = 
+
             configs['projection_args']['embed_dim'] = int(
-                configs['model_args']['feat_dim'] /
-                pow(abs(configs['model_args']['embed_dim']),
-                    configs['model_args']['num_scale'])
-            )
+                    configs['model_args']['feat_dim'] / 
+                    pow(abs(configs['model_args']['embed_dim'])
+                    ))
         else:
             configs['projection_args']['embed_dim'] = int(
-                configs['model_args']['feat_dim'] /
-                abs(configs['model_args']['embed_dim'])
-            )
+                    configs['model_args']['feat_dim'] / 
+                    abs(configs['model_args']['embed_dim'])
+                    )
     else:
         configs['projection_args']['embed_dim'] = configs['model_args'][
             'embed_dim']
-    configs['projection_args']['num_class'] = len(spk2id_dict)
+    configs['projection_args']['num_class'] = len(label2id_dict)
     configs['projection_args']['do_lm'] = configs.get('do_lm', False)
-    if configs['data_type'] != 'feat' and configs['dataset_args']['speed_perturb']:
+    if configs['data_type'] != 'feat' and configs['dataset_args'][
+            'speed_perturb']:
         # diff speed is regarded as diff spk
         configs['projection_args']['num_class'] *= 3
         if configs.get('do_lm', False):
@@ -257,7 +236,7 @@ def train(config='conf/config.yaml', **kwargs):
     else:
         start_epoch = 1
     logger.info('start_epoch: {}'.format(start_epoch))
-
+    
     # freeze some pretraining-specific parameters
     for name, param in model.named_parameters():
         if any(k in name for k in ["quantizer", "project_q", "final_proj"]):
@@ -282,7 +261,6 @@ def train(config='conf/config.yaml', **kwargs):
         logger.info("optimizer is: " + configs['optimizer'])
 
     # scheduler
-    # Max epochs
     configs['scheduler_args']['num_epochs'] = configs['num_epochs']
     configs['scheduler_args']['epoch_iter'] = epoch_iter
     # here, we consider the batch_size 64 as the base, the learning rate will be
@@ -309,6 +287,7 @@ def train(config='conf/config.yaml', **kwargs):
         with open(saved_config_path, 'w') as fout:
             data = yaml.dump(configs)
             fout.write(data)
+
     # training
     dist.barrier(device_ids=[gpu])  # synchronize here
     if rank == 0:
@@ -319,44 +298,33 @@ def train(config='conf/config.yaml', **kwargs):
     dist.barrier(device_ids=[gpu])  # synchronize here
 
     scaler = torch.cuda.amp.GradScaler(enabled=configs['enable_amp'])
-    best_val_acc = float('-inf')
-    val_no_improvement_count = 0
-    early_stop_patience = configs.get('early_stop_patience', 5)
-    val_interval = configs.get('validate_interval', 1)
-
     for epoch in range(start_epoch, configs['num_epochs'] + 1):
         train_dataset.set_epoch(epoch)
 
-        train_epoch(
-            train_dataloader, epoch_iter, ddp_model, criterion, optimizer, scheduler,
-            margin_scheduler, epoch, logger, scaler, device, configs, wandb_log=wandb_run
-        )
-
-        if val_dataloader is not None and (epoch-1) % val_interval == 0:
-            val_loss, val_acc = val_epoch(val_dataloader, val_iter, ddp_model, criterion, device, configs, wandb_log=wandb_run)
-            if rank == 0:
-                logger.info(f"Validation - Epoch: {epoch}, Loss: {val_loss:.4f}, Acc: {val_acc:.4f}")
-
-                if val_acc >= best_val_acc:
-                    best_val_acc = val_acc
-                    val_no_improvement_count = 0
-                    logger.info(f"New best validation accuracy: {best_val_acc:.6f}")
-                    save_checkpoint(model, os.path.join(model_dir, 'best_model.pt'))
-                else:
-                    val_no_improvement_count += 1
-                    logger.info(f"No improvement for {val_no_improvement_count} validation checks")
-                    if val_no_improvement_count >= early_stop_patience:
-                        logger.info(f"Early stopping triggered after {epoch} epochs")
-                        save_checkpoint(model, os.path.join(model_dir, 'final.pt'))
-                        break
+        run_epoch(train_dataloader,
+                  epoch_iter,
+                  ddp_model,
+                  criterion,
+                  optimizer,
+                  scheduler,
+                  margin_scheduler,
+                  epoch,
+                  logger,
+                  scaler,
+                  device=device,
+                  configs=configs)
 
         if rank == 0:
-            if epoch % configs['save_epoch_interval'] == 0 or epoch > configs['num_epochs'] - configs['num_avg']:
-                save_checkpoint(model, os.path.join(model_dir, 'model_{}.pt'.format(epoch)))
+            if epoch % configs['save_epoch_interval'] == 0 or epoch > configs[
+                    'num_epochs'] - configs['num_avg']:
+                save_checkpoint(
+                    model, os.path.join(model_dir,
+                                        'model_{}.pt'.format(epoch)))
 
-    if dist.is_initialized():
-        dist.destroy_process_group()
-    wandb_run.finish()    
+    if rank == 0:
+        os.symlink('model_{}.pt'.format(configs['num_epochs']),
+                   os.path.join(model_dir, 'final_model.pt'))
+        logger.info(tp.bottom(len(header), width=10, style='grid'))
 
 
 if __name__ == '__main__':

@@ -27,7 +27,7 @@ and prepare data dir for partial spoof: wav.scp, utt2cls, cls2utt, utt2dur, dur2
 PS_dir=$1
 data=$2
 
-# bash ./local/01_download_database.sh ${PS_dir}
+bash ./01_download_database.sh ${PS_dir}
 
 for dset in train dev eval; do
   if [ ! -d ${data}/${dset} ]; then

@@ -36,9 +36,9 @@ def main(set_name, pkl_path, vad_path):
             if len(data)-num_frames>0:
                 data = data[len(data)-num_frames:]
 
-            # follow the interspeech paper, this is for the data to draw the figure.
-            if filename == "CON_E_0033629": 
-                print("For the visualization of CON_E_0033629: GradCam Scores:", data, 'labels:', vads)
+            # follow the interspeech paper, this is for drawing the figure.
+            # if filename == "CON_E_0033629": 
+            #     print("For the visualization of CON_E_0033629: GradCam Scores:", data, 'labels:', vads)
 
             for line in vads:
                 parts = line.strip().split(' ')

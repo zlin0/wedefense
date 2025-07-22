@@ -29,7 +29,7 @@ DSETs_full=(train dev eval)
 
 if [ ! -d ${ASVspoof5_dir} ]; then
     mkdir -p ${ASVspoof5_dir}
-    bash ./local/01_download_database.sh ${ASVspoof5_dir} 
+    bash ./01_download_database.sh ${ASVspoof5_dir} 
 fi
 
 for i in "${!DSETs[@]}"; do

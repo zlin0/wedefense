@@ -233,4 +233,4 @@ cython_debug/
 .pypirc
 
 # checkpoints
-.pt
+*.pt

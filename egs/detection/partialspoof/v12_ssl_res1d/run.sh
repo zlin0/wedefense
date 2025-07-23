@@ -15,11 +15,11 @@ PS_dir=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database
 data=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database/partialspoof # data folder
 data_type="shard"  # shard/raw
 
-# config=conf/xlsr_53_ft.yaml
-# exp_dir=exp/debug_multireso_res1d_xlsr_53_ft
+config=conf/xlsr_53_ft.yaml
+exp_dir=exp/W2V2xlsr_Res1D_emb128_SGD_epoch20
 
-config=conf/wav2vec2_large_960_ft_backend_Res1D.yaml
-exp_dir=exp/debug_multireso_res1d
+# config=conf/wav2vec2_large_960_ft_backend_Res1D.yaml
+# exp_dir=exp/W2V2_Res1D_emb128_SGD_epoch20
 
 gpus="[6]"
 num_avg=10 # how many models you want to average

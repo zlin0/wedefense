@@ -1,6 +1,6 @@
 ### train configuraton
 
-exp_dir: exp/W2V2baseFrozen_Res1D-TSTP-emb256-fbank80-num_frms400-aug0-spFalse-saFalse-ArcMargin-SGD-epoch100
+exp_dir: exp/W2V2_Res1D-emb128-SGD-epoch20
 gpus: "[0,1]"
 num_avg: 10
 enable_amp: False # whether enable automatic mixed precision training
@@ -58,16 +58,9 @@ dataset_args:
 model: SSL_BACKEND_utt_only_res1d # starts from SSL_BACKEND (as defined in models/get_model.py) 
 model_init: null
 model_args:
-  # num_scale: 6 # {2, 4, 8, 16, 32 ,64}
-  feat_dim: 768 #-1 #768
-  embed_dim: 128 #-2 #768/pow(2,num_scale)
-  # seq_len: 2001
-  bottleneck_dim: 128
-  # flag_pool: 'ap' #TODO changeto the one exist in pooling layers.
-  # gmlp_layers: 5
-  #nb_layer: 13
-  # multi_reso_active: ['utt'] #How many reso will be frozen during training.
-  #Frame_shifts = [2,4,8,16,32,64]
+  feat_dim: 768 
+  embed_dim: 128
+  # bottleneck_dim: 128
 projection_args:
   project_type: "MSEp2sgrad" # add_margin, arc_margin, sphere, sphereface2, softmax, arc_margin_intertopk_subcenter
   scale: 32.0

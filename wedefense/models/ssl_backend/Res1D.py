@@ -97,25 +97,11 @@ class SSL_BACKEND_utt_only_res1d(nn.Module):
         super().__init__()
         input_dim = feat_dim 
         self.res1D = Res1D(feat_dim)
-        # self.se_res2block = SE_Res2Block(1024,
-        #                            kernel_size=3,
-        #                            stride=1,
-        #                            padding=4,
-        #                            dilation=4,
-        #                            scale=8)
-        # self.att_pool = ASTP(in_dim=2)
         self.fc = nn.Conv1d(input_dim,
                   embed_dim,
                   kernel_size=1,
                   stride=1,
                   padding=0)
-        # self.bn = nn.BatchNorm1d(embed_dim)
-        # self.Relu = nn.ReLU()
-        # self.fc2 = nn.Conv1d(embed_dim,
-        #           2,
-        #           kernel_size=1,
-        #           stride=1,
-        #           padding=0)
 
     def forward(self, x):
         """
@@ -129,8 +115,6 @@ class SSL_BACKEND_utt_only_res1d(nn.Module):
         x = self.fc(x)              # B x 128 x T
         x = torch.mean(x, dim=2, keepdims=True)
         x = x.squeeze(-1)
-        # x = self.conv2(x)              # B x embed_dim x T
-        # x = self.pool(x)               # B x embed_dim
         return x
 
 def debug_backend():

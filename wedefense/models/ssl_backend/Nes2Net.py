@@ -127,23 +127,19 @@ class SSL_BACKEND_utt_only_nes2net(nn.Module):
         return out
 
 def debug_backend():
-    # 模拟输入：batch_size = 8, seq_len = 200, feat_dim = 1024
+    # input：batch_size = 8, seq_len = 200, feat_dim = 1024
     batch_size = 8
     seq_len = 200
     feat_dim = 1024
     embed_dim = 128
 
-    # 创建测试输入
     x = torch.randn(batch_size, seq_len, feat_dim)
 
-    # 初始化模型
     model = SSL_BACKEND_utt_only_nes2net(feat_dim=feat_dim)
 
-    # 前向传播
     with torch.no_grad():
         out = model(x)
 
-    # 输出检查
     print("Input shape:", x.shape)       # B x T x D
     print("Output shape:", out.shape)    # B x embed_dim，如 (8, 128)
 

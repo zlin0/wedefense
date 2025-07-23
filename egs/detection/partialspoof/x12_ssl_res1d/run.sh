@@ -1,9 +1,6 @@
 #!/bin/bash
 
-# Copyright 2022 Hongji Wang (jijijiang77@gmail.com)
-#           2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
-#           2025 Johan Rohdin, Lin Zhang (rohdin@fit.vut.cz, partialspoof@gmail.com)
-#           2025 Junyi Peng (pengjy@fit.vut.cz)
+# Copyright 2025 Johan Rohdin, Lin Zhang (rohdin@fit.vut.cz, partialspoof@gmail.com)
 #           2025 Tianchi Liu (tianchi_liu@u.nus.edu)
 set -x
 . ./path.sh || exit 1
@@ -15,11 +12,8 @@ PS_dir=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database
 data=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database/partialspoof # data folder
 data_type="shard"  # shard/raw
 
-config=conf/xlsr_53_ft.yaml
-exp_dir=exp/W2V2xlsr_Res1D_emb128_SGD_epoch20
-
-# config=conf/wav2vec2_large_960_ft_backend_Res1D.yaml
-# exp_dir=exp/W2V2_Res1D_emb128_SGD_epoch20
+config=conf/singlereso_utt_xlsr_53_ft_backend_Res1D.yaml
+exp_dir=exp/singlereso_utt_xlsr_53_ft_backend_Res1D
 
 gpus="[7]"
 num_avg=10 # how many models you want to average

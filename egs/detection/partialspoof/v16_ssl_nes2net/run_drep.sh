@@ -14,8 +14,8 @@ PS_dir=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database
 data=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database/partialspoof # data folder
 data_type="shard"  # shard/raw
 
-config=conf/0613_xlsr53_Nes2Net8_ASTP_num_frms150_epoch30_bz64_2e4_1e6_adam_warm3.yaml
-exp_dir=exp/0613_xlsr53_Nes2Net8_ASTP_num_frms150_epoch30_bz64_2e4_1e6_adam_warm3
+config=conf/singlereso_utt_xlsr_53_ft_backend_Nes2Net.yaml
+exp_dir=exp/singlereso_utt_xlsr_53_ft_backend_Nes2Net
 
 gpus="[7]"
 num_avg=10 # how many models you want to average

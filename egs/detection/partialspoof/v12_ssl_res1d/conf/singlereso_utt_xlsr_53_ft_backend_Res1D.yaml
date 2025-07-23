@@ -1,6 +1,6 @@
 ### train configuraton
 
-exp_dir: exp/W2V2xlsr_Res1D_emb128_SGD_epoch20
+exp_dir: exp/singlereso_utt_xlsr_53_ft_backend_Res1D
 gpus: "[0,1]"
 num_avg: 10
 enable_amp: False # whether enable automatic mixed precision training

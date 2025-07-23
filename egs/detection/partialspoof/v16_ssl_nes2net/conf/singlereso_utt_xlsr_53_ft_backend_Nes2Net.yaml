@@ -1,6 +1,6 @@
 ### train configuraton
 
-exp_dir: exp/W2V2_Nes2Net-TSTP-emb256-fbank80-num_frms400-aug0-spFalse-saFalse-ArcMargin-SGD-epoch100
+exp_dir: exp/singlereso_utt_xlsr_53_ft_backend_Nes2Net
 gpus: "[0,1]"
 num_avg: 10
 enable_amp: False # whether enable automatic mixed precision training
@@ -35,7 +35,7 @@ dataset_args:
   frontend: "s3prl" # fbank, s3prl
   s3prl_args:
     upstream_args:
-      name: wav2vec2_large_960
+      name: xlsr_53
     download_dir: ./s3prl_hub
     multilayer_feature: True
     layerwise_feature: False #False for weighted sum

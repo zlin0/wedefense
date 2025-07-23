@@ -1,6 +1,6 @@
 ### train configuraton
 
-exp_dir: exp/W2V2_Res1D_emb128_SGD_epoch20
+exp_dir: exp/singlereso_utt_wav2vec2_large_960_ft_backend_Nes2Net
 gpus: "[0,1]"
 num_avg: 10
 enable_amp: False # whether enable automatic mixed precision training
@@ -55,12 +55,15 @@ dataset_args:
     max_f: 8
     prob: 0.6
 
-model: SSL_BACKEND_utt_only_res1d # starts from SSL_BACKEND (as defined in models/get_model.py) 
+model: SSL_BACKEND_utt_only_nes2net # starts from SSL_BACKEND (as defined in models/get_model.py) 
 model_init: null
 model_args:
-  feat_dim: 768 
-  embed_dim: 128
-  # bottleneck_dim: 128
+  # feat_dim: 768
+  embed_dim: 2048
+  Nes_ratio: [8, 8]  # 外层嵌套数、内层 scale
+  dilation: 1        # 可选，默认值也是 2
+  pool_func: ASTP    # 可选，默认使用 ASTP pooling
+  SE_ratio: 8      # 可选，SE模块降维比例
 projection_args:
   project_type: "MSEp2sgrad" # add_margin, arc_margin, sphere, sphereface2, softmax, arc_margin_intertopk_subcenter
   scale: 32.0

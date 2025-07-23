@@ -1,26 +1,34 @@
 #!/bin/bash
 
-# Copyright 2025 Johan Rohdin, Lin Zhang (rohdin@fit.vut.cz, partialspoof@gmail.com)
-#           2025 Tianchi Liu (tianchi_liu@u.nus.edu)
+# Copyright 2022 Hongji Wang (jijijiang77@gmail.com)
+#           2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
+#           2025 Johan Rohdin, Lin Zhang (rohdin@fit.vut.cz, partialspoof@gmail.com)
+#           2025 Junyi Peng (pengjy@fit.vut.cz)
 
 set -x
 . ./path.sh || exit 1
 
-stage=4
+stage=5
 stop_stage=7
 
 PS_dir=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database
 data=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database/partialspoof # data folder
 data_type="shard"  # shard/raw
 
-config=conf/0723_w_val_xlsr53_Nes2Net8_ASTP_num_frms150_epoch30_bz64_2e4_1e6_adam_warm3.yaml
-exp_dir=exp/0723_w_val_xlsr53_Nes2Net8_ASTP_num_frms150_epoch30_bz64_2e4_1e6_adam_warm3
+config=conf/xlsr_53_ft.yaml
+exp_dir=exp/W2V2xlsr_Res1D_emb128_SGD_epoch20
 
-gpus="[7]"
+# config=conf/wav2vec2_large_960_ft_backend_Res1D.yaml
+# exp_dir=exp/W2V2_Res1D_emb128_SGD_epoch20
+
+gpus="[6]"
 num_avg=10 # how many models you want to average
 checkpoint=
 score_norm_method="asnorm"  # asnorm/snorm
 top_n=300
+
+# setup for large margin fine-tuning
+# lm_config=conf/campplus_lm.yaml
 
 . tools/parse_options.sh || exit 1
 
@@ -89,7 +97,7 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
   #       #--noise_data data/musan/lmdb \
 	# #TODO, currently also moved from local/extract_emb.sh, flexible to control musan/rirs.
 
-  # tianchi
+  #tc
   find_free_port() {
   for port in $(seq 12355 12455); do
     (echo > /dev/tcp/localhost/$port) &>/dev/null || {
@@ -112,26 +120,21 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
     --data_type "${data_type}" \
     --train_data ${data}/train/${data_type}.list \
     --train_label ${data}/train/utt2cls \
-    --val_data ${data}/dev/${data_type}.list \
-    --val_label ${data}/dev/utt2cls \
     ${checkpoint:+--checkpoint $checkpoint}
+
 fi
 
-# avg_model=$exp_dir/models/avg_model.pt
-# model_path=$avg_model
-best_model=$exp_dir/models/best_model.pt
-model_path=$best_model
+avg_model=$exp_dir/models/avg_model.pt
+model_path=$avg_model
 #######################################################################################
-# Stage 4. Extract embeddings
+# Stage 4. Averaging the model, and extract embeddings
 #######################################################################################
 if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
-  # avg_model=$exp_dir/models/avg_model.pt
-  # model_path=$avg_model
-  # echo "Do model average ..."
-  # python wedefense/bin/average_model.py \
-  #   --dst_model $avg_model \
-  #   --src_path $exp_dir/models \
-  #   --num ${num_avg}
+  echo "Do model average ..."
+  python wedefense/bin/average_model.py \
+    --dst_model $avg_model \
+    --src_path $exp_dir/models \
+    --num ${num_avg}
 
 
   echo "Extract embeddings ..."
@@ -160,6 +163,7 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
 	  --out_path ${exp_dir}/posteriors/$dset
   done
 fi
+
 
 #######################################################################################
 # Stage 6. Convert logits to llr 

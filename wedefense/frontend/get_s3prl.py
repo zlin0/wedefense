@@ -79,7 +79,6 @@ class S3prlFrontend(nn.Module):
         if download_dir is not None:
             s3prl.util.download.set_dir(download_dir)
 
-        print('tc debug:', upstream_args.get("name",None), S3PRLUpstream.available_names())
         assert upstream_args.get("name",
                                  None) in S3PRLUpstream.available_names()
         self.upstream_name = upstream_args["name"].lower()
@@ -152,31 +151,18 @@ class S3prlFrontend(nn.Module):
         return feats, feats_lens
 
 def download_pretrained_model():
-    # frontend = S3prlFrontend(
-    #     upstream_args={
-    #         "name": "wav2vec2_base_960", #TODO: change to the model you want 
-    #         "normalize": False,
-    #     },
-    #     download_dir="s3prl_hub", #TODO change to your path.
-    #     multilayer_feature=True,
-    #     layer=-1,
-    #     frozen=True,
-    #     frame_shift=20,
-    #     frame_length=20,
-    #     sample_rate=16000,
-    # )
     frontend = S3prlFrontend(
-    upstream_args={
-        "name": "wav2vec2_libri960_big",
-        "path_or_url": "/home/tianchiliu/workspace/wedefense/egs/detection/partialspoof/v11_ssl_gmlp/s3prl_hub/libri960_big.pt",  # 本地路径
-        "normalize": False,
-    },
-    download_dir="./s3prl_hub",  # 不再起决定性作用，但可以保留
-    multilayer_feature=True,
-    layer=-1,
-    frozen=True,
-    frame_shift=20,
-    sample_rate=16000,
+        upstream_args={
+            "name": "wav2vec2_base_960", #TODO: change to the model you want 
+            "normalize": False,
+        },
+        download_dir="s3prl_hub", #TODO change to your path.
+        multilayer_feature=True,
+        layer=-1,
+        frozen=True,
+        frame_shift=20,
+        frame_length=20,
+        sample_rate=16000,
     )
 
     dummy_input = torch.randn(2, 16000)

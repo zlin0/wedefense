@@ -11,8 +11,8 @@ set -x
 stage=5
 stop_stage=7
 
-PS_dir=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database
-data=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database/partialspoof # data folder
+PS_dir=path_to_ps_dir
+data=path_to_database # data folder
 data_type="shard"  # shard/raw
 
 config=conf/singlereso_utt_xlsr_53_ft_backend_Res1D.yaml

@@ -9,12 +9,12 @@ set -x
 stage=3
 stop_stage=7
 
-PS_dir=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database
-data=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database/partialspoof # data folder
+PS_dir=path_to_ps_dir
+data=path_to_database # data folder
 data_type="shard"  # shard/raw
 
-config=conf/singlereso_utt_xlsr_53_ft_backend_Res1D.yaml
-exp_dir=exp/singlereso_utt_xlsr_53_ft_backend_Res1D
+config=conf/optimized_singlereso_utt_xlsr_53_ft_backend_Nes2Net_epoch30_lr2e_4_1e_6.yaml
+exp_dir=exp/optimized_singlereso_utt_xlsr_53_ft_backend_Nes2Net_epoch30_lr2e_4_1e_6
 
 gpus="[7]"
 num_avg=10 # how many models you want to average
@@ -117,23 +117,12 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
     ${checkpoint:+--checkpoint $checkpoint}
 fi
 
-# avg_model=$exp_dir/models/avg_model.pt
-# model_path=$avg_model
 best_model=$exp_dir/models/best_model.pt
 model_path=$best_model
 #######################################################################################
 # Stage 4. Extract embeddings
 #######################################################################################
 if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
-  # avg_model=$exp_dir/models/avg_model.pt
-  # model_path=$avg_model
-  # echo "Do model average ..."
-  # python wedefense/bin/average_model.py \
-  #   --dst_model $avg_model \
-  #   --src_path $exp_dir/models \
-  #   --num ${num_avg}
-
-
   echo "Extract embeddings ..."
   num_gpus=1
   if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then

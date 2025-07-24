@@ -1,12 +1,12 @@
 ### train configuraton
 
-exp_dir: exp/0613_xlsr53_Nes2Net8_ASTP_num_frms150_epoch20_bz64_1e3_1e6_adam_warm3
+exp_dir: exp/optimized_singlereso_utt_xlsr_53_ft_backend_Nes2Net_epoch30_lr2e_4_1e_6
 gpus: "[0,1]"
 num_avg: 10
 enable_amp: False # whether enable automatic mixed precision training
 
 seed: 42
-num_epochs: 20
+num_epochs: 30
 save_epoch_interval: 5 # save model every 5 epochs
 log_batch_interval: 100 # log every 100 batchs
 
@@ -88,7 +88,7 @@ optimizer_args:
 
 scheduler: ExponentialDecrease
 scheduler_args:
-  initial_lr: 0.001
+  initial_lr: 0.0002
   final_lr: 0.000001
   warm_up_epoch: 3
   warm_from_zero: True

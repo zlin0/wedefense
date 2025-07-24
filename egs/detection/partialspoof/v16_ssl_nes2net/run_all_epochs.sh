@@ -10,8 +10,8 @@ set -x
 stage=3
 stop_stage=7
 
-PS_dir=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database
-data=/nfs1/tianchi/workspace/wedefense/PartialSpoof/database/partialspoof # data folder
+PS_dir=path_to_ps_dir
+data=path_to_database # data folder
 data_type="shard"  # shard/raw
 
 config=conf/singlereso_utt_xlsr_53_ft_backend_Nes2Net.yaml
@@ -93,7 +93,7 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
   #       #--noise_data data/musan/lmdb \
 	# #TODO, currently also moved from local/extract_emb.sh, flexible to control musan/rirs.
 
-  #tc
+  # tianchi
   find_free_port() {
   for port in $(seq 12355 12455); do
     (echo > /dev/tcp/localhost/$port) &>/dev/null || {

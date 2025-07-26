@@ -36,3 +36,6 @@ wandb
 # For umap visualizing embedding
 umap-learn
 
+# for XAI
+ttach==0.0.3
+opencv-python==4.11.0.86

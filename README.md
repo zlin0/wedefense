@@ -2,14 +2,14 @@
 
 
 
->  ⚠️ **Warning / Disclaimer**⚠️ 
+>  ⚠️ **Warning / Disclaimer**⚠️
 >
 > Although the goal of this toolkit is to promote progress in fake detection, we acknowledge that any open-source software may be misused by malicious actors.
 > **We strongly discourage any use of the models or code for harmful purposes**, such as:
 >
 > * Bypassing biometric authentication
 > * Creating or enhancing systems that generate fake or deceptive audio
-> 
+>
 > Some of the models included here perform well on public datasets, but may not generalize to unseen or adversarial scenarios. Please be aware of these limitations and use this repository responsibly and ethically.
 
 
@@ -40,7 +40,7 @@ If you are working on merlin:
 pip install safe_gpu
 ```
 
-We don't need to instaill pre-commit before the first realse version. 
+We don't need to instaill pre-commit before the first realse version.
 But we will use pre-commit to check code in future. So I input to here for record.
 ```shell
 # pre-commit install  # for clean and tidy code
@@ -56,7 +56,7 @@ But we will use pre-commit to check code in future. So I input to here for recor
 
 
 
-## Folder 
+## Folder
 
 **Note:** This is **NOT** the same as the repo version. It's for reference and discussion only, intended to guide future restructuring. Final decisions will need to be confirmed with co-authors. (try to decide on May 11)
 
@@ -64,7 +64,7 @@ But we will use pre-commit to check code in future. So I input to here for recor
 .
 ├── egs     # example folders to include supported tasks/databases.
 │   ├── detection
-│   │   ├── asvspoof5 
+│   │   ├── asvspoof5
 │   │   ├── llamapartialspoof
 │   │   ├── partialedit
 │   │   └── partialspoof				# [ASRU2025 Foucs]
@@ -126,7 +126,7 @@ But we will use pre-commit to check code in future. So I input to here for recor
     │   ├── pooling_layers.py
     │   ├── projections.py
     │   ├── resnet.py
-    │   ├── ssl_backend/  # folder to save those light weighted backend. i.e., mhfa, sls, etc. 
+    │   ├── ssl_backend/  # folder to save those light weighted backend. i.e., mhfa, sls, etc.
     │   └── speaker_model.py
     └── utils
         ├── checkpoint.py
@@ -147,7 +147,7 @@ Please go to [CN](https://docs.google.com/document/d/1rZlAkg5HQqo4-4LL_qjj5BhBxi
 
 For the main structure of wedefense: (need to be implemented ASAP)
 * Lin: localization
-* Junyi: add an example for SSL 
+* Junyi: add an example for SSL
 * Johan: calibration, fusion
 * Lin, Shuai: move wespeaker part to pip install wespeaker
 

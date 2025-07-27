@@ -15,7 +15,7 @@ PS_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database
 data=data/partialspoof # data folder
 data_type="shard"  # shard/raw
 
-config=conf/debug_multireso_gmlp.yaml 
+config=conf/debug_multireso_gmlp.yaml
 exp_dir=exp/debug_multireso_gmlp
 gpus="[0]"
 num_avg=10 # how many models you want to average
@@ -40,11 +40,11 @@ if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
 fi
 
 #######################################################################################
-# Stage 2. Preapring shard data for partialspoof and musan/rirs 
+# Stage 2. Preapring shard data for partialspoof and musan/rirs
 #######################################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Covert train and test data to ${data_type}..."
-  # We don't use VAD here 
+  # We don't use VAD here
   for dset in train dev eval;do
       if [ $data_type == "shard" ]; then
           python tools/make_shard_list.py --num_utts_per_shard 1000 \
@@ -71,7 +71,7 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   #RIRs_dir=/export/fs05/arts/dataset/RIRS_NOISES/RIRS_NOISES
   #find ${RIRs_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
   # Convert all musan data to LMDB. But note that lmdb does not work on NFS!
-  python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb 
+  python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb
   rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
   # Convert all rirs data to LMDB
   python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
@@ -100,7 +100,7 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         --train_data ${data}/train/${data_type}.list \
         --train_label ${data}/train/rttm_localization \
         ${checkpoint:+--checkpoint $checkpoint}
-        # Note, label was assigned in stage 2, 
+        # Note, label was assigned in stage 2,
 	# utt2cls here only for label2id.
         #--reverb_data data/rirs/lmdb \
         #--noise_data data/musan/lmdb \
@@ -126,7 +126,7 @@ if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
      gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
   fi
 
-  #TODO 
+  #TODO
   #1. currently too much layers to call the extracting script.
   #2. not friend for slurm when spliting list
   local/extract_emb.sh \
@@ -135,12 +135,12 @@ if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
 fi
 
 #######################################################################################
-# Stage 5. Extract logits and posterior 
+# Stage 5. Extract logits and posterior
 #######################################################################################
 if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   echo "Extract logits and posteriors ..."
   for dset in dev eval;do
-      mkdir -p ${exp_dir}/posteriors/$dset 
+      mkdir -p ${exp_dir}/posteriors/$dset
       echo $dset
       python wedefense/bin/infer_by_utt.py --model_path $model_path \
 	  --config ${exp_dir}/config.yaml \
@@ -152,7 +152,7 @@ fi
 
 
 #######################################################################################
-# Stage 6. Print logits to txt 
+# Stage 6. Print logits to txt
 #######################################################################################
 if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
   echo "Convert logits to llr ..."
@@ -164,7 +164,7 @@ if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
 	  --score_reso 20 \
 	  --eval_reso ${eval_reso} \
 	  --train_label ${data}/train/rttm_localization \
-	  --eval_label ${data}/$dset/rttm_localization 
+	  --eval_label ${data}/$dset/rttm_localization
       #comment out the last row for eval_label if you don't have the ground truth.
 
       #TODO Convert logits to rttm, based on argmax only for now.
@@ -179,7 +179,7 @@ if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
 fi
 
 #######################################################################################
-# Stage 7. Measuring performance 
+# Stage 7. Measuring performance
 #######################################################################################
 if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
   echo "Measuring Performance ..."
@@ -189,12 +189,12 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
     echo "Measuring " $dset
     python wedefense/metrics/localization/point_eer.py  \
 	--score_file ${exp_dir}/posteriors/${dset}/logits_frame_${eval_reso}ms.txt \
-	--score_reso ${eval_reso} 
+	--score_reso ${eval_reso}
 
-    #TODO Unify variable names and usage 
+    #TODO Unify variable names and usage
     frame_dur=$(echo "scale=3; ${eval_reso} / 1000" | bc)  #convert ms to sec.
     python wedefense/metrics/localization/rangeeer.py  \
-	--score_file ${exp_dir}/posteriors/${dset}/logits_frame_${eval_reso}ms.txt 
+	--score_file ${exp_dir}/posteriors/${dset}/logits_frame_${eval_reso}ms.txt
 	--score_index 3 \
 	--rttm_file ${data}/$dset/rttm_localization \
 	--frame_duration ${frame_dur}
@@ -202,7 +202,7 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
 fi
 
 #######################################################################################
-# Stage 8. Analyses 
+# Stage 8. Analyses
 #######################################################################################
 # TODO
 # 1. significant test

@@ -509,7 +509,8 @@ class MSEp2sgrad(nn.Module):
     def __repr__(self):
         return self.__class__.__name__ + '(' \
             + 'in_features=' + str(self.in_features) \
-            + ', out_features=' + str(self.out_features)  + ')'
+            + ', out_features=' + str(self.out_features) + ')'
+
 
 class Linear(nn.Module):
     """
@@ -527,17 +528,18 @@ class Linear(nn.Module):
         out = self.trans(input)
         return out
 
+
 class TanhLinear(nn.Module):
     """
     The linear transform for simple softmax loss
 
     Simpler without batchnorm and ReLU
     """
+
     def __init__(self, emb_dim=512, class_num=1000):
         super(TanhLinear, self).__init__()
 
-        self.trans = nn.Sequential(nn.Tanh(),
-                                   nn.Linear(emb_dim, class_num))
+        self.trans = nn.Sequential(nn.Tanh(), nn.Linear(emb_dim, class_num))
 
     def forward(self, input, label):
         out = self.trans(input)

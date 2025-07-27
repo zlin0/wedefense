@@ -43,7 +43,7 @@ for dset in train dev eval; do
 
   ./tools/utt2spk_to_spk2utt.pl ${data}/${dset}/utt2cls >${data}/${dset}/cls2utt
 
-  #we are using wav2dur.py, but quite slow. 
+  #we are using wav2dur.py, but quite slow.
   python tools/wav2dur.py ${data}/${dset}/wav.scp ${data}/${dset}/utt2dur
 done
 

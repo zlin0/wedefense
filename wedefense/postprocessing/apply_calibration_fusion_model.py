@@ -13,7 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 apply_calibration_fusion_model.py
 Todo: The code for reading scores etc. is the same as in
@@ -48,10 +47,11 @@ def main(model_load_path, score_dir, new_scores_file, method='LR'):
 
     # Read in scores and make a dataframe.
     for i in range(len(systems)):
-        df_tmp = pd.read_csv(score_dir+'/'+systems[i]+'/llr.txt', sep='\t')
-        df_tmp = df_tmp.rename(columns={'cm-score':
-                                        'cm-score'
-                                        + str(i)}).set_index('filename')
+        df_tmp = pd.read_csv(score_dir + '/' + systems[i] + '/llr.txt',
+                             sep='\t')
+        df_tmp = df_tmp.rename(columns={
+            'cm-score': 'cm-score' + str(i)
+        }).set_index('filename')
         # To consider: Would it better to put the system's name in the column
         #              names? (For clearer debugging / analysis.)
         if i == 0:

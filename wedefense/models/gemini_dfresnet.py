@@ -28,12 +28,16 @@ import wedefense.models.pooling_layers as pooling_layers
 
 
 class Inverted_Bottleneck(nn.Module):
+
     def __init__(self, dim):
         super(Inverted_Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(dim, 4 * dim, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(4 * dim)
-        self.conv2 = nn.Conv2d(4 * dim, 4 * dim,
-                               kernel_size=3, padding=1, groups=4 * dim,
+        self.conv2 = nn.Conv2d(4 * dim,
+                               4 * dim,
+                               kernel_size=3,
+                               padding=1,
+                               groups=4 * dim,
                                bias=False)
         self.bn2 = nn.BatchNorm2d(4 * dim)
         self.conv3 = nn.Conv2d(4 * dim, dim, kernel_size=1, bias=False)
@@ -65,10 +69,12 @@ class Gemini_DF_ResNet(nn.Module):
 
         self.downsample_layers = nn.ModuleList()
         stem = nn.Sequential(
-            nn.Conv2d(1, dims[0], kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(dims[0]),
-            nn.ReLU()
-        )
+            nn.Conv2d(1,
+                      dims[0],
+                      kernel_size=3,
+                      stride=1,
+                      padding=1,
+                      bias=False), nn.BatchNorm2d(dims[0]), nn.ReLU())
         self.downsample_layers.append(stem)
 
         stride_f = [2, 2, 2, 2]
@@ -76,19 +82,19 @@ class Gemini_DF_ResNet(nn.Module):
 
         for i in range(4):
             downsample_layer = nn.Sequential(
-                nn.Conv2d(
-                    dims[i], dims[i + 1], kernel_size=3,
-                    stride=(stride_f[i], stride_t[i]),
-                    padding=1, bias=False),
-                nn.BatchNorm2d(dims[i + 1])
-            )
+                nn.Conv2d(dims[i],
+                          dims[i + 1],
+                          kernel_size=3,
+                          stride=(stride_f[i], stride_t[i]),
+                          padding=1,
+                          bias=False), nn.BatchNorm2d(dims[i + 1]))
             self.downsample_layers.append(downsample_layer)
 
         self.stages = nn.ModuleList()
         for i in range(4):
-            stage = nn.Sequential(
-                *[Inverted_Bottleneck(dim=dims[i + 1]) for _ in range(depths[i])]
-            )
+            stage = nn.Sequential(*[
+                Inverted_Bottleneck(dim=dims[i + 1]) for _ in range(depths[i])
+            ])
             self.stages.append(stage)
 
         self.pool = getattr(pooling_layers,
@@ -142,7 +148,10 @@ class Gemini_DF_ResNet(nn.Module):
 
 
 # following models do include separate downsmapling layers into layer counting
-def Gemini_DF_ResNet60(feat_dim, embed_dim, pooling_func='TSTP', two_emb_layer=False):
+def Gemini_DF_ResNet60(feat_dim,
+                       embed_dim,
+                       pooling_func='TSTP',
+                       two_emb_layer=False):
     return Gemini_DF_ResNet(depths=[3, 3, 9, 3],
                             dims=[32, 32, 64, 128, 256],
                             feat_dim=feat_dim,
@@ -151,7 +160,10 @@ def Gemini_DF_ResNet60(feat_dim, embed_dim, pooling_func='TSTP', two_emb_layer=F
                             two_emb_layer=two_emb_layer)
 
 
-def Gemini_DF_ResNet114(feat_dim, embed_dim, pooling_func='TSTP', two_emb_layer=False):
+def Gemini_DF_ResNet114(feat_dim,
+                        embed_dim,
+                        pooling_func='TSTP',
+                        two_emb_layer=False):
     return Gemini_DF_ResNet(depths=[3, 3, 27, 3],
                             dims=[32, 32, 64, 128, 256],
                             feat_dim=feat_dim,
@@ -160,7 +172,10 @@ def Gemini_DF_ResNet114(feat_dim, embed_dim, pooling_func='TSTP', two_emb_layer=
                             two_emb_layer=two_emb_layer)
 
 
-def Gemini_DF_ResNet183(feat_dim, embed_dim, pooling_func='TSTP', two_emb_layer=False):
+def Gemini_DF_ResNet183(feat_dim,
+                        embed_dim,
+                        pooling_func='TSTP',
+                        two_emb_layer=False):
     return Gemini_DF_ResNet(depths=[3, 8, 45, 3],
                             dims=[32, 32, 64, 128, 256],
                             feat_dim=feat_dim,
@@ -169,7 +184,10 @@ def Gemini_DF_ResNet183(feat_dim, embed_dim, pooling_func='TSTP', two_emb_layer=
                             two_emb_layer=two_emb_layer)
 
 
-def Gemini_DF_ResNet237(feat_dim, embed_dim, pooling_func='TSTP', two_emb_layer=False):
+def Gemini_DF_ResNet237(feat_dim,
+                        embed_dim,
+                        pooling_func='TSTP',
+                        two_emb_layer=False):
     return Gemini_DF_ResNet(depths=[3, 8, 63, 3],
                             dims=[32, 32, 64, 128, 256],
                             feat_dim=feat_dim,

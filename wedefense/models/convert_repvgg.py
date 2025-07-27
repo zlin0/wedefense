@@ -24,8 +24,7 @@ from wedefense.utils.utils import parse_config_or_kwargs
 
 def convert(config='conf/config.yaml', **kwargs):
     configs = parse_config_or_kwargs(config, **kwargs)
-    speaker_model = get_model(
-        configs['model'])(**configs['model_args'])
+    speaker_model = get_model(configs['model'])(**configs['model_args'])
     configs['model_args']['deploy'] = True
     # save new configs for testing and deploying
     # NOTE: 'deploy': true

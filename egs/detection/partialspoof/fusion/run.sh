@@ -87,33 +87,33 @@ declare -A eval_scores=(
 # to embedding extractor training data. THE CALIBRATION / FUSION MODELS ARE
 # ALWAYS TRAINED ON INDOMAIN (PS) IN THESE EXPERIMENTS.
 
-# declare -a systems=('PS_v03') 
+# declare -a systems=('PS_v03')
 # fusion_name=fusion-PS_v03
 
-# declare -a systems=('PS_v13') 
+# declare -a systems=('PS_v13')
 # fusion_name=fusion-PS_v13
 
 ### Table V, row 1 (although calibration is not needed for EER reported there)
-# declare -a systems=('PS_v15') 
+# declare -a systems=('PS_v15')
 # fusion_name=fusion-PS_v13
 
-# declare -a systems=('A5_v14') 
+# declare -a systems=('A5_v14')
 # fusion_name=fusion-A5_v14
 
 ### Table V, row 2 (although calibration is not needed for EER reported there)
-# declare -a systems=('A5_v15') 
+# declare -a systems=('A5_v15')
 # fusion_name=fusion-A5_v15
 
 ### Table V, row 6
-# declare -a systems=('PS_v13' 'PS_v15') 
+# declare -a systems=('PS_v13' 'PS_v15')
 # fusion_name=fusion-PS_v13-PS_v15
 
 ### Table V, row 7
-# declare -a systems=('A5_v14' 'A5_v15') 
+# declare -a systems=('A5_v14' 'A5_v15')
 # fusion_name=fusion-A5_v14-A5_v15
 
 ### Table V, row 8
-declare -a systems=('PS_v15' 'A5_v15') 
+declare -a systems=('PS_v15' 'A5_v15')
 fusion_name=fusion-PS_v15-A5_v15
 
 
@@ -123,7 +123,7 @@ mkdir -p $exp_dir
 
 # Stage 1. Copy scores to a convenient organization. (We also need the scores
 # in our own folder since the evaluation script creates the results files in
-# the same directory as the input scores.) 
+# the same directory as the input scores.)
 ###############################################################################
 if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
 
@@ -140,9 +140,9 @@ if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
     done
 fi
 
-	       
+
 ################################################################################
-# Stage 2. Check performance of individual systems. 
+# Stage 2. Check performance of individual systems.
 ################################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
 
@@ -152,10 +152,10 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
 	    echo $sys
 	    # Preparing trials
 	    # filename        cm-label
-	    echo "filename cm-label" > ${data}/${dset}/cm_key_file.txt    
+	    echo "filename cm-label" > ${data}/${dset}/cm_key_file.txt
 	    cat ${data}/${dset}/utt2cls >> ${data}/${dset}/cm_key_file.txt
 	    sed -i "s/ /\t/g" ${data}/${dset}/cm_key_file.txt
-		   
+
 	    echo "Measuring " $dset
         python wedefense/metrics/detection/evaluation.py \
 	    --m t1 \
@@ -165,18 +165,18 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
     done
 fi
 
-		   
+
 ###############################################################################
-# Stage 3. Train logisic regression fusion / calibration model. 
+# Stage 3. Train logisic regression fusion / calibration model.
 ###############################################################################
 if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
     echo "Estimate calibration parameters ..."
-    # The target prior p_tar can be a single number in (0,1) a range in numpy 
-    # arange  format, e.g., "np.arange(0.1,1,0.1)" in which case all these 
+    # The target prior p_tar can be a single number in (0,1) a range in numpy
+    # arange  format, e.g., "np.arange(0.1,1,0.1)" in which case all these
     # values will be tested and the best model will be saved.
-    # The effective target priors p_tar will be converted to effective target 
+    # The effective target priors p_tar will be converted to effective target
     # prior according to
-    #   p_tar_eff = p_tar * c_fr / (p_tar * c_fr + (1-p_tar) * c_fa) 
+    #   p_tar_eff = p_tar * c_fr / (p_tar * c_fr + (1-p_tar) * c_fa)
     python wedefense/postprocessing/train_calibration_fusion_model.py \
        --score_dir $exp_dir/input_scores/dev/ \
        --cm_key ${data}/dev/cm_key_file.txt  \
@@ -188,7 +188,7 @@ fi
 
 
 ################################################################################
-# Stage 4. Create fused scores 
+# Stage 4. Create fused scores
 ################################################################################
 if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
     echo "Compute fused scores ..."
@@ -203,7 +203,7 @@ fi
 
 
 ################################################################################
-# Stage 5. Measuring performance 
+# Stage 5. Measuring performance
 ################################################################################
 if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
     for dset in dev eval; do

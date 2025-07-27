@@ -16,24 +16,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io
-import kaldiio
-import json
-import logging
 import random
-import tarfile
-from subprocess import PIPE, Popen
-from urllib.parse import urlparse
 
 import numpy as np
-from scipy import signal
-from scipy.io import wavfile
 import torch
-import torchaudio
-import torchaudio.compliance.kaldi as kaldi
 
-import wedefense.dataset.augmentation.rawboost_util as rawboost_util 
-from wedefense.utils.diarization.rttm_tool import get_rttm, rttm2vadvec
+from wedefense.utils.diarization.rttm_tool import rttm2vadvec
 
 
 def label_to_id_timestamps(data, label2id):
@@ -67,50 +55,55 @@ def label_to_id_timestamps(data, label2id):
 def chunk_label_timestamps(label_timestamps, start, end):
     """ Chunk segments to a specified time interval.
     Args:
-        label_timestamps (List[List[int, float, float]]): one utterance's RTTM segments
-                         after mapping label to int.        
+        label_timestamps (List[List[int, float, float]]): one utterance's RTTM segments  # noqa
+                         after mapping label to int.
         start (float): start time of chunk, in second
         end (float): end time of chunk, in second
     Returns:
-        List[List[int, float, float]]: chunked segments, time-shifted so new start is 0.0
+        List[List[int, float, float]]: chunked segments, time-shifted so new start is 0.0  # noqa
     """
     new_label_timestamps = []
-    assert(start <= end)
+    assert (start <= end)
 
     for lab, st, et in label_timestamps:
         # check if segment overlaped with [st, et]
-        if(et <= start or st >= end):
-            continue #no overlap
+        if (et <= start or st >= end):
+            continue  # no overlap
         new_st = round(max(st, start) - start, 8)
-        new_et = round(min(et, end) - start, 8) # To avoid floating-point precision error in python
+        new_et = round(min(et, end) - start,
+                       8)  # To avoid floating-point precision error in python
         new_label_timestamps.append([lab, new_st, new_et])
 
     return new_label_timestamps
 
+
 def pad_label_timestamps(label_timestamps, chunk_len):
     """ Pad segments
     Args:
-        label_timestamps (List[List[int, float, float]]): one utterance's RTTM segments
-                         after mapping label to int.        
+        label_timestamps (List[List[int, float, float]]): one utterance's RTTM segments  # noqa
+                         after mapping label to int.
         chunk_len (float): the desired duration. in second, same as in rttm.
     Returns:
-        List[List[int, float, float]]: chunked segments, time-shifted so new start is 0.0
+        List[List[int, float, float]]: chunked segments, time-shifted so new start is 0.0  # noqa
     """
-    assert label_timestamps[0][1] == 0.0 # Assume the label_timestamps starts from 0.0
-                                         # And every secons are labeled.
-    duration = label_timestamps[-1][2] # assume the last end is total duration
+    assert label_timestamps[0][
+        1] == 0.0  # Assume the label_timestamps starts from 0.0
+    # And every secons are labeled.
+    duration = label_timestamps[-1][2]  # assume the last end is total duration
     repeat_label_timestamps = label_timestamps.copy()
 
-    while(duration < chunk_len):
+    while (duration < chunk_len):
         for lab, st, et in label_timestamps:
             new_st = st + duration
             new_et = et + duration
-            if(new_st >= chunk_len):
+            if (new_st >= chunk_len):
                 break
-            repeat_label_timestamps.append([lab, new_st, min(new_et, chunk_len)])
+            repeat_label_timestamps.append(
+                [lab, new_st, min(new_et, chunk_len)])
             duration += (min(new_et, chunk_len) - new_st)
 
     return repeat_label_timestamps
+
 
 def get_random_chunk_timestamps(data, label, chunk_len_sp, sample_rate=16000):
     """ Get random chunk, support labels in timestamps.
@@ -129,10 +122,11 @@ def get_random_chunk_timestamps(data, label, chunk_len_sp, sample_rate=16000):
     data_shape = data.shape
     # random chunk
     if data_len >= chunk_len_sp:
-        chunk_start = random.randint(0, data_len - chunk_len_sp) #samplepoint
+        chunk_start = random.randint(0, data_len - chunk_len_sp)  # samplepoint
         data = data[chunk_start:chunk_start + chunk_len_sp]
-        new_label = chunk_label_timestamps(label, float(chunk_start/sample_rate), 
-                                           float((chunk_start+chunk_len_sp)/sample_rate))
+        new_label = chunk_label_timestamps(
+            label, float(chunk_start / sample_rate),
+            float((chunk_start + chunk_len_sp) / sample_rate))
         # re-clone the data to avoid memory leakage
         if type(data) == torch.Tensor:
             data = data.clone()
@@ -148,9 +142,11 @@ def get_random_chunk_timestamps(data, label, chunk_len_sp, sample_rate=16000):
         else:  # np.array
             data = np.tile(data, repeat_shape)
         data = data[:chunk_len_sp]
-        new_label = pad_label_timestamps(label, float(chunk_len_sp/sample_rate))
+        new_label = pad_label_timestamps(label,
+                                         float(chunk_len_sp / sample_rate))
 
     return data, new_label
+
 
 def timestamps_to_labelvec(data, shift_sec, label2id, reco2dur):
     """ Replace 'spk' segment field with frame-level label vector.
@@ -163,31 +159,33 @@ def timestamps_to_labelvec(data, shift_sec, label2id, reco2dur):
         sample['label'] replaced by frame-level label vector
         #note that sample['spk'] has str as label, ['label'] has number as id
         #TODO to be consistent.
-    """    
+    """
 
     for sample in data:
         assert 'label' in sample
         assert 'key' in sample
-        label = sample['spk']    
-        # dur = reco2dur[sample['key']], may chunked, so need to use updated duration.
-        # TODO duration is calculated too many times, save duration info to data using processor.pt 
-        # Lin 20250524: we need to transfer dur in case rttm doesn't cover all durations.
+        label = sample['spk']
+        # dur = reco2dur[sample['key']], may chunked, so need to use updated duration.  # noqa
+        # TODO duration is calculated too many times, save duration info to data using processor.pt  # noqa
+        # Lin 20250524: we need to transfer dur in case rttm doesn't cover all durations.  # noqa
         # In current case, we assigned all durations, so use -1
-        # If needed, uncomment: 
+        # If needed, uncomment:
         # dur = float(len(sample['wav'])/sample['sample_rate'])
-        
-        labelvec = rttm2vadvec(rttm = label, seg_shift_sec = shift_sec, 
-                               label2id = label2id, dur = -1)
+
+        labelvec = rttm2vadvec(rttm=label,
+                               seg_shift_sec=shift_sec,
+                               label2id=label2id,
+                               dur=-1)
         sample['label'] = labelvec
 
         yield sample
 
 
 def filter_timestamps(data,
-           min_num_frames=100,
-           max_num_frames=800,
-           frame_shift=10,
-           data_type='shard/raw/feat'):
+                      min_num_frames=100,
+                      max_num_frames=800,
+                      frame_shift=10,
+                      data_type='shard/raw/feat'):
     """ Filter the utterance with very short duration and random chunk the
         utterance with very long duration.
 
@@ -213,11 +211,11 @@ def filter_timestamps(data,
             if len(feat) < min_num_frames:
                 continue
             elif len(feat) > max_num_frames:
-                #TODO
-                raise NotImplementedError("Note impelmented chunk for frames yet.")
-                feat, new_label = get_random_chunk_timestamps(feat, label, 
-                                                              max_num_frames, 
-                                                              sample['sample_rate'])
+                # TODO
+                raise NotImplementedError(
+                    "Note impelmented chunk for frames yet.")
+                feat, new_label = get_random_chunk_timestamps(
+                    feat, label, max_num_frames, sample['sample_rate'])
             sample['feat'] = feat
             sample['spk'] = label
         else:
@@ -232,13 +230,12 @@ def filter_timestamps(data,
             if len(wav) < min_len:
                 continue
             elif len(wav) > max_len:
-                wav, new_label = get_random_chunk_timestamps(wav, label, max_len, 
-                                                             sample['sample_rate'])
+                wav, new_label = get_random_chunk_timestamps(
+                    wav, label, max_len, sample['sample_rate'])
             sample['wav'] = wav.unsqueeze(0)
             sample['spk'] = new_label
 
         yield sample
-
 
 
 def random_chunk_timestamps(data, chunk_len, data_type='shard/raw/feat'):
@@ -252,7 +249,7 @@ def random_chunk_timestamps(data, chunk_len, data_type='shard/raw/feat'):
             Iterable[{key, wav/feat, label}]
     """
     for sample in data:
-        # print(sample['key']) 
+        # print(sample['key'])
         assert 'key' in sample
         assert 'spk' in sample
         label = sample['spk']
@@ -260,18 +257,21 @@ def random_chunk_timestamps(data, chunk_len, data_type='shard/raw/feat'):
         if data_type == 'feat':
             assert 'feat' in sample
             feat = sample['feat']
-            feat, new_label = get_random_chunk_timestamps(feat, label, chunk_len, sample['sample_rate'])
+            feat, new_label = get_random_chunk_timestamps(
+                feat, label, chunk_len, sample['sample_rate'])
             sample['feat'] = feat
         else:
             assert 'wav' in sample
             wav = sample['wav'][0]
-            wav, new_label = get_random_chunk_timestamps(wav, label, chunk_len, sample['sample_rate'])
+            wav, new_label = get_random_chunk_timestamps(
+                wav, label, chunk_len, sample['sample_rate'])
             sample['wav'] = wav.unsqueeze(0)
             sample['spk'] = new_label
         yield sample
 
+
 def update_label_with_rttm(data, rttm):
-    #rttm = get_rttm(rttm_file)
+    # rttm = get_rttm(rttm_file)
     for sample in data:
         assert 'key' in sample
         assert 'spk' in sample
@@ -281,16 +281,16 @@ def update_label_with_rttm(data, rttm):
 
 def clean_batch(data):
     for sample in data:
-        if('feat' in sample):
-             yield{
-                 'key': sample['key'],
-                 'feat': sample['feat'],
-                 'label': sample['label']
-             }
+        if ('feat' in sample):
+            yield {
+                'key': sample['key'],
+                'feat': sample['feat'],
+                'label': sample['label']
+            }
 
-        else:    
-             yield{
-                 'key': sample['key'],
-                 'wav': sample['wav'],
-                 'label': sample['label']
-             }
+        else:
+            yield {
+                'key': sample['key'],
+                'wav': sample['wav'],
+                'label': sample['label']
+            }

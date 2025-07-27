@@ -21,23 +21,34 @@ frame-level prediction has format as:
 
 """
 
-import os
 import argparse
 import kaldiio
 from tqdm import tqdm
-import numpy as np
+
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Convert frame-level logits to RTTM by argmax post-processing.")
+    parser = argparse.ArgumentParser(
+        description="Convert frame-level logits to RTTM "
+        "by argmax post-processing.")
 
-    parser.add_argument('--logits_scp_path', type=str, required=True,
+    parser.add_argument('--logits_scp_path',
+                        type=str,
+                        required=True,
                         help="Path to the Kaldi-style logits.scp file.")
-    parser.add_argument('--score_reso', type=int, required=True,
-                        help="Resolution of logits in milliseconds (e.g., 20 means each frame is 20ms).")
-    parser.add_argument('--output_rttm', type=str, required=True,
+    parser.add_argument('--score_reso',
+                        type=int,
+                        required=True,
+                        help="Resolution of logits in milliseconds "
+                        "(e.g., 20 means each frame is 20ms).")
+    parser.add_argument('--output_rttm',
+                        type=str,
+                        required=True,
                         help="Output RTTM file path.")
-    parser.add_argument('--label2id_file', type=str, default='data/partialspoof/train/label2id',
-                        help="Path to label2id file mapping labels to indices (e.g., {'bonafide': 0, 'spoof': 1}).")
+    parser.add_argument('--label2id_file',
+                        type=str,
+                        default='data/partialspoof/train/label2id',
+                        help="Path to label2id file mapping labels to indices "
+                        "(e.g., {'bonafide': 0, 'spoof': 1}).")
 
     return parser.parse_args()
 
@@ -61,7 +72,8 @@ def logits_to_rttm(logits_scp_path, score_reso, output_rttm, label2id_file):
     frame_shift = score_reso / 1000.0  # Convert ms to seconds
 
     with open(output_rttm, "w") as f_out:
-        for utt, scores in tqdm(kaldiio.load_scp_sequential(logits_scp_path), desc="Converting"):
+        for utt, scores in tqdm(kaldiio.load_scp_sequential(logits_scp_path),
+                                desc="Converting"):
             preds = scores.argmax(axis=1)  # Frame-level predictions (0 or 1)
 
             if len(preds) == 0:
@@ -76,7 +88,9 @@ def logits_to_rttm(logits_scp_path, score_reso, output_rttm, label2id_file):
                     start_time = start_idx * frame_shift
                     duration = (idx - start_idx) * frame_shift
                     label = 'bonafide' if current_label == bonafide_idx else 'spoof'
-                    f_out.write(f"SPEAKER {utt} 1 {start_time:.3f} {duration:.3f} <NA> <NA> {label} <NA> <NA>\n")
+                    f_out.write(
+                        f"SPEAKER {utt} 1 {start_time:.3f} {duration:.3f} <NA> <NA> {label} <NA> <NA>\n"
+                    )
 
                     # Update start for new segment
                     start_idx = idx
@@ -86,11 +100,12 @@ def logits_to_rttm(logits_scp_path, score_reso, output_rttm, label2id_file):
             start_time = start_idx * frame_shift
             duration = (len(preds) - start_idx) * frame_shift
             label = 'bonafide' if current_label == bonafide_idx else 'spoof'
-            f_out.write(f"SPEAKER {utt} 1 {start_time:.3f} {duration:.3f} <NA> <NA> {label} <NA> <NA>\n")
+            f_out.write(
+                f"SPEAKER {utt} 1 {start_time:.3f} {duration:.3f} <NA> <NA> {label} <NA> <NA>\n"
+            )
 
 
 if __name__ == "__main__":
     args = parse_arguments()
-    logits_to_rttm(args.logits_scp_path, args.score_reso, args.output_rttm, args.label2id_file)
-
-
+    logits_to_rttm(args.logits_scp_path, args.score_reso, args.output_rttm,
+                   args.label2id_file)

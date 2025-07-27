@@ -14,7 +14,7 @@ dataloader_args:
   batch_size: 32
   num_workers: 0
   pin_memory: False
-  prefetch_factor:  
+  prefetch_factor:
   drop_last: True
 
 dataset_args:
@@ -55,7 +55,7 @@ dataset_args:
     max_f: 8
     prob: 0.6
 
-model: SSL_BACKEND_multireso_MaxPool1dLin_gmlp # starts from SSL_BACKEND (as defined in models/get_model.py) 
+model: SSL_BACKEND_multireso_MaxPool1dLin_gmlp # starts from SSL_BACKEND (as defined in models/get_model.py)
 model_init: null
 model_args:
   num_scale: 6 # {2, 4, 8, 16, 32 ,64}
@@ -82,7 +82,7 @@ margin_update:
   increase_type: "exp" # exp, linear
 
 loss: CrossEntropyLoss
-loss_args: {} 
+loss_args: {}
   #multi_scale_active: ['utt'] # ['2', '4','8','16', '32', '64', 'utt']
 
 optimizer: SGD

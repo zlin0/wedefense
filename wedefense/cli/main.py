@@ -43,7 +43,9 @@ def get_args():
                         type=int,
                         default=16000,
                         help='Resample rate for audio processing')
-    parser.add_argument('--audio_file', type=str, help='Path to the audio file')
+    parser.add_argument('--audio_file',
+                        type=str,
+                        help='Path to the audio file')
     parser.add_argument('--rttm_file', type=str, help='Path to the RTTM file')
     args = parser.parse_args()
     return args

@@ -31,7 +31,7 @@ data_dir=$2
 
 if [ ! -d "${ITW_dir}" ]; then
     mkdir -p "${ITW_dir}"
-    bash ./01_download_database.sh "${ITW_dir}" 
+    bash ./01_download_database.sh "${ITW_dir}"
 fi
 
 if [ ! -d "${data_dir}" ]; then
@@ -52,7 +52,7 @@ sed -i 's/,/ /g' ${data_dir}/utt2cls
 ./tools/utt2spk_to_spk2utt.pl ${data_dir}/utt2cls \
         >${data_dir}/cls2utt
 
-#we are using wav2dur.py, but quite slow. 
+#we are using wav2dur.py, but quite slow.
 nj=10  # number of parallel jobs
 wavscp_path=${data_dir}/wav.scp
 output_dir=${data_dir}

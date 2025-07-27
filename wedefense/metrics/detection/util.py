@@ -1,10 +1,8 @@
-# original from ASVspoof5 Evaluation Package 
+# original from ASVspoof5 Evaluation Package
 # (https://github.com/asvspoof-challenge/asvspoof5/tree/main/evaluation-package)
-import os
-import sys
+
 from pathlib import Path
 import pandas as pd
-
 
 # column tags used in data frame
 # trial name
@@ -40,6 +38,7 @@ g_asv_spf = 'spoof'
 g_t2_tag = 'track_2_tag'
 g_t2_dummy = 'dummy'
 
+
 def load_tsv(filepath, sep='\t'):
     """
     input
@@ -53,10 +52,14 @@ def load_tsv(filepath, sep='\t'):
 
     Assume tsv file, the first line is header
     """
-    return pd.read_csv(filepath, sep = sep, header=0).rename(
-        columns={'tar_spk_anon': g_tar_speaker_tag,
-                 'trial_anon': g_filename_tag,
-                 'asv-label': g_asv_label_tag, 'cm-label': g_cm_label_tag})
+    return pd.read_csv(filepath, sep=sep, header=0).rename(
+        columns={
+            'tar_spk_anon': g_tar_speaker_tag,
+            'trial_anon': g_filename_tag,
+            'asv-label': g_asv_label_tag,
+            'cm-label': g_cm_label_tag
+        })
+
 
 def load_full_keys(filepath, sep=' '):
     """
@@ -74,14 +77,21 @@ def load_full_keys(filepath, sep=' '):
     Assume tsv file, the first line is header
     """
     full_key_pd = load_tsv(filepath, sep)
-    
+
     # manually change column names
     full_key_pd = full_key_pd.rename(
-        columns={'tar_spk_anon': g_tar_speaker_tag, 'trial_anon': g_filename_tag,
-                 'asv-label': g_asv_label_tag, 'cm-label': g_cm_label_tag})
+        columns={
+            'tar_spk_anon': g_tar_speaker_tag,
+            'trial_anon': g_filename_tag,
+            'asv-label': g_asv_label_tag,
+            'cm-label': g_cm_label_tag
+        })
     return full_key_pd
 
-def load_cm_scores_keys(cm_scores_file, cm_keys_file, default_index=g_filename_tag):
+
+def load_cm_scores_keys(cm_scores_file,
+                        cm_keys_file,
+                        default_index=g_filename_tag):
     """
     input
     -----
@@ -115,18 +125,20 @@ def load_cm_scores_keys(cm_scores_file, cm_keys_file, default_index=g_filename_t
 
     # merge scores and keys
     cm_pd = cm_scores_pd.join(cm_keys_pd)
-    
+
     return cm_pd[g_cm_score_tag].to_numpy(), cm_pd[g_cm_label_tag].to_numpy()
 
 
-def load_sasv_scores_keys(sasv_scores_file, sasv_keys_file, default_index=[g_tar_speaker_tag, g_filename_tag]):
+def load_sasv_scores_keys(sasv_scores_file,
+                          sasv_keys_file,
+                          default_index=[g_tar_speaker_tag, g_filename_tag]):
     """
     input
     -----
       sasv_scores_file: str, path to the SASV score file
          five columns
          spk        filename        cm-score          asv-score       sasv-score
-         E_0101     E_0000000001    4.76273775100708  -1.0224495      1.87014412550354
+         E_0101     E_0000000001    4.76273775100708  -1.0224495      1.87014412550354  # noqa
 
       sasv_keys_file: str, path to the SASV key file
          spk        filename        cm-label          asv-label
@@ -144,19 +156,21 @@ def load_sasv_scores_keys(sasv_scores_file, sasv_keys_file, default_index=[g_tar
     assert sasv_keys_file, "Please provide SASV key file"
     assert Path(sasv_scores_file).exists(), "SASV score file not exist"
     assert Path(sasv_keys_file).exists(), "SASV key file not exist"
-    
+
     # load tsv files
     sasv_scores_pd = load_tsv(sasv_scores_file).set_index(default_index)
     sasv_keys_pd = load_tsv(sasv_keys_file).set_index(default_index)
 
     assert set(sasv_scores_pd.index) == set(sasv_keys_pd.index), \
         'Error: SASV score and key incompatible'
-    
+
     # merge scores and keys
     sasv_pd = sasv_scores_pd.join(sasv_keys_pd)
-    assert sasv_pd.shape[0] == sasv_scores_pd.shape[0], 'Error: SASV score and key incompatible'
-    assert sasv_pd.shape[0] == sasv_keys_pd.shape[0], 'Error: SASV score and key incompatible'
-    
+    assert sasv_pd.shape[0] == sasv_scores_pd.shape[
+        0], 'Error: SASV score and key incompatible'
+    assert sasv_pd.shape[0] == sasv_keys_pd.shape[
+        0], 'Error: SASV score and key incompatible'
+
     return sasv_pd[g_cm_score_tag].to_numpy(), \
         sasv_pd[g_asv_score_tag].to_numpy(), \
         sasv_pd[g_sasv_score_tag].to_numpy(), \
@@ -164,8 +178,9 @@ def load_sasv_scores_keys(sasv_scores_file, sasv_keys_file, default_index=[g_tar
         sasv_pd[g_asv_label_tag].to_numpy()
 
 
-
-def load_cm_scores_keys_as_pd(cm_scores_file, cm_full_keys_file, default_index=g_filename_tag):
+def load_cm_scores_keys_as_pd(cm_scores_file,
+                              cm_full_keys_file,
+                              default_index=g_filename_tag):
     """
     input
     -----
@@ -196,14 +211,17 @@ def load_cm_scores_keys_as_pd(cm_scores_file, cm_full_keys_file, default_index=g
     return cm_pd
 
 
-def load_sasv_scores_keys_as_pd(sasv_scores_file, sasv_full_keys_file, default_index=[g_tar_speaker_tag, g_filename_tag]):
+def load_sasv_scores_keys_as_pd(
+        sasv_scores_file,
+        sasv_full_keys_file,
+        default_index=[g_tar_speaker_tag, g_filename_tag]):
     """
     input
     -----
       sasv_scores_file: str, path to the SASV score file
          five columns
          spk        filename        cm-score          asv-score       sasv-score
-         E_0101     E_0000000001    4.76273775100708  -1.0224495      1.87014412550354
+         E_0101     E_0000000001    4.76273775100708  -1.0224495      1.87014412550354  # noqa
 
 
     output
@@ -214,61 +232,62 @@ def load_sasv_scores_keys_as_pd(sasv_scores_file, sasv_full_keys_file, default_i
     assert sasv_full_keys_file, "Please provide SASV key file"
     assert Path(sasv_scores_file).exists(), "SASV score file not exist"
     assert Path(sasv_full_keys_file).exists(), "SASV key file not exist"
-    
+
     # load tsv files
     sasv_scores_pd = load_tsv(sasv_scores_file).set_index(default_index)
     sasv_keys_pd = load_full_keys(sasv_full_keys_file).set_index(default_index)
 
     # merge scores and keys
     sasv_pd = sasv_scores_pd.join(sasv_keys_pd)
-    assert sasv_pd.shape[0] == sasv_scores_pd.shape[0], 'Error: SASV score and key incompatible'
+    assert sasv_pd.shape[0] == sasv_scores_pd.shape[
+        0], 'Error: SASV score and key incompatible'
 
     # filter out dummy data
     sasv_pd = sasv_pd.query('{:s} != "{:s}"'.format(g_t2_tag, g_t2_dummy))
 
     try:
-        return sasv_pd[[g_asv_label_tag, g_cm_label_tag,
-                        g_cm_score_tag, g_asv_score_tag, g_sasv_score_tag,
-                        g_attack_tag, g_codec_tag]]
+        return sasv_pd[[
+            g_asv_label_tag, g_cm_label_tag, g_cm_score_tag, g_asv_score_tag,
+            g_sasv_score_tag, g_attack_tag, g_codec_tag
+        ]]
     except KeyError:
-        return sasv_pd[[g_asv_label_tag, g_cm_label_tag,
-                        g_asv_score_tag,
-                        g_attack_tag, g_codec_tag]]
-
+        return sasv_pd[[
+            g_asv_label_tag, g_cm_label_tag, g_asv_score_tag, g_attack_tag,
+            g_codec_tag
+        ]]
 
 
 def return_attacks(data_key_pd, tag_attack_col=g_attack_tag):
     """
-    return a list of spoofing attack labels 
+    return a list of spoofing attack labels
 
     input
     -----
       data_key_pd: dataframe, contains both scores and full set of key files
       tag_attack_col: str, tag of the column for attack labels
-    
+
     output
     ------
       attacks: list of str
     """
-    # excldue the label bonafide 
+    # excldue the label bonafide
     attacks = sorted(data_key_pd[tag_attack_col].unique())[:-1]
     return attacks
 
+
 def return_codecs(data_key_pd, tag_codec_col=g_codec_tag):
     """
-    return a list of codecs labels 
+    return a list of codecs labels
 
     input
     -----
       data_key_pd: dataframe, contains both scores and full set of key files
       tag_attack_col: str, tag of the column for attack labels
-    
+
     output
     ------
       codecs: list of str
     """
-    # excldue the label bonafide 
+    # excldue the label bonafide
     codecs = sorted(data_key_pd[tag_codec_col].unique())
     return codecs
-
-    

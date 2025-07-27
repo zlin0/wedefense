@@ -32,13 +32,12 @@ from wedefense.models.projections import get_projection
 from wedefense.models.get_model import get_model
 from wedefense.utils.checkpoint import load_checkpoint, save_checkpoint
 from wedefense.utils.executor_localization import run_epoch
-from wedefense.utils.file_utils import read_table, read_seglab_npy
-from wedefense.utils.utils import get_logger, parse_config_or_kwargs, set_seed, \
-    spk2id
-from wedefense.utils.diarization.rttm_tool import get_rttm 
+from wedefense.utils.file_utils import read_seglab_npy
+from wedefense.utils.utils import get_logger, parse_config_or_kwargs, set_seed
+from wedefense.utils.diarization.rttm_tool import get_rttm
 
 import wedefense.dataset.customize_collate_fn as nii_collate_fn
-import wedefense.dataset.customize_sampler as nii_sampler_fn
+
 
 def train(config='conf/config.yaml', **kwargs):
     """Trains a model on the given features and spk labels.
@@ -84,30 +83,31 @@ def train(config='conf/config.yaml', **kwargs):
 
     # train data
     train_label = configs['train_label']
-    if(os.path.basename(train_label).startswith('rttm')):
+    if (os.path.basename(train_label).startswith('rttm')):
         train_reco2timestamps_dict, label2id_dict = get_rttm(train_label)
-    elif(train_label.endswith('.npy')):
+    elif (train_label.endswith('.npy')):
         raise NotImplementedError("seglab vec is not checked yet.")
         train_reco2timestamps_dict = read_seglab_npy(train_label)
-        #label2id_dict
+        # label2id_dict
     else:
         raise NotImplementedError("Other label type is not implemented yet.")
 
     # Save label2id:
-    label2id_path=os.path.join(os.path.dirname(train_label), "label2id") 
+    label2id_path = os.path.join(os.path.dirname(train_label), "label2id")
     if not os.path.exists(label2id_path):
         with open(label2id_path, "w") as f:
             for k, v in label2id_dict.items():
                 f.write(f"{k}\t{v}\n")
 
-    num_class = len(label2id_dict.keys()) 
+    num_class = len(label2id_dict.keys())
     if rank == 0:
         logger.info("<== Data statistics ==>")
         logger.info("train data num: {}, class num: {}".format(
             len(train_reco2timestamps_dict.keys()), num_class))
 
     batch_size = configs['dataloader_args']['batch_size']
-    whole_utt = configs['dataset_args'].get('whole_utt', False) #set as True after debugging.
+    whole_utt = configs['dataset_args'].get(
+        'whole_utt', False)  # set as True after debugging.
     sampler = configs['dataset_args'].get('sampler', None)
 
     # collate function
@@ -120,34 +120,36 @@ def train(config='conf/config.yaml', **kwargs):
 
     tmp_params_dataloader = configs['dataloader_args'].copy()
     # load utterance duration
-    # duration info is used by both block_shuffle_by_length and 
-    train_dur = os.path.join(os.path.dirname(train_label),'utt2dur') 
+    # duration info is used by both block_shuffle_by_length and
+    train_dur = os.path.join(os.path.dirname(train_label), 'utt2dur')
     assert os.path.isfile(train_dur), f"utt2dur file not found: {train_dur}"
 
-    if sampler=='block_shuffle_by_length' and batch_size >1:
+    if sampler == 'block_shuffle_by_length' and batch_size > 1:
         # size of block shuffle
         block_shuffle_size = world_size * batch_size
     else:
         block_shuffle_size = 0
-    
+
     # read rttm file to get label in timestamps.
     # TODO move rttm to make_raw/shard_list.py
-    # train_rttm = os.path.join(configs['rttm_file']) 
+    # train_rttm = os.path.join(configs['rttm_file'])
 
     # dataset and dataloader
     train_dataset = Dataset(configs['data_type'],
                             configs['train_data'],
                             configs['dataset_args'],
                             label2id_dict,
-                            whole_utt = configs['dataset_args'].get('whole_utt'),
-                            reverb_lmdb_file = configs.get('reverb_data', None),
-                            noise_lmdb_file = configs.get('noise_data', None),
-                            data_dur_file = train_dur,
-                            reco2timestamps_dict = train_reco2timestamps_dict,
-                            block_shuffle_size = block_shuffle_size,
-                            output_reso = configs['dataset_args']['label_reso'])
+                            whole_utt=configs['dataset_args'].get('whole_utt'),
+                            reverb_lmdb_file=configs.get('reverb_data', None),
+                            noise_lmdb_file=configs.get('noise_data', None),
+                            data_dur_file=train_dur,
+                            reco2timestamps_dict=train_reco2timestamps_dict,
+                            block_shuffle_size=block_shuffle_size,
+                            output_reso=configs['dataset_args']['label_reso'])
 
-    train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, **tmp_params_dataloader)
+    train_dataloader = DataLoader(train_dataset,
+                                  collate_fn=collate_fn,
+                                  **tmp_params_dataloader)
     if configs['dataset_args'].get('sample_num_per_epoch', 0) > 0:
         sample_num_per_epoch = configs['dataset_args']['sample_num_per_epoch']
     else:
@@ -181,24 +183,23 @@ def train(config='conf/config.yaml', **kwargs):
     elif checkpoint is None:
         logger.info('Train model from scratch ...')
     # projection layer
-    if(configs['model_args']['embed_dim'] < 0): 
+    if (configs['model_args']['embed_dim'] < 0):
         # #if emb_dim <0, we will reduce dim by emb_dim. like -2 will be dim/2
-        if 'multireso' in configs['model'] and configs['model_args']['num_scale'] > 0:
-            # If we are using multireso structure, dim will reduced by 
-            #['embed_dim'] in ['num_scale'] times.
+        if 'multireso' in configs[
+                'model'] and configs['model_args']['num_scale'] > 0:
+            # If we are using multireso structure, dim will reduced by
+            # ['embed_dim'] in ['num_scale'] times.
             # @Lin TODO, support multi-reso.
-            #for idx, scale in enumerate(configs['model_args']['num_scale']):
-            #    configs['projection'{idx}'_args']['embed_dim'] = 
+            # for idx, scale in enumerate(configs['model_args']['num_scale']):
+            #    configs['projection'{idx}'_args']['embed_dim'] =
 
             configs['projection_args']['embed_dim'] = int(
-                    configs['model_args']['feat_dim'] / 
-                    pow(abs(configs['model_args']['embed_dim'])
-                    ))
+                configs['model_args']['feat_dim'] /
+                pow(abs(configs['model_args']['embed_dim'])))
         else:
             configs['projection_args']['embed_dim'] = int(
-                    configs['model_args']['feat_dim'] / 
-                    abs(configs['model_args']['embed_dim'])
-                    )
+                configs['model_args']['feat_dim'] /
+                abs(configs['model_args']['embed_dim']))
     else:
         configs['projection_args']['embed_dim'] = configs['model_args'][
             'embed_dim']
@@ -236,7 +237,7 @@ def train(config='conf/config.yaml', **kwargs):
     else:
         start_epoch = 1
     logger.info('start_epoch: {}'.format(start_epoch))
-    
+
     # freeze some pretraining-specific parameters
     for name, param in model.named_parameters():
         if any(k in name for k in ["quantizer", "project_q", "final_proj"]):

@@ -13,7 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 train_calibration_fusion_model.py
 Trains calibration and/or fusion of scores for binary decisions.
@@ -42,7 +41,7 @@ def train_with_BFGS(model, train_set, p_tar=-1, max_iter=20, lr=0.01):
     loss_func = T.nn.BCEWithLogitsLoss(reduction='none')  # We have logits
 
     def weighted_loss_func(P, Y, W):
-        return T.mean(W*loss_func(P, Y))
+        return T.mean(W * loss_func(P, Y))
 
     opt = T.optim.LBFGS(model.parameters(), max_iter=max_iter, lr=lr)
 
@@ -73,6 +72,7 @@ def train_with_BFGS(model, train_set, p_tar=-1, max_iter=20, lr=0.01):
                 loss_val = weighted_loss_func(P, Y, W)
                 loss_val.backward()
                 return loss_val
+
             # If we define the function as "def loss_closure(X, Y, W):"
             # we get the flake8 complaint
             # "F841 local variable 'Y' is assigned to but never used", see
@@ -83,9 +83,9 @@ def train_with_BFGS(model, train_set, p_tar=-1, max_iter=20, lr=0.01):
             # within the loop "at the same iteration step" where it is defined.
             # -------------------------------------------
 
-            opt.step(loss_closure)      # get loss, use to update wts
+            opt.step(loss_closure)  # get loss, use to update wts
 
-            _ = model(X, p_tar)         # monitor loss
+            _ = model(X, p_tar)  # monitor loss
             loss_val = loss_closure()
             itr_loss += loss_val.item()
         # Generate training information message.
@@ -125,18 +125,23 @@ def estimate_min_max_fusion(train_set):
 
     # Sum up the offsets into one to fit the standard "affine transform" format
     aff_trans = np.concatenate((scale, np.sum(offset, keepdims=True)))
-    print("Estimated affine transform: scales {}, offset {}"
-          .format(aff_trans[0:-1], aff_trans[-1]))
+    print("Estimated affine transform: scales {}, offset {}".format(
+        aff_trans[0:-1], aff_trans[-1]))
     return aff_trans
 
 
-def main(score_dir, cm_key, model_save_path,
-         p_tar=0.5, c_fr=1, c_fa=1, method='LR'):
+def main(score_dir,
+         cm_key,
+         model_save_path,
+         p_tar=0.5,
+         c_fr=1,
+         c_fa=1,
+         method='LR'):
 
     # Compute effective prior
-    p_eff = p_tar * c_fr / (p_tar * c_fr + (1-p_tar) * c_fa)
+    p_eff = p_tar * c_fr / (p_tar * c_fr + (1 - p_tar) * c_fa)
     print("p_tar: {}, c_fr: {}, c_fa: {}, p_eff: {}.".format(
-            p_tar, c_fr, c_fa, p_eff))
+        p_tar, c_fr, c_fa, p_eff))
 
     # Search for scores
     print("Using scores in {} for calibration / fusion.".format(score_dir))
@@ -152,10 +157,11 @@ def main(score_dir, cm_key, model_save_path,
 
     # Read in scores and make a dataframe.
     for i in range(len(systems)):
-        df_tmp = pd.read_csv(
-            score_dir + '/' + systems[i] + '/llr.txt', sep='\t')
-        df_tmp = df_tmp.rename(
-            columns={'cm-score': 'cm-score' + str(i)}).set_index('filename')
+        df_tmp = pd.read_csv(score_dir + '/' + systems[i] + '/llr.txt',
+                             sep='\t')
+        df_tmp = df_tmp.rename(columns={
+            'cm-score': 'cm-score' + str(i)
+        }).set_index('filename')
         # To consider: Would it better to put the system's name in the column
         #              names? (For clearer debugging / analysis.)
         if i == 0:
@@ -183,8 +189,10 @@ def main(score_dir, cm_key, model_save_path,
 
     print("#trials {}, #tar {}, #non-target {}".format(n_trials, n_tar, n_non))
 
-    df['weight'] = df['cm-label'].replace(
-        to_replace={1: n_trials*p_eff/n_tar, 0: n_trials*(1-p_eff)/n_non})
+    df['weight'] = df['cm-label'].replace(to_replace={
+        1: n_trials * p_eff / n_tar,
+        0: n_trials * (1 - p_eff) / n_non
+    })
 
     df = df.to_numpy().astype(np.float32)
 

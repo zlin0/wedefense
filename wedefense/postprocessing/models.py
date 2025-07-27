@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 logistic_regression.py
 A logistic regression model for calibration and/or fusion of binary
@@ -55,8 +54,8 @@ class LogisticRegression(T.nn.Module):
         # input to be log posterior odds.)
 
         if p_tar == -1:
-            tau = - T.special.logit(self.p_tar)
+            tau = -T.special.logit(self.p_tar)
         else:
-            tau = - T.special.logit(T.tensor(p_tar, requires_grad=False))
+            tau = -T.special.logit(T.tensor(p_tar, requires_grad=False))
         s = self.trans(x) - tau
         return s

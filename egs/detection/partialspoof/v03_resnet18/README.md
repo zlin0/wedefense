@@ -1,7 +1,7 @@
 ## 🔎 PartialSpoof Results on ResNet18
 
 - **Input Feature**: `shard` or `raw` waveform
-- **Frame Configuration**: (1) 300 frames per segment, 10 ms frame shift, or (2) varied-length input (with max_num_frames=800) 
+- **Frame Configuration**: (1) 300 frames per segment, 10 ms frame shift, or (2) varied-length input (with max_num_frames=800)
 - **Evaluation Metrics**: minDCF, EER (%), Cllr, actDCF
 - **Evaluation Sets**: Dev / Eval
 
@@ -15,7 +15,7 @@
          --config conf/resnet.yaml \
          --exp_dir exp/ResNet18-TSTP-emb256-fbank80-frms300-aug0-spFalse-saFalse-Softmax-SGD-epoch100
 ```
-#### 🔹Varied-length input (with max_num_frames=800) 
+#### 🔹Varied-length input (with max_num_frames=800)
 
 ```bash
 ./run.sh --stage 3 --stop_stage 7 \

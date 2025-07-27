@@ -49,7 +49,7 @@ class Model:
 
     def init_model(self, configs, model_path):
         self.frontend_type = configs['dataset_args'].get(
-            'frontend', 'fbank')  #TODO support other features
+            'frontend', 'fbank')  # TODO support other features
         if self.frontend_type != "fbank" and not self.frontend_type.startswith(
                 'lfcc'):
             frontend_args = self.frontend_type + "_args"
@@ -96,8 +96,8 @@ class Model:
         return feat
 
     def compute_embeds(self, audio_path: str, detection=False):
-        wavform, sample_rate = torchaudio.load(audio_path,
-                                               normalize=self.wavform_normalize)
+        wavform, sample_rate = torchaudio.load(
+            audio_path, normalize=self.wavform_normalize)
         if sample_rate != self.resample_rate:
             wavform = torchaudio.transforms.Resample(
                 orig_freq=sample_rate, new_freq=self.resample_rate)(wavform)

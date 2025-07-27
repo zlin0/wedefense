@@ -22,10 +22,10 @@ conda create --name <ENV_NAME> python=3.8.0 scipy=1.10.1 pandas=1.2.4
 
 
 ## Usage
-For the Track 1, cm score 
+For the Track 1, cm score
 
 1. Track 1
-   
+
 Calculate minDCF, CLLR, and EER by giving one cm score file and key file
 ```
 python evaluation.py --m t1 --cm cm_score_file --cm_key cm_key_file
@@ -36,10 +36,10 @@ python evaluation.py --m t1 --cm cm_score_file --cm_key cm_key_file
 Calculate a-DCF, min t-DCF, and t-EER by giving an SASV score file and key file
 
 ```
-# To calculate all metrics, 
+# To calculate all metrics,
 python evaluation.py --m t2_tandem --sasv sasv_score_file --sasv_key sasv_key_file
 
-# To calculate a-DCF only, 
+# To calculate a-DCF only,
 python evaluation.py --m t2_single --sasv sasv_score_file --sasv_key sasv_key_file
 ```
 
@@ -104,8 +104,8 @@ If you use the provided evaluation metrics, please cite the following papers:
 ```bibtex
 @ARTICLE{9143410,
   author={Kinnunen, Tomi and Delgado, Héctor and Evans, Nicholas and Lee, Kong Aik and Vestman, Ville and Nautsch, Andreas and Todisco, Massimiliano and Wang, Xin and Sahidullah, Md and Yamagishi, Junichi and Reynolds, Douglas A.},
-  journal={IEEE/ACM Transactions on Audio, Speech, and Language Processing}, 
-  title={Tandem Assessment of Spoofing Countermeasures and Automatic Speaker Verification: Fundamentals}, 
+  journal={IEEE/ACM Transactions on Audio, Speech, and Language Processing},
+  title={Tandem Assessment of Spoofing Countermeasures and Automatic Speaker Verification: Fundamentals},
   year={2020},
   volume={28},
   number={},

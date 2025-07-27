@@ -29,11 +29,11 @@ DSETs_full=(train dev eval)
 
 if [ ! -d ${ASVspoof5_dir} ]; then
     mkdir -p ${ASVspoof5_dir}
-    bash ./01_download_database.sh ${ASVspoof5_dir} 
+    bash ./01_download_database.sh ${ASVspoof5_dir}
 fi
 
 for i in "${!DSETs[@]}"; do
-  dset=${DSETs[$i]}	
+  dset=${DSETs[$i]}
   dset_full=${DSETs_full[$i]}
 
   if [ ! -d ${data_dir}/flac_${dset}_all ]; then
@@ -58,7 +58,7 @@ for i in "${!DSETs[@]}"; do
   ./tools/utt2spk_to_spk2utt.pl ${data_dir}/flac_${dset}_all/utt2cls \
 	  >${data_dir}/flac_${dset}_all/cls2utt
 
-  #we are using wav2dur.py, but quite slow. 
+  #we are using wav2dur.py, but quite slow.
   python tools/wav2dur.py ${data_dir}/flac_${dset}_all/wav.scp ${data_dir}/flac_${dset}_all/utt2dur
 
 
@@ -67,7 +67,7 @@ for i in "${!DSETs[@]}"; do
       if [ ! -e ${data_dir}/flac_${dset} ]; then
           ln -s flac_${dset}_all ${data_dir}/flac_${dset}
       fi
-  else 
+  else
       if [ ! -d ${data_dir}/flac_${dset} ]; then
             mkdir -p ${data_dir}/flac_${dset}
       fi

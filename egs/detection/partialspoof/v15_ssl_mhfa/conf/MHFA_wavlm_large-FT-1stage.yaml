@@ -14,7 +14,7 @@ dataloader_args:
   batch_size: 16
   num_workers: 6
   pin_memory: False
-  prefetch_factor: 8 
+  prefetch_factor: 8
   drop_last: True
 
 dataset_args:
@@ -55,7 +55,7 @@ dataset_args:
     max_f: 8
     prob: 0.6
 
-model: SSL_BACKEND_MHFA # starts from SSL_BACKEND (as defined in models/get_model.py) 
+model: SSL_BACKEND_MHFA # starts from SSL_BACKEND (as defined in models/get_model.py)
 model_init: null
 model_args:
   feat_dim: -1

@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 #SBATCH --job-name=localization_gmlp #job name
 #SBATCH --nodes=1  #number of nodes requested
@@ -28,7 +28,7 @@ CONFIGs=(
 	FTxlsr_53_gmlp_reso20_CE
 	FTxlsr_53_gmlp_reso20_P2Sgrad
 )
-config_name=${CONFIGs[$SLURM_ARRAY_TASK_ID]} 
+config_name=${CONFIGs[$SLURM_ARRAY_TASK_ID]}
 
 
 ./run.sh --stage 3 --stop_stage 7 \

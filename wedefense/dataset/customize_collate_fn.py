@@ -1,8 +1,8 @@
 # Licensed under the BSD 3-Clause License
-# copy from project: https://github.com/nii-yamagishilab/project-NN-Pytorch-scripts
-# Author: Xin Wang (wangxin@nii.ac.jp) 
+# copy from project: https://github.com/nii-yamagishilab/project-NN-Pytorch-scripts  # noqa
+# Author: Xin Wang (wangxin@nii.ac.jp)
 
-#!/usr/bin/env python
+# !/usr/bin/env python
 """
 customize_collate_fn
 
@@ -14,16 +14,13 @@ PyTorch is BSD-style licensed, as found in the LICENSE file.
 
 from __future__ import absolute_import
 
-import os
-import sys
 import torch
 import re
 import collections
 
-##from torch._six import container_abcs, string_classes, int_classes
-#from torch._six import string_classes
-string_classes = str   # No module named 'torch._six'
-
+# from torch._six import container_abcs, string_classes, int_classes
+# from torch._six import string_classes
+string_classes = str  # No module named 'torch._six'
 """
 The primary motivation is to handle batch of data with varied length.
 Default default_collate cannot handle that because of stack:
@@ -42,7 +39,6 @@ https://gist.github.com/HarshTrivedi/f4e7293e941b17d19058f6fb90ab0fec
 __author__ = "Xin Wang"
 __email__ = "wangxin@nii.ac.jp"
 
-
 np_str_obj_array_pattern = re.compile(r'[SaUO]')
 
 customize_collate_err_msg = (
@@ -52,11 +48,11 @@ customize_collate_err_msg = (
 
 def pad_sequence(batch, padding_value=0.0):
     """ output_batch = pad_sequence(batch)
-   
+
     input
     -----
       batch: list of tensor, [data_1, data2, ...], and data_1 is (len, dim, ...)
-   
+
     output
     ------
       output_batch: list of tensor, [data_1_padded, data_2_padded, ...]
@@ -74,14 +70,14 @@ def pad_sequence(batch, padding_value=0.0):
 
     # get the maximum length
     max_len = max([s.size(0) for s in batch])
-   
+
     if all(x.shape[0] == max_len for x in batch):
         # if all data sequences in batch have the same length, no need to pad
         return batch
     else:
         # else, we need to pad
         out_dims = (max_len, ) + trailing_dims
-       
+
         output_batch = []
         for i, tensor in enumerate(batch):
             # check the rest of dimensions
@@ -109,7 +105,7 @@ def customize_collate(batch):
         # batch = [data_tensor_1, data_tensor_2, data_tensor_3 ... ]
         #
         batch_new = pad_sequence(batch)
-       
+
         out = None
         if torch.utils.data.get_worker_info() is not None:
             # If we're in a background process, concatenate directly into a
@@ -121,9 +117,9 @@ def customize_collate(batch):
             # updated according to latest collate function
             # otherwise, it raises warning
             # pytorch/blob/master/torch/utils/data/_utils/collate.py
-            out = elem.new(storage).resize_(
-                len(batch_new), *list(batch_new[0].size()))
-            #print(batch_new.shape[0], batch_new.shape[1])
+            out = elem.new(storage).resize_(len(batch_new),
+                                            *list(batch_new[0].size()))
+            # print(batch_new.shape[0], batch_new.shape[1])
         return torch.stack(batch_new, 0, out=out)
 
     elif elem_type.__module__ == 'numpy' and elem_type.__name__ != 'str_' \
@@ -136,35 +132,36 @@ def customize_collate(batch):
             return customize_collate([torch.as_tensor(b) for b in batch])
         elif elem.shape == ():  # scalars
             return torch.as_tensor(batch)
-       
+
     elif isinstance(elem, float):
         return torch.tensor(batch, dtype=torch.float64)
-    #elif isinstance(elem, int_classes):
+    # elif isinstance(elem, int_classes):
     elif isinstance(elem, int):
         return torch.tensor(batch)
     elif isinstance(elem, string_classes):
         return batch
-    #elif isinstance(elem, container_abcs.Mapping):
+    # elif isinstance(elem, container_abcs.Mapping):
     elif isinstance(elem, collections.abc.Mapping):
-        return {key: customize_collate([d[key] for d in batch]) for key in elem}
+        return {
+            key: customize_collate([d[key] for d in batch])
+            for key in elem
+        }
     elif isinstance(elem, tuple) and hasattr(elem, '_fields'):  # namedtuple
-        return elem_type(*(customize_collate(samples) \
+        return elem_type(*(customize_collate(samples)
                            for samples in zip(*batch)))
-    #elif isinstance(elem, container_abcs.Sequence):
+    # elif isinstance(elem, container_abcs.Sequence):
     elif isinstance(elem, collections.abc.Sequence):
         # check to make sure that the elements in batch have consistent size
         it = iter(batch)
         elem_size = len(next(it))
         if not all(len(elem) == elem_size for elem in it):
             raise RuntimeError('each element in batch should be of equal size')
-       
+
         # zip([[A, B, C], [a, b, c]])  -> [[A, a], [B, b], [C, c]]
         transposed = zip(*batch)
         return [customize_collate(samples) for samples in transposed]
 
     raise TypeError(customize_collate_err_msg.format(elem_type))
-
-
 
 
 def pad_sequence_batch(list_batch, padding_value=0.0):
@@ -174,7 +171,7 @@ def pad_sequence_batch(list_batch, padding_value=0.0):
     -----
       batch: list of batch, [batch_1, batch_2, ...], and batch_1 is
       (batch_size, len, dim1, dim2, ...)
-   
+
     output
     ------
       output_batch: list of tensor, [batch_1_padded, batch_2_padded, ...]
@@ -189,10 +186,10 @@ def pad_sequence_batch(list_batch, padding_value=0.0):
         return list_batch
 
     trailing_dims = dim_size[2:]
-   
+
     # get the maximum length for each batched tensor
     max_len = max([s.size(1) for s in list_batch])
-   
+
     if all(x.shape[1] == max_len for x in list_batch):
         # if all data sequences in batch have the same length, no need to pad
         return list_batch
@@ -201,8 +198,11 @@ def pad_sequence_batch(list_batch, padding_value=0.0):
         for i, tensor in enumerate(list_batch):
 
             # shape (batch, max_len, dim1, dim2, ...)
-            out_dims = (tensor.shape[0], max_len, ) + trailing_dims
-       
+            out_dims = (
+                tensor.shape[0],
+                max_len,
+            ) + trailing_dims
+
             # check the rest of dimensions
             if tensor.size()[2:] != trailing_dims:
                 print("Data in batch has different dimensions:")
@@ -217,7 +217,7 @@ def pad_sequence_batch(list_batch, padding_value=0.0):
 
 def customize_collate_from_batch(batch):
     """ output = customize_collate_from_batch
-   
+
     input
     -----
       batch: list of tensor, [tensor1, tensor2, ...], where
@@ -226,7 +226,7 @@ def customize_collate_from_batch(batch):
     output
     ------
       output: tensor (batch_sum, length, dim1, dim2, ...)
-   
+
     Similar to customize_collate, but input is a list of batch data that have
     been collated through customize_collate.
     The difference is use torch.cat rather than torch.stack to merge tensors.
@@ -239,7 +239,7 @@ def customize_collate_from_batch(batch):
     elem = batch[0]
     elem_type = type(elem)
     if isinstance(elem, torch.Tensor):
-        batch_new = pad_sequence_batch(batch)       
+        batch_new = pad_sequence_batch(batch)
         out = None
         if torch.utils.data.get_worker_info() is not None:
             numel = max([x.numel() for x in batch_new]) * len(batch_new)
@@ -270,7 +270,7 @@ def customize_collate_from_batch(batch):
             return torch.as_tensor(batch)
     elif isinstance(elem, float):
         return torch.tensor(batch, dtype=torch.float64)
-    #elif isinstance(elem, int_classes):
+    # elif isinstance(elem, int_classes):
     elif isinstance(elem, int):
         return torch.tensor(batch)
     elif isinstance(elem, string_classes):
@@ -281,14 +281,16 @@ def customize_collate_from_batch(batch):
         for tmp_elem in batch[1:]:
             tmp += tmp_elem
         return tmp
-    #elif isinstance(elem, container_abcs.Sequence):
+    # elif isinstance(elem, container_abcs.Sequence):
     elif isinstance(elem, collections.abc.Sequence):
         it = iter(batch)
         elem_size = len(next(it))
         if not all(len(elem) == elem_size for elem in it):
             raise RuntimeError('each element in batch should be of equal size')
         transposed = zip(*batch)
-        return [customize_collate_from_batch(samples) for samples in transposed]
+        return [
+            customize_collate_from_batch(samples) for samples in transposed
+        ]
 
     raise TypeError(customize_collate_err_msg.format(elem_type))
 

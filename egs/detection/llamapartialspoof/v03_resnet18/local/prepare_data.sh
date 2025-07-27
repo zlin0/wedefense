@@ -29,7 +29,7 @@ data=$2
 
 # Download data
 curpath=$( pwd )
-if [ ! -f ${LPS_dir}/label_R01TTS.0.a.txt ]; then 
+if [ ! -f ${LPS_dir}/label_R01TTS.0.a.txt ]; then
   cd ${LPS_dir}
   wget https://zenodo.org/records/14214149/files/R01TTS.0.a.tgz?download=1 -O R01TTS.0.a.tgz
   wget https://zenodo.org/records/14214149/files/label_R01TTS.0.a.txt?download=1 label_R01TTS.0.a.txt

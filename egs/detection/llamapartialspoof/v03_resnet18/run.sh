@@ -16,7 +16,7 @@ data_type="shard"  # shard/raw
 expname=ResNet18-TSTP-emb256-fbank80-frms400-aug0-spFalse-saFalse-Softmax-SGD-epoch100
 exp_dir=exp/${expname}
 
-config=../../partialspoof/conf/resnet.yaml #wespeaker version 
+config=../../partialspoof/conf/resnet.yaml #wespeaker version
 trained_exp_dir=../../partialspoof/v03_resnet18/exp/${expname}
 trained_data=../../partialspoof/v03_resnet18/data/partialspoof
 
@@ -36,7 +36,7 @@ if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
 fi
 
 #######################################################################################
-# Stage 2. Preapring shard data for partialspoof and musan/rirs 
+# Stage 2. Preapring shard data for partialspoof and musan/rirs
 #######################################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Covert evaluation data 0a to ${data_type}..."
@@ -74,14 +74,14 @@ if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
     --batch_size 1 \
     --num_workers 1 \
     --nj $num_gpus \
-    --gpus $gpus 
+    --gpus $gpus
   mkdir -p ${exp_dir}/embeddings/
   mv ${trained_exp_dir}/embeddings/0a ${exp_dir}/embeddings
 
 fi
 
 #######################################################################################
-# Stage 5. Extract logits and posterior 
+# Stage 5. Extract logits and posterior
 #######################################################################################
 if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   echo "Extract logits and posteriors ..."
@@ -95,7 +95,7 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
 fi
 
 #######################################################################################
-# Stage 6. Convert logits to llr 
+# Stage 6. Convert logits to llr
 #######################################################################################
 if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
   echo "Convert logits to llr ..."
@@ -108,13 +108,13 @@ if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
 fi
 
 #######################################################################################
-# Stage 7. Measuring performance 
+# Stage 7. Measuring performance
 #######################################################################################
 if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
   echo "Measuring Performance ..."
   # Preparing trails
   # filename        cm-label
-  echo "filename cm-label" > ${data}/0a/cm_key_file.txt	  
+  echo "filename cm-label" > ${data}/0a/cm_key_file.txt
   cat ${data}/0a/utt2cls >> ${data}/0a/cm_key_file.txt
   sed -i "s/ /\t/g" ${data}/0a/cm_key_file.txt
 

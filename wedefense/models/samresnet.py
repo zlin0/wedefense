@@ -21,9 +21,13 @@ import wedefense.models.pooling_layers as pooling_layers
 class SimAMBasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(
-        self, ConvLayer, NormLayer, in_planes, planes, stride=1, block_id=1
-    ):
+    def __init__(self,
+                 ConvLayer,
+                 NormLayer,
+                 in_planes,
+                 planes,
+                 stride=1,
+                 block_id=1):
         super(SimAMBasicBlock, self).__init__()
         self.conv1 = ConvLayer(
             in_planes,
@@ -34,9 +38,12 @@ class SimAMBasicBlock(nn.Module):
             bias=False,
         )
         self.bn1 = NormLayer(planes)
-        self.conv2 = ConvLayer(
-            planes, planes, kernel_size=3, stride=1, padding=1, bias=False
-        )
+        self.conv2 = ConvLayer(planes,
+                               planes,
+                               kernel_size=3,
+                               stride=1,
+                               padding=1,
+                               bias=False)
         self.bn2 = NormLayer(planes)
         self.relu = nn.ReLU(inplace=True)
         self.sigmoid = nn.Sigmoid()
@@ -71,31 +78,41 @@ class SimAMBasicBlock(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(
-        self, in_planes, block, num_blocks, in_ch=1, **kwargs
-    ):
+
+    def __init__(self, in_planes, block, num_blocks, in_ch=1, **kwargs):
         super(ResNet, self).__init__()
         self.in_planes = in_planes
         self.NormLayer = nn.BatchNorm2d
         self.ConvLayer = nn.Conv2d
 
-        self.conv1 = self.ConvLayer(
-            in_ch, in_planes, kernel_size=3, stride=1, padding=1, bias=False
-        )
+        self.conv1 = self.ConvLayer(in_ch,
+                                    in_planes,
+                                    kernel_size=3,
+                                    stride=1,
+                                    padding=1,
+                                    bias=False)
         self.bn1 = self.NormLayer(in_planes)
         self.relu = nn.ReLU(inplace=True)
-        self.layer1 = self._make_layer(
-            block, in_planes, num_blocks[0], stride=1, block_id=1
-        )
-        self.layer2 = self._make_layer(
-            block, in_planes * 2, num_blocks[1], stride=2, block_id=2
-        )
-        self.layer3 = self._make_layer(
-            block, in_planes * 4, num_blocks[2], stride=2, block_id=3
-        )
-        self.layer4 = self._make_layer(
-            block, in_planes * 8, num_blocks[3], stride=2, block_id=4
-        )
+        self.layer1 = self._make_layer(block,
+                                       in_planes,
+                                       num_blocks[0],
+                                       stride=1,
+                                       block_id=1)
+        self.layer2 = self._make_layer(block,
+                                       in_planes * 2,
+                                       num_blocks[1],
+                                       stride=2,
+                                       block_id=2)
+        self.layer3 = self._make_layer(block,
+                                       in_planes * 4,
+                                       num_blocks[2],
+                                       stride=2,
+                                       block_id=3)
+        self.layer4 = self._make_layer(block,
+                                       in_planes * 8,
+                                       num_blocks[3],
+                                       stride=2,
+                                       block_id=4)
 
     def _make_layer(self, block, planes, num_blocks, stride, block_id=1):
         strides = [stride] + [1] * (num_blocks - 1)
@@ -109,8 +126,7 @@ class ResNet(nn.Module):
                     planes,
                     stride,
                     block_id,
-                )
-            )
+                ))
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
@@ -132,7 +148,12 @@ def SimAM_ResNet100(in_planes):
 
 
 class SimAM_ResNet34_ASP(nn.Module):
-    def __init__(self, in_planes=64, embed_dim=256, acoustic_dim=80, dropout=0):
+
+    def __init__(self,
+                 in_planes=64,
+                 embed_dim=256,
+                 acoustic_dim=80,
+                 dropout=0):
         super(SimAM_ResNet34_ASP, self).__init__()
         self.front = SimAM_ResNet34(in_planes)
         self.pooling = pooling_layers.ASP(in_planes, acoustic_dim)
@@ -150,7 +171,12 @@ class SimAM_ResNet34_ASP(nn.Module):
 
 
 class SimAM_ResNet100_ASP(nn.Module):
-    def __init__(self, in_planes=64, embed_dim=256, acoustic_dim=80, dropout=0):
+
+    def __init__(self,
+                 in_planes=64,
+                 embed_dim=256,
+                 acoustic_dim=80,
+                 dropout=0):
         super(SimAM_ResNet100_ASP, self).__init__()
         self.front = SimAM_ResNet100(in_planes)
         self.pooling = pooling_layers.ASP(in_planes, acoustic_dim)

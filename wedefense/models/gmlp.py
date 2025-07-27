@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 
 # This gmlp.py is adapted from below scripts:
-# https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/aacd926dba97ba7a1d67a3631120c46d0670ba94/labml_nn/transformers/gmlp/__init__.py#L27
+# https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/aacd926dba97ba7a1d67a3631120c46d0670ba94/labml_nn/transformers/gmlp/__init__.py#L27  # noqa
 # https://nn.labml.ai/transformers/gmlp/index.html
-# and follows MIT License which can be found in modules/LICENSE 
-
+# and follows MIT License which can be found in modules/LICENSE
 """
 ---
 title: Pay Attention to MLPs (gMLP)
 summary: >
-  This is an annotated implementation/tutorial of Pay Attention to MLPs (gMLP) in PyTorch.
+  This is an annotated implementation/tutorial of Pay Attention to MLPs (gMLP) in PyTorch.  # noqa
 ---
 
 # Pay Attention to MLPs (gMLP)
@@ -17,12 +16,12 @@ summary: >
 This is a [PyTorch](https://pytorch.org) implementation of the paper
 [Pay Attention to MLPs](https://papers.labml.ai/paper/2105.08050).
 
-This paper introduces a Multilayer Perceptron (MLP) based architecture with gating,
+This paper introduces a Multilayer Perceptron (MLP) based architecture with gating,  # noqa
 which they name **gMLP**. It consists of a stack of $L$ *gMLP* blocks.
 
-Here is [the training code](experiment.html) for a gMLP model based autoregressive model.
+Here is [the training code](experiment.html) for a gMLP model based autoregressive model.  # noqa
 
-[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/01bd941ac74c11eb890c1d9196651a4a)
+[![View Run](https://img.shields.io/badge/labml-experiment-brightgreen)](https://app.labml.ai/run/01bd941ac74c11eb890c1d9196651a4a)  # noqa
 """
 
 from typing import Optional
@@ -71,13 +70,13 @@ class GMLPBlock(nn.Module):
         self.proj2 = nn.Linear(d_ffn // 2, d_model)
         # Embedding size (required by [Encoder](../models.html#Encoder).
         # We use the encoder module from transformer architecture and plug
-        # *gMLP* block as a replacement for the [Transformer Layer](../models.html#Encoder).
+        # *gMLP* block as a replacement for the [Transformer Layer](../models.html#Encoder).  # noqa
         self.size = d_model
 
     def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None):
         """
-        * `x` is the input embedding tensor $X$ of shape `[seq_len, batch_size, d_model]`
-        * `mask` is a boolean mask of shape `[seq_len, seq_len, 1]` that controls the visibility of tokens
+        * `x` is the input embedding tensor $X$ of shape `[seq_len, batch_size, d_model]`  # noqa
+        * `mask` is a boolean mask of shape `[seq_len, seq_len, 1]` that controls the visibility of tokens  # noqa
          among each other.
         """
         # Keep a copy for shortcut connection
@@ -101,10 +100,11 @@ class SpacialGatingUnit(nn.Module):
 
     $$s(Z) = Z_1 \odot f_{W,b}(Z_2)$$
 
-    where $f_{W,b}(Z) = W Z + b$ is a linear transformation along the sequence dimension,
+    where $f_{W,b}(Z) = W Z + b$ is a linear transformation along the sequence dimension,  # noqa
     and $\odot$ is element-wise multiplication.
-    $Z$ is split into to parts of equal size $Z_1$ and $Z_2$ along the channel dimension (embedding dimension).
+    $Z$ is split into to parts of equal size $Z_1$ and $Z_2$ along the channel dimension (embedding dimension).  # noqa
     """
+
     def __init__(self, d_z: int, seq_len: int):
         """
         * `d_z` is the dimensionality of $Z$
@@ -114,9 +114,11 @@ class SpacialGatingUnit(nn.Module):
         # Normalization layer before applying $f_{W,b}(\cdot)$
         # Weight $W$ in $f_{W,b}(\cdot)$.
         self.norm = nn.LayerNorm([d_z // 2])
-        # The paper notes that it's important to initialize weights to small values and the bias to $1$,
-        # so that during the initial training $s(\cdot)$ is close to identity (apart from the split).
-        self.weight = nn.Parameter(torch.zeros(seq_len, seq_len).uniform_(-0.01, 0.01), requires_grad=True)
+        # The paper notes that it's important to initialize weights to small values and the bias to $1$,  # noqa
+        # so that during the initial training $s(\cdot)$ is close to identity (apart from the split).   # noqa
+        self.weight = nn.Parameter(torch.zeros(seq_len,
+                                               seq_len).uniform_(-0.01, 0.01),
+                                   requires_grad=True)
         # Weight $b$ in $f_{W,b}(\cdot)$
         #
         # The paper notes that it's important to initialize bias to $1$.
@@ -125,8 +127,8 @@ class SpacialGatingUnit(nn.Module):
     def forward(self, z: torch.Tensor, mask: Optional[torch.Tensor] = None):
         """
         * `z` is the input $Z$ of shape `[seq_len, batch_size, d_z]`
-        * `mask` is is a boolean mask of shape `[seq_len, seq_len, 1]` that controls the visibility of tokens
-         among each other. The last dimension of size `1` is the batch, which we have in other transformer
+        * `mask` is is a boolean mask of shape `[seq_len, seq_len, 1]` that controls the visibility of tokens  # noqa
+         among each other. The last dimension of size `1` is the batch, which we have in other transformer  # noqa
          implementations and was left for compatibility.
         """
 
@@ -138,7 +140,7 @@ class SpacialGatingUnit(nn.Module):
         # Check mask
         if mask is not None:
             # `mask` has shape `[seq_len_q, seq_len_k, batch_size]`.
-            # The batch dimension should be of size `1` because this implementation supports
+            # The batch dimension should be of size `1` because this implementation supports  # noqa
             # only same mask for all samples in the batch.
             assert mask.shape[0] == 1 or mask.shape[0] == seq_len
             assert mask.shape[1] == seq_len
@@ -159,10 +161,12 @@ class SpacialGatingUnit(nn.Module):
             weight = weight * mask
 
         # $f_{W,b}(Z_2) = W Z_2 + b$
-        z2 = torch.einsum('ij,jbd->ibd', weight, z2) + self.bias[:seq_len, None, None]
+        z2 = torch.einsum('ij,jbd->ibd', weight, z2) + self.bias[:seq_len,
+                                                                 None, None]
 
         # $Z_1 \odot f_{W,b}(Z_2)$
         return z1 * z2
+
 
 class SpacialGatingUnit_3D_F(nn.Module):
     """
@@ -170,10 +174,11 @@ class SpacialGatingUnit_3D_F(nn.Module):
 
     $$s(Z) = Z_1 \odot f_{W,b}(Z_2)$$
 
-    where $f_{W,b}(Z) = W Z + b$ is a linear transformation along the sequence dimension,
+    where $f_{W,b}(Z) = W Z + b$ is a linear transformation along the sequence dimension,  # noqa
     and $\odot$ is element-wise multiplication.
-    $Z$ is split into to parts of equal size $Z_1$ and $Z_2$ along the channel dimension (embedding dimension).
+    $Z$ is split into to parts of equal size $Z_1$ and $Z_2$ along the channel dimension (embedding dimension).  # noqa
     """
+
     def __init__(self, d_z: int, seq_len: int):
         """
         * `d_z` is the dimensionality of $Z$
@@ -184,9 +189,11 @@ class SpacialGatingUnit_3D_F(nn.Module):
         self.norm = nn.LayerNorm([d_z // 2])
         # Weight $W$ in $f_{W,b}(\cdot)$.
         #
-        # The paper notes that it's important to initialize weights to small values and the bias to $1$,
-        # so that during the initial training $s(\cdot)$ is close to identity (apart from the split).
-        self.weight = nn.Parameter(torch.zeros(seq_len, seq_len).uniform_(-0.01, 0.01), requires_grad=True)
+        # The paper notes that it's important to initialize weights to small values and the bias to $1$,  # noqa
+        # so that during the initial training $s(\cdot)$ is close to identity (apart from the split).  # noqa
+        self.weight = nn.Parameter(torch.zeros(seq_len,
+                                               seq_len).uniform_(-0.01, 0.01),
+                                   requires_grad=True)
         # Weight $b$ in $f_{W,b}(\cdot)$
         #
         # The paper notes that it's important to initialize bias to $1$.
@@ -195,15 +202,15 @@ class SpacialGatingUnit_3D_F(nn.Module):
     def forward(self, z: torch.Tensor, mask: Optional[torch.Tensor] = None):
         """
         * `z` is the input $Z$ of shape `[seq_len, batch_size, d_z(F) ]`
-        * `mask` is is a boolean mask of shape `[seq_len, seq_len, 1]` that controls the visibility of tokens
-         among each other. The last dimension of size `1` is the batch, which we have in other transformer
+        * `mask` is is a boolean mask of shape `[seq_len, seq_len, 1]` that controls the visibility of tokens  # noqa
+         among each other. The last dimension of size `1` is the batch, which we have in other transformer  # noqa
          implementations and was left for compatibility.
         """
 
         # Get sequence length
         seq_len = z.shape[0]
-        if(z.shape[-1]%2 != 0):
-        #    z = z[:,:,:,:-1]
+        if (z.shape[-1] % 2 != 0):
+            #    z = z[:,:,:,:-1]
             z = nn.ReplicationPad2d(padding=(1, 0, 0, 0))(z)
         # Split $Z$ into $Z_1$ and $Z_2$
         z1, z2 = torch.chunk(z, 2, dim=-1)
@@ -211,7 +218,7 @@ class SpacialGatingUnit_3D_F(nn.Module):
         # Check mask
         if mask is not None:
             # `mask` has shape `[seq_len_q, seq_len_k, batch_size]`.
-            # The batch dimension should be of size `1` because this implementation supports
+            # The batch dimension should be of size `1` because this implementation supports  # noqa
             # only same mask for all samples in the batch.
             assert mask.shape[0] == 1 or mask.shape[0] == seq_len
             assert mask.shape[1] == seq_len
@@ -232,10 +239,12 @@ class SpacialGatingUnit_3D_F(nn.Module):
             weight = weight * mask
 
         # $f_{W,b}(Z_2) = W Z_2 + b$
-        z2 = torch.einsum('ij,jbdc->ibdc', weight, z2) + self.bias[:seq_len, None, None, None]
+        z2 = torch.einsum('ij,jbdc->ibdc', weight,
+                          z2) + self.bias[:seq_len, None, None, None]
 
         # $Z_1 \odot f_{W,b}(Z_2)$
         return z1 * z2
+
 
 class SpacialGatingUnit_3D_C(nn.Module):
     """
@@ -243,10 +252,11 @@ class SpacialGatingUnit_3D_C(nn.Module):
 
     $$s(Z) = Z_1 \odot f_{W,b}(Z_2)$$
 
-    where $f_{W,b}(Z) = W Z + b$ is a linear transformation along the sequence dimension,
+    where $f_{W,b}(Z) = W Z + b$ is a linear transformation along the sequence dimension,  # noqa
     and $\odot$ is element-wise multiplication.
-    $Z$ is split into to parts of equal size $Z_1$ and $Z_2$ along the channel dimension (embedding dimension).
+    $Z$ is split into to parts of equal size $Z_1$ and $Z_2$ along the channel dimension (embedding dimension).  # noqa
     """
+
     def __init__(self, d_z: int, seq_len: int, BN=False):
         """
         * `d_z` is the dimensionality of $Z$
@@ -260,9 +270,11 @@ class SpacialGatingUnit_3D_C(nn.Module):
             self.norm = nn.LayerNorm([d_z // 2])
         # Weight $W$ in $f_{W,b}(\cdot)$.
         #
-        # The paper notes that it's important to initialize weights to small values and the bias to $1$,
-        # so that during the initial training $s(\cdot)$ is close to identity (apart from the split).
-        self.weight = nn.Parameter(torch.zeros(seq_len, seq_len).uniform_(-0.01, 0.01), requires_grad=True)
+        # The paper notes that it's important to initialize weights to small values and the bias to $1$,  # noqa
+        # so that during the initial training $s(\cdot)$ is close to identity (apart from the split).  # noqa
+        self.weight = nn.Parameter(torch.zeros(seq_len,
+                                               seq_len).uniform_(-0.01, 0.01),
+                                   requires_grad=True)
         # Weight $b$ in $f_{W,b}(\cdot)$
         #
         # The paper notes that it's important to initialize bias to $1$.
@@ -271,24 +283,24 @@ class SpacialGatingUnit_3D_C(nn.Module):
     def forward(self, z: torch.Tensor, mask: Optional[torch.Tensor] = None):
         """
         * `z` is the input $Z$ of shape `[seq_len, batch_size, d_z(F) ]`
-        * `mask` is is a boolean mask of shape `[seq_len, seq_len, 1]` that controls the visibility of tokens
-         among each other. The last dimension of size `1` is the batch, which we have in other transformer
+        * `mask` is is a boolean mask of shape `[seq_len, seq_len, 1]` that controls the visibility of tokens  # noqa
+         among each other. The last dimension of size `1` is the batch, which we have in other transformer  # noqa
          implementations and was left for compatibility.
         """
-        dim_idx = 1 #B,C,T,F
+        dim_idx = 1  # B,C,T,F
 
         # Get sequence length
         seq_len = z.shape[0]
-        #if(z.shape[dim_idx]%2 != 0):
+        # if(z.shape[dim_idx]%2 != 0):
         #    z = z[:,-1,:,:]
-            #z = np.pad(z, ((0,0),(1,0),(0,0),(0,0)),'edge')
+        # z = np.pad(z, ((0,0),(1,0),(0,0),(0,0)),'edge')
         # Split $Z$ into $Z_1$ and $Z_2$
         z1, z2 = torch.chunk(z, 2, dim=dim_idx)
 
         # Check mask
         if mask is not None:
             # `mask` has shape `[seq_len_q, seq_len_k, batch_size]`.
-            # The batch dimension should be of size `1` because this implementation supports
+            # The batch dimension should be of size `1` because this implementation supports  # noqa
             # only same mask for all samples in the batch.
             assert mask.shape[0] == 1 or mask.shape[0] == seq_len
             assert mask.shape[1] == seq_len
@@ -309,21 +321,19 @@ class SpacialGatingUnit_3D_C(nn.Module):
             weight = weight * mask
 
         # $f_{W,b}(Z_2) = W Z_2 + b$
-        z2 = torch.einsum('ij,jbdc->ibdc', weight, z2) + self.bias[:seq_len, None, None, None]
+        z2 = torch.einsum('ij,jbdc->ibdc', weight,
+                          z2) + self.bias[:seq_len, None, None, None]
 
         # $Z_1 \odot f_{W,b}(Z_2)$
         return z1 * z2
 
 
-
-#def debug():
+# def debug():
 #    model=GMLPBlock(60, 60, 160)
 #    tmp = torch.rand(64,1,160,60)
 #    x = model(tmp, )
 #
 #
 #
-#if __name__ == '__main__':
+# if __name__ == '__main__':
 #    debug()
-
-

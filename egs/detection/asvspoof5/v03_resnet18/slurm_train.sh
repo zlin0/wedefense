@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 #SBATCH --job-name=resnet18 #job name
 #SBATCH --nodes=1  #number of nodes requested

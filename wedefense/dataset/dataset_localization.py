@@ -2,7 +2,7 @@
 #               2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
 #               2022 Hongji Wang (jijijiang77@gmail.com)
 #               2023 Zhengyang Chen (chenzhengyang117@gmail.com)
-#               2025 Lin Zhang, Xin Wang (lzhang.as@gmail.com, wangxin@nii.ac.jp)
+#               2025 Lin Zhang, Xin Wang (lzhang.as@gmail.com, wangxin@nii.ac.jp)  # noqa
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ from wedefense.dataset.lmdb_data import LmdbData
 import wedefense.dataset.processor as processor
 import wedefense.dataset.processor_time as processor_time
 import wedefense.dataset.shuffle_random_tools as shuffle_tools
+
 
 class Processor(IterableDataset):
     # https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.IterableDataset
@@ -57,13 +58,14 @@ class Processor(IterableDataset):
 class DistributedSampler:
     """ Sampler for distributed training
     """
+
     def __init__(self, shuffle=True, partition=True, block_shuffle_size=0):
         """ Initialzie DistributedSampler
 
             Args:
-                shuffle (bool): whether shuffle data list. 
+                shuffle (bool): whether shuffle data list.
                     Default to True
-                partition (bool): whether divide file list based on world_size. 
+                partition (bool): whether divide file list based on world_size.
                     Default to True
                 block_shuffle_size (int): if larger than 0, shuffle by block
                     [1,2,3,4,5,6] -> shuffle_blck_size with 3 -> [3,1,2,5,4,6]
@@ -112,17 +114,20 @@ class DistributedSampler:
             if self.shuffle and self.block_shuffle_size > 0:
                 # shuffle within blocks
                 # e.g., [1,2,3,4,5,6], block_size=3 -> [3,1,2,5,4,6]
-                shuffle_tools.f_shuffle_in_block_inplace(data, self.block_shuffle_size, self.epoch)
+                shuffle_tools.f_shuffle_in_block_inplace(
+                    data, self.block_shuffle_size, self.epoch)
                 # shuffle blocks
                 # e.g., [3,1,2,5,4,6], block_size=3 -> [5,4,6,3,1,2]
-                shuffle_tools.f_shuffle_blocks_inplace(data, self.block_shuffle_size, self.epoch)
-                
+                shuffle_tools.f_shuffle_blocks_inplace(data,
+                                                       self.block_shuffle_size,
+                                                       self.epoch)
+
             elif self.shuffle:
                 # default shuffle
                 random.Random(self.epoch).shuffle(data)
             else:
                 pass
-            
+
             data = data[self.rank::self.world_size]
         data = data[self.worker_id::self.num_workers]
         return data
@@ -132,20 +137,20 @@ class DataList(IterableDataset):
     """
     Dataset based on torch IterableDataset
     """
-    
+
     def __init__(self,
                  lists,
                  shuffle=True,
                  partition=True,
                  repeat_dataset=True,
-                 block_shuffle_size = 0):
+                 block_shuffle_size=0):
         """ Initialize DataList.
 
             Args:
                 lists (list): list of data files
-                shuffle (bool): whether shuffle data list. 
+                shuffle (bool): whether shuffle data list.
                     Default to True
-                partition (bool): whether divide file list based on world_size. 
+                partition (bool): whether divide file list based on world_size.
                     Default to True
                 repeat_dataset (bool): whether repeat_dataset during loading.
                     Default to True
@@ -153,12 +158,13 @@ class DataList(IterableDataset):
                     [1,2,3,4,5,6] -> shuffle_blck_size with 3 -> [3,1,2,5,4,6]
                     Default to 0
 
-            When block_shuffle_size > 0, we assume that lists is a sorted list of 
-            file paths, wherein the sorting is based on the duration of each file.
+            When block_shuffle_size > 0, we assume that lists is a sorted list of  # noqa
+            file paths, wherein the sorting is based on the duration of each file.  # noqa
         """
         self.lists = lists
         self.repeat_dataset = repeat_dataset
-        self.sampler = DistributedSampler(shuffle, partition, block_shuffle_size)
+        self.sampler = DistributedSampler(shuffle, partition,
+                                          block_shuffle_size)
 
     def set_epoch(self, epoch):
         self.sampler.set_epoch(epoch)
@@ -192,8 +198,8 @@ def Dataset(data_type,
             repeat_dataset=True,
             data_dur_file=None,
             reco2timestamps_dict=None,
-            block_shuffle_size = 0,
-            output_reso = 0.01,
+            block_shuffle_size=0,
+            output_reso=0.01,
             contain_label=True):
     """ Construct dataset from arguments
 
@@ -212,7 +218,7 @@ def Dataset(data_type,
             repeat_dataset: True for training while False for testing
             data_dur_file (str): path to the utterance duration file
             reco2timestamps_dict (dict): dict to save map between recoid to rttm
-            block_shuffle_size (int): size of block shuffle. 
+            block_shuffle_size (int): size of block shuffle.
                     Default to 0, no block shuffle
     """
     assert data_type in ['shard', 'raw', 'feat']
@@ -221,12 +227,12 @@ def Dataset(data_type,
 
     # lists of file
     lists = read_lists(data_list_file)
-        
-    if(block_shuffle_size > 0 or contain_label):
+
+    if (block_shuffle_size > 0 or contain_label):
         # Both block_fhuffle and localization require duration information.
         assert data_dur_file is not None, "utt2dur is required"
         # load duration
-        utt2dur = {x[0]:float(x[1]) for x in read_table(data_dur_file)}
+        utt2dur = {x[0]: float(x[1]) for x in read_table(data_dur_file)}
     # block_shuffle is to be used, sort the file list based on duration
     if block_shuffle_size > 0:
         assert data_type == 'raw', "block shuffle requires raw data type"
@@ -244,12 +250,11 @@ def Dataset(data_type,
     #   set in train.py to keep consistent with wespeaker.
     # whole_utt = configs.get('whole_utt', False)
     # Global shuffle
-    dataset = DataList(
-        lists,
-        shuffle=shuffle,
-        repeat_dataset=repeat_dataset,
-        block_shuffle_size=block_shuffle_size)
-    
+    dataset = DataList(lists,
+                       shuffle=shuffle,
+                       repeat_dataset=repeat_dataset,
+                       block_shuffle_size=block_shuffle_size)
+
     if data_type == 'shard':
         dataset = Processor(dataset, processor.url_opener)
         dataset = Processor(dataset, processor.tar_file_and_group)
@@ -258,9 +263,9 @@ def Dataset(data_type,
     else:
         dataset = Processor(dataset, processor.parse_feat)
 
-    if(contain_label):
-        dataset = Processor(dataset, processor_time.update_label_with_rttm, 
-                        reco2timestamps_dict)
+    if (contain_label):
+        dataset = Processor(dataset, processor_time.update_label_with_rttm,
+                            reco2timestamps_dict)
 
     if configs.get('filter', True):
         # Filter the data with unwanted length
@@ -278,12 +283,12 @@ def Dataset(data_type,
         dataset = Processor(dataset, processor.shuffle,
                             **configs['shuffle_args'])
 
-
     if data_type == 'feat':
         if not whole_utt:
             # random chunk
             chunk_len = num_frms = configs.get('num_frms', 200)
-            dataset = Processor(dataset, processor_time.random_chunk_timestamps, 
+            dataset = Processor(dataset,
+                                processor_time.random_chunk_timestamps,
                                 chunk_len, 'feat')
     else:
         # resample
@@ -301,13 +306,14 @@ def Dataset(data_type,
             frame_length = configs[frontend_args].get('frame_length', 25)
             chunk_len = ((num_frms - 1) * frame_shift +
                          frame_length) * resample_rate // 1000
-            dataset = Processor(dataset, processor_time.random_chunk_timestamps, 
+            dataset = Processor(dataset,
+                                processor_time.random_chunk_timestamps,
                                 chunk_len, data_type)
-            
+
         # process Rawboost:
         rawboost_flag = configs.get('rawboost', False)
         if (rawboost_flag):
-            dataset = Processor(dataset, processor.rawboost, algo = 5)
+            dataset = Processor(dataset, processor.rawboost, algo=5)
         # add reverb & noise
         aug_prob = configs.get('aug_prob', 0.6)
         if (reverb_lmdb_file and noise_lmdb_file) and (aug_prob > 0.0):
@@ -321,19 +327,20 @@ def Dataset(data_type,
             dataset = Processor(dataset, processor.compute_fbank,
                                 **configs['fbank_args'])
 
-
     # TODO: move to make_shard/raw_list.py
     # Then rttm and contain_label can be remove
     # spk2id
-    if(contain_label):
-        dataset = Processor(dataset, processor_time.label_to_id_timestamps, spk2id_dict)
+    if (contain_label):
+        dataset = Processor(dataset, processor_time.label_to_id_timestamps,
+                            spk2id_dict)
         # Convert timestamps to frame-level label vector
         # Put to the final step after all chunk/shuffle.
-        dataset = Processor(dataset, processor_time.timestamps_to_labelvec, 
-                            output_reso, spk2id_dict, utt2dur) #we use 0.01sec as unit.
+        dataset = Processor(dataset, processor_time.timestamps_to_labelvec,
+                            output_reso, spk2id_dict,
+                            utt2dur)  # we use 0.01sec as unit.
 
-        # keep timestamps will get error when collect.py:138 
-        dataset = Processor(dataset, processor_time.clean_batch) 
+        # keep timestamps will get error when collect.py:138
+        dataset = Processor(dataset, processor_time.clean_batch)
 
     # !!!IMPORTANT NOTICE!!!
     # To support different frontends (including ssl pretrained models),

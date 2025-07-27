@@ -47,7 +47,7 @@ for i in $(seq 0 $(($count - 1))); do
     --batch_size ${batch_size_array[$i]} \
     --num_workers ${num_workers_array[$i]} \
     --nj ${nj_array[$i]} \
-    --gpus $gpus 
+    --gpus $gpus
 done
 
 wait

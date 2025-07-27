@@ -93,15 +93,15 @@ declare -A eval_scores=(
 #declare -a systems=('PS_v15')
 #fusion_name=fusion-minmax_avg-PS_v15
 
-### Table V, row 4 
+### Table V, row 4
 #declare -a systems=('A5_v14' 'A5_v15')
 #fusion_name=fusion-minmax_avg-A5_v14-A5_v15
 
-### Table V, row 3 
+### Table V, row 3
 #declare -a systems=('PS_v13' 'PS_v15')
 #fusion_name=fusion-minmax_avg-PS_v13-PS_v15
 
-### Table V, row 5 
+### Table V, row 5
 declare -a systems=('PS_v15' 'A5_v15')
 fusion_name=fusion-minmax_avg-PS_v15-A5_v15
 
@@ -131,7 +131,7 @@ fi
 
 
 ###############################################################################
-# Stage 2. Check performance of individual systems. 
+# Stage 2. Check performance of individual systems.
 ###############################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
 
@@ -141,10 +141,10 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
 	    echo $sys
 	    # Preparing trials
 	    # filename        cm-label
-	    echo "filename cm-label" > ${data}/${dset}/cm_key_file.txt    
+	    echo "filename cm-label" > ${data}/${dset}/cm_key_file.txt
 	    cat ${data}/${dset}/utt2cls >> ${data}/${dset}/cm_key_file.txt
 	    sed -i "s/ /\t/g" ${data}/${dset}/cm_key_file.txt
-	    echo $exp_dir/input_scores//$dset/$sys/llr.txt 
+	    echo $exp_dir/input_scores//$dset/$sys/llr.txt
 	    echo "Measuring " $dset
         python wedefense/metrics/detection/evaluation.py \
 	    --m t1 \
@@ -154,18 +154,18 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
     done
 fi
 
-		   
+
 ###############################################################################
-# Stage 3. Train logisic regression fusion / calibration model. 
+# Stage 3. Train logisic regression fusion / calibration model.
 ###############################################################################
 if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
     echo "Estimate calibration parameters ..."
-    # The target prior p_tar can be a single number in (0,1) a range in numpy 
-    # arange  format, e.g., "np.arange(0.1,1,0.1)" in which case all these 
+    # The target prior p_tar can be a single number in (0,1) a range in numpy
+    # arange  format, e.g., "np.arange(0.1,1,0.1)" in which case all these
     # values will be tested and the best model will be saved.
-    # The effective target priors p_tar will be converted to effective target 
+    # The effective target priors p_tar will be converted to effective target
     # prior according to
-    #   p_tar_eff = p_tar * c_fr / (p_tar * c_fr + (1-p_tar) * c_fa) 
+    #   p_tar_eff = p_tar * c_fr / (p_tar * c_fr + (1-p_tar) * c_fa)
     python wedefense/postprocessing/train_calibration_fusion_model.py \
        --score_dir $exp_dir/input_scores/flac_D/ \
        --cm_key ${data}/flac_D/cm_key_file.txt  \
@@ -175,7 +175,7 @@ fi
 
 
 ###############################################################################
-# Stage 4. Create fused scores 
+# Stage 4. Create fused scores
 ###############################################################################
 if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
     echo "Compute fused scores ..."
@@ -191,7 +191,7 @@ fi
 
 
 ###############################################################################
-# Stage 5. Measuring performance 
+# Stage 5. Measuring performance
 ###############################################################################
 if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
     for dset in flac_D flac_E_eval; do

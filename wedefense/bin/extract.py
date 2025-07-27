@@ -95,7 +95,8 @@ def extract(config='conf/config.yaml', **kwargs):
                                  embed_scp) as writer:
             for _, batch in tqdm(enumerate(dataloader)):
                 utts = batch['key']
-                if frontend_type == 'fbank' or frontend_type.startswith('lfcc'):
+                if frontend_type == 'fbank' or frontend_type.startswith(
+                        'lfcc'):
                     features = batch['feat']
                     features = features.float().to(device)  # (B,T,F)
                 else:  # 's3prl'

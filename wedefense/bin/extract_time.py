@@ -52,8 +52,7 @@ def extract(config='conf/config.yaml', **kwargs):
         # frontends besides acoustic features, like s3prl
         print('Initializing frontend model (this could take some time) ...')
         frontend = frontend_class_dict[frontend_type](
-            **test_conf[frontend_args], 
-            sample_rate=test_conf['resample_rate'])
+            **test_conf[frontend_args], sample_rate=test_conf['resample_rate'])
         model.add_module("frontend", frontend)
     print('Loading checkpoint ...')
     load_checkpoint(model, model_path)
@@ -95,7 +94,8 @@ def extract(config='conf/config.yaml', **kwargs):
                                  embed_scp) as writer:
             for _, batch in tqdm(enumerate(dataloader)):
                 utts = batch['key']
-                if frontend_type == 'fbank' or frontend_type.startswith('lfcc'):
+                if frontend_type == 'fbank' or frontend_type.startswith(
+                        'lfcc'):
                     features = batch['feat']
                     features = features.float().to(device)  # (B,T,F)
                 else:  # 's3prl'
@@ -103,7 +103,7 @@ def extract(config='conf/config.yaml', **kwargs):
                     wavs = wavs.squeeze(1).float().to(device)  # (B,W)
                     wavs_len = torch.LongTensor([wavs.shape[1]]).repeat(
                         wavs.shape[0]).to(device)  # (B)
-                    features, _ = model.frontend(wavs, wavs_len) # (B, T, D)
+                    features, _ = model.frontend(wavs, wavs_len)  # (B, T, D)
 
                 # apply cmvn
                 if test_conf.get('cmvn', True):
@@ -117,7 +117,7 @@ def extract(config='conf/config.yaml', **kwargs):
                 if hasattr(model, 'get_frame_emb'):
                     outputs = model.get_frame_emb(features)
                 else:
-                    outputs = model(features)  # (B,T,D)  
+                    outputs = model(features)  # (B,T,D)
                 embeds = outputs[-1] if isinstance(outputs, tuple) else outputs
                 embeds = embeds.cpu().detach().numpy()  # (B,F)
 

@@ -15,7 +15,7 @@ if [ ! -d ${cache_dir} ]; then
     echo -e "${RED} ${NC}"
 fi
 
-huggingface-cli download --repo-type dataset jungjee/spoofceleb --local-dir ${spoofceleb_dir}/backup 
+huggingface-cli download --repo-type dataset jungjee/spoofceleb --local-dir ${spoofceleb_dir}/backup
 #
 ## Check whether spoofceleb is downloaded to local_dir or cache.
 ## If it is downloaded to cache, use the below script to move

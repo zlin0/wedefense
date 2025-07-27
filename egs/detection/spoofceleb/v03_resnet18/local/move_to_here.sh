@@ -30,6 +30,6 @@ for link; do
         # on failure, restore the symlink
         rm -rfv $link
         ln -sfv $reltarget $link
-    
+
     }
 done

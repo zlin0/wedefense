@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import kaldiio
 import numpy as np
 import os
@@ -21,19 +20,21 @@ import umap
 import matplotlib
 import matplotlib.pyplot as plt
 
+
 def get_utt2embs(emb_scp):
     utt2embs = {}
     for utt, emb in kaldiio.load_scp_sequential(emb_scp):
         utt2embs[utt] = emb
     return utt2embs
 
+
 def draw_emb_fig(ax, emb_scp, utt2lab, label2num, num2label, redudim_name=""):
     """
     ax: The matplotlib Axes object to draw on
-    emb_scp: 
+    emb_scp:
     """
 
-    print("start to process embedding from "+ emb_scp)
+    print("start to process embedding from " + emb_scp)
     utt2embs = get_utt2embs(emb_scp)
     os.makedirs("embs", exist_ok=True)
 
@@ -48,29 +49,44 @@ def draw_emb_fig(ax, emb_scp, utt2lab, label2num, num2label, redudim_name=""):
     all_labnum = [int(label2num[i]) for i in all_lab]
 
     # UMAP
-    if len(redudim_name)>0:
-        redudim_file = os.path.join("embs", redudim_name if redudim_name.endswith(".npy") else redudim_name + ".npy")
+    if len(redudim_name) > 0:
+        redudim_file = os.path.join(
+            "embs",
+            redudim_name if redudim_name.endswith(".npy") else redudim_name +
+            ".npy")
     else:
-        redudim_file = os.path.join("embs", f"{emb_scp.split('/')[-4]}_{emb_scp.split('/')[-2]}.npy")
-    
+        redudim_file = os.path.join(
+            "embs", f"{emb_scp.split('/')[-4]}_{emb_scp.split('/')[-2]}.npy")
+
     if os.path.exists(redudim_file):
         redu_embedding = np.load(redudim_file)
     else:
-        reducer = umap.UMAP(n_components=2, n_neighbors=15, min_dist=0.1, metric='cosine')
+        reducer = umap.UMAP(n_components=2,
+                            n_neighbors=15,
+                            min_dist=0.1,
+                            metric='cosine')
         redu_embedding = reducer.fit_transform(all_emb_ary)
         np.save(redudim_file, redu_embedding)
 
     norm = plt.Normalize(vmin=min(all_labnum), vmax=max(all_labnum))
     cmap = matplotlib.cm.get_cmap('tab20')
 
-    ax.scatter(redu_embedding[:, 0], redu_embedding[:, 1],
-               c=all_labnum, cmap=cmap, norm=norm, s=0.2, alpha=0.3)
+    ax.scatter(redu_embedding[:, 0],
+               redu_embedding[:, 1],
+               c=all_labnum,
+               cmap=cmap,
+               norm=norm,
+               s=0.2,
+               alpha=0.3)
 
     for tag in np.unique(all_labnum):
         mean_data = redu_embedding[np.array(all_labnum) == tag].mean(axis=0)
-        ax.text(mean_data[0], mean_data[1], num2label[str(tag)], fontsize=10,
-                color=cmap(norm(tag)), bbox=dict(facecolor='white', alpha=0.7))
+        ax.text(mean_data[0],
+                mean_data[1],
+                num2label[str(tag)],
+                fontsize=10,
+                color=cmap(norm(tag)),
+                bbox=dict(facecolor='white', alpha=0.7))
 
     ax.set_xticks([])
     ax.set_yticks([])
-

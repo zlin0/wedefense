@@ -15,7 +15,7 @@ conda activate /mnt/matylda6/pengjy/python_new/miniconda/envs/wespeaker
 cd /mnt/matylda6/pengjy/shared_model_weights/lin/wedefense/egs/detection/asvspoof5/v15_ssl_mhfa
 
 SSLMODELs=(
-        MHFA_hubert 
+        MHFA_hubert
         MHFA_wav2vec2
         MHFA_wavlm
         MHFA_wavlmplus
@@ -26,7 +26,7 @@ SSLMODELs=(
         MHFA_data2vec_large
         MHFA_wav2vec2_xlsr53
         )
-upstream=${SSLMODELs[$SGE_TASK_ID-1]} 
+upstream=${SSLMODELs[$SGE_TASK_ID-1]}
 
 # echo "[$(date)] Starting Job ID: $SLURM_JOB_ID" > logs/debug_$SLURM_JOB_ID.txt
 echo "[$(date)] Starting Job ID: $JOB_ID" > logs/debug_${JOB_ID}_${SGE_TASK_ID}.txt

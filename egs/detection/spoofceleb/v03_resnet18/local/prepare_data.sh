@@ -28,11 +28,11 @@ DSETs=(train development evaluation)
 
 if [ ! -d ${SpoofCeleb_dir} ]; then
     mkdir -p ${SpoofCeleb_dir}
-    bash ./01_download_database.sh ${SpoofCeleb_dir} 
+    bash ./01_download_database.sh ${SpoofCeleb_dir}
 fi
 
 for i in "${!DSETs[@]}"; do
-  dset=${DSETs[$i]}	
+  dset=${DSETs[$i]}
 
 
   if [ ! -d ${data_dir}/${dset} ]; then
@@ -67,28 +67,28 @@ for i in "${!DSETs[@]}"; do
   ./tools/utt2spk_to_spk2utt.pl ${data_dir}/${dset}/utt2cls \
 	  >${data_dir}/${dset}/cls2utt
 
-  #we are using wav2dur.py, but quite slow. 
+  #we are using wav2dur.py, but quite slow.
   nj=10  # number of parallel jobs
   wavscp_path=${data_dir}/${dset}/wav.scp
   output_dir=${data_dir}/${dset}
   split_dir=${output_dir}/split_wavscp
-  
+
   mkdir -p $split_dir
   split -n l/$nj -d --additional-suffix=.scp "$wavscp_path" "$split_dir/wav_part_"
-  
+
   # run wav2dur.py in parallel
   for i in $(seq -f "%02g" 0 $((nj - 1))); do
     python tools/wav2dur.py "$split_dir/wav_part_${i}.scp" "$split_dir/utt2dur_${i}" &
   done
-  
+
   wait  # wait for all jobs to finish
-  
+
   # merge all utt2dur files
   cat "$split_dir"/utt2dur_* > "$output_dir/utt2dur"
-  
+
   # optional: clean up
   rm -r "$split_dir"
-  
+
   echo "Done: utt2dur saved to $output_dir/utt2dur"
 
 

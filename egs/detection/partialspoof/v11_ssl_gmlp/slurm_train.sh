@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 #SBATCH --job-name=train_gmlp #job name
 #SBATCH --nodes=1  #number of nodes requested
@@ -26,7 +26,7 @@ CONFIGs=(singlereso-utt_gmlp_wavlm-large_frozen
 	 singlereso-utt_gmlp_xlsr53_frozen
 	 singlereso-utt_gmlp_wav2vec2-large_ft
 	 singlereso-utt_gmlp_wav2vec2-large_frozen)
-config_name=${CONFIGs[$SLURM_ARRAY_TASK_ID]} 
+config_name=${CONFIGs[$SLURM_ARRAY_TASK_ID]}
 
 
 ./run.sh --stage 3 --stop_stage 7 \

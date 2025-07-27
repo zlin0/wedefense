@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -30,22 +29,22 @@ import urllib.request
 
 
 class Linear(nn.Linear):
+
     def forward(self, x: Tensor) -> Tensor:
-        return F.linear(
-            x, self.weight.to(
-                x.dtype), None if self.bias is None else self.bias.to(
-                x.dtype))
+        return F.linear(x, self.weight.to(x.dtype),
+                        None if self.bias is None else self.bias.to(x.dtype))
 
 
 class Conv1d(nn.Conv1d):
+
     def _conv_forward(self, x: Tensor, weight: Tensor,
                       bias: Optional[Tensor]) -> Tensor:
         return super()._conv_forward(
-            x, weight.to(x.dtype), None if bias is None else bias.to(x.dtype)
-        )
+            x, weight.to(x.dtype), None if bias is None else bias.to(x.dtype))
 
 
 class LayerNorm(nn.LayerNorm):
+
     def forward(self, x: Tensor) -> Tensor:
         return super().forward(x.float()).type(x.dtype)
 
@@ -56,12 +55,13 @@ def sinusoids(length, channels, max_timescale=10000):
     log_timescale_increment = np.log(max_timescale) / (channels // 2 - 1)
     inv_timescales = torch.exp(-log_timescale_increment *
                                torch.arange(channels // 2))
-    scaled_time = torch.arange(
-        length)[:, np.newaxis] * inv_timescales[np.newaxis, :]
+    scaled_time = torch.arange(length)[:, np.newaxis] * inv_timescales[
+        np.newaxis, :]
     return torch.cat([torch.sin(scaled_time), torch.cos(scaled_time)], dim=1)
 
 
 class MultiHeadAttention(nn.Module):
+
     def __init__(self, n_state: int, n_head: int):
         super().__init__()
         self.n_head = n_head
@@ -95,14 +95,13 @@ class MultiHeadAttention(nn.Module):
         wv, qk = self.qkv_attention(q, k, v, mask)
         return self.out(wv), qk
 
-    def qkv_attention(
-            self,
-            q: Tensor,
-            k: Tensor,
-            v: Tensor,
-            mask: Optional[Tensor] = None):
+    def qkv_attention(self,
+                      q: Tensor,
+                      k: Tensor,
+                      v: Tensor,
+                      mask: Optional[Tensor] = None):
         n_batch, n_ctx, n_state = q.shape
-        scale = (n_state // self.n_head) ** -0.25
+        scale = (n_state // self.n_head)**-0.25
         q = q.view(*q.shape[:2], self.n_head, -1).permute(0, 2, 1, 3) * scale
         k = k.view(*k.shape[:2], self.n_head, -1).permute(0, 2, 3, 1) * scale
         v = v.view(*v.shape[:2], self.n_head, -1).permute(0, 2, 1, 3)
@@ -117,7 +116,10 @@ class MultiHeadAttention(nn.Module):
 
 
 class ResidualAttentionBlock(nn.Module):
-    def __init__(self, n_state: int, n_head: int,
+
+    def __init__(self,
+                 n_state: int,
+                 n_head: int,
                  cross_attention: bool = False):
         super().__init__()
 
@@ -129,10 +131,8 @@ class ResidualAttentionBlock(nn.Module):
         self.cross_attn_ln = LayerNorm(n_state) if cross_attention else None
 
         n_mlp = n_state * 4
-        self.mlp = nn.Sequential(
-            Linear(
-                n_state, n_mlp), nn.GELU(), Linear(
-                n_mlp, n_state))
+        self.mlp = nn.Sequential(Linear(n_state, n_mlp), nn.GELU(),
+                                 Linear(n_mlp, n_state))
         self.mlp_ln = LayerNorm(n_state)
 
     def forward(
@@ -144,35 +144,27 @@ class ResidualAttentionBlock(nn.Module):
     ):
         x = x + self.attn(self.attn_ln(x), mask=mask, kv_cache=kv_cache)[0]
         if self.cross_attn:
-            x = x + self.cross_attn(self.cross_attn_ln(x),
-                                    xa, kv_cache=kv_cache)[0]
+            x = x + self.cross_attn(
+                self.cross_attn_ln(x), xa, kv_cache=kv_cache)[0]
         x = x + self.mlp(self.mlp_ln(x))
         return x
 
 
 class AudioEncoder(nn.Module):
-    def __init__(
-            self,
-            n_mels: int,
-            n_ctx: int,
-            n_state: int,
-            n_head: int,
-            n_layer: int,
-            layer_st: int,
-            layer_ed: int):
+
+    def __init__(self, n_mels: int, n_ctx: int, n_state: int, n_head: int,
+                 n_layer: int, layer_st: int, layer_ed: int):
         super().__init__()
         self.conv1 = Conv1d(n_mels, n_state, kernel_size=3, padding=1)
-        self.conv2 = Conv1d(
-            n_state,
-            n_state,
-            kernel_size=3,
-            stride=2,
-            padding=1)
+        self.conv2 = Conv1d(n_state,
+                            n_state,
+                            kernel_size=3,
+                            stride=2,
+                            padding=1)
         self.register_buffer("positional_embedding", sinusoids(n_ctx, n_state))
 
         self.blocks: Iterable[ResidualAttentionBlock] = nn.ModuleList(
-            [ResidualAttentionBlock(n_state, n_head) for _ in range(n_layer)]
-        )
+            [ResidualAttentionBlock(n_state, n_head) for _ in range(n_layer)])
         # self.ln_post = LayerNorm(n_state)
         # ------------------------ADD:add new layer norm------------------------
         self.ln_post2 = LayerNorm(n_state * (layer_ed - layer_st + 1))
@@ -197,7 +189,8 @@ class AudioEncoder(nn.Module):
         assert x.shape[2:] == self.positional_embedding.shape[1:], \
             "incorrect audio shape"
         if self.positional_embedding.shape[0] > x.shape[1]:
-            temp_positional_embedding = self.positional_embedding[:x.shape[1], :]
+            temp_positional_embedding = self.positional_embedding[:x.
+                                                                  shape[1], :]
         elif self.positional_embedding.shape[0] < x.shape[1]:
             x = x[:, :self.positional_embedding.shape[0], :]
             temp_positional_embedding = self.positional_embedding
@@ -220,6 +213,7 @@ class AudioEncoder(nn.Module):
 
 
 class whisper_encoder(torch.nn.Module):
+
     def __init__(self,
                  frozen=False,
                  n_mels=80,
@@ -229,17 +223,15 @@ class whisper_encoder(torch.nn.Module):
                  layer_st=16,
                  layer_ed=23,
                  model_path=None,
-                 sample_rate=16000
-                 ):
+                 sample_rate=16000):
         super(whisper_encoder, self).__init__()
-        self.encoder = AudioEncoder(
-            n_mels=n_mels,
-            n_layer=num_blocks,
-            n_state=output_size,
-            n_ctx=1500,
-            n_head=n_head,
-            layer_st=layer_st,
-            layer_ed=layer_ed)
+        self.encoder = AudioEncoder(n_mels=n_mels,
+                                    n_layer=num_blocks,
+                                    n_state=output_size,
+                                    n_ctx=1500,
+                                    n_head=n_head,
+                                    layer_st=layer_st,
+                                    layer_ed=layer_ed)
         # 0 for freeze finetune, 1 for all parameters finetune
         self.frozen = frozen
         self.single_output_size = output_size
@@ -309,8 +301,8 @@ class whisper_encoder(torch.nn.Module):
             processed_feats = []
             for i in range(wavs.size(0)):
                 tf_tensor = wavs[i].unsqueeze(0).to(wavs.device)
-                mat = whisper.log_mel_spectrogram(
-                    tf_tensor.squeeze(), n_mels=self.n_mels)
+                mat = whisper.log_mel_spectrogram(tf_tensor.squeeze(),
+                                                  n_mels=self.n_mels)
                 processed_feats.append(mat)
 
             feat = torch.stack(processed_feats, dim=0).to(wavs.device)

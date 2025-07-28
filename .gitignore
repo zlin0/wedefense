@@ -9,7 +9,7 @@ s3prl_hub/
 note
 egs/*/*/*/data/
 egs/*/*/*/exp/
-egs/*/*/*/slurm-*
+egs/*/*/*/slurm_*
 debug*
 egs/*/*/*/logs*/
 *.err

@@ -4,11 +4,11 @@
 # 
 # source ./install_env.sh
 
-# Make sure conda is avalible
+# Make sure conda is avalilabel
 eval "$(conda shell.bash hook)"
 
 env_name=wedefense
-if conda info --envs | grep -q "$ENV_NAME"; then
+if conda info --envs | grep -q "$env_name"; then
     echo "Conda env ${env_name} already exist."
     conda activate ${env_name}
 else
@@ -24,8 +24,8 @@ fi
 # For managing and maintaining multi-language pre-commit hooks.
 pre-commit install
 
-## You may consider to to use pip to install your env
-## Note that this version can not support codec augmentation because of version issue.
+## You may consider to use pip to install your env
+## Note that this version cannot support codec augmentation because of version issues.
 #conda create -n ${env_name} python=3.10
 #conda activate ${env_name}
 #pip install torch==2.1.2+cu121 torchaudio==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu121

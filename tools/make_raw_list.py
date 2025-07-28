@@ -26,7 +26,7 @@ def get_args():
                         help='vad file',
                         default='non_exist')
     parser.add_argument('wav_file', help='wav file')
-    parser.add_argument('utt2spk_file', help='utt2spk file')
+    parser.add_argument('utt2lab_file', help='utt2lab file')
     parser.add_argument('raw_list', help='output raw list file')
     args = parser.parse_args()
     return args
@@ -57,29 +57,29 @@ def main():
         vad_dict = None
 
     data = []
-    with open(args.utt2spk_file, 'r', encoding='utf8') as fin:
+    with open(args.utt2lab_file, 'r', encoding='utf8') as fin:
         for line in fin:
             arr = line.strip().split(maxsplit=1)
             key = arr[0]  # os.path.splitext(arr[0])[0]
-            spk = arr[1]
+            lab = arr[1]
             assert key in wav_table
             wav = wav_table[key]
             if vad_dict is None:
-                data.append((key, spk, wav))
+                data.append((key, lab, wav))
             else:
                 if key not in vad_dict:
                     continue
                 vad = vad_dict[key]
-                data.append((key, spk, wav, vad))
+                data.append((key, lab, wav, vad))
 
     with open(args.raw_list, 'w', encoding='utf8') as fout:
         for utt_info in data:
             if len(utt_info) == 4:
-                key, spk, wav, vad = utt_info
-                line = dict(key=key, spk=spk, wav=wav, vad=vad)
+                key, lab, wav, vad = utt_info
+                line = dict(key=key, lab=lab, wav=wav, vad=vad)
             else:
-                key, spk, wav = utt_info
-                line = dict(key=key, spk=spk, wav=wav)
+                key, lab, wav = utt_info
+                line = dict(key=key, lab=lab, wav=wav)
             json_line = json.dumps(line, ensure_ascii=False)
             fout.write(json_line + '\n')
 

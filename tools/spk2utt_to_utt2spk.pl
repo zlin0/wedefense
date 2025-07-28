@@ -17,7 +17,7 @@
 
 while(<>){
     @A = split(" ", $_);
-    @A > 1 || die "Invalid line in spk2utt file: $_";
+    @A > 1 || die "Invalid line in lab2utt file: $_";
     $s = shift @A;
     foreach $u ( @A ) {
         print "$u $s\n";

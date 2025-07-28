@@ -18,7 +18,7 @@ import fire
 import kaldiio
 import numpy as np
 from wedefense.utils.file_utils import read_table
-from wedefense.utils.utils import spk2id
+from wedefense.utils.utils import lab2id
 from scipy.special import logsumexp
 import os.path
 
@@ -53,8 +53,8 @@ def main(logits_scp_path, training_counts, train_label, pi_spoof):
     lab2training_prior = dict(zip(training_counts_labs, training_priors))
 
     # Create a map from label to the index in the logits
-    train_utt_spk_list = read_table(train_label)
-    lab2id_dict = spk2id(train_utt_spk_list)
+    train_utt_lab_list = read_table(train_label)
+    lab2id_dict = lab2id(train_utt_lab_list)
 
     bonafide_idx = []
     bonafide_priors = []

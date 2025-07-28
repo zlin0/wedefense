@@ -73,7 +73,7 @@ def extract(config='conf/config.yaml', **kwargs):
     dataset = Dataset(configs['data_type'],
                       configs['data_list'],
                       test_conf,
-                      spk2id_dict={},
+                      lab2id_dict={},
                       whole_utt=(batch_size == 1),
                       reverb_lmdb_file=configs.get('reverb_data', None),
                       noise_lmdb_file=configs.get('noise_data', None),

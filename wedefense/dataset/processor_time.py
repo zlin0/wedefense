@@ -25,21 +25,21 @@ from wedefense.utils.diarization.rttm_tool import rttm2vadvec
 
 
 def label_to_id_timestamps(data, label2id):
-    """ Parse spk id
+    """ Parse lab id
 
         Args:
-            data: Iterable[{key, wav/feat, spk}],
-                 'spk': [<str: label>, <float: st>, <float: end>]
-            spk2id: Dict[str, int] e.g.:{'bonafide': 1, 'spoof': 0}
+            data: Iterable[{key, wav/feat, lab}],
+                 'lab': [<str: label>, <float: st>, <float: end>]
+            lab2id: Dict[str, int] e.g.:{'bonafide': 1, 'spoof': 0}
 
         Returns:
             Iterable[{key, wav/feat, label}]
     """
     for sample in data:
-        assert 'spk' in sample
+        assert 'lab' in sample
         one_rttm_id = []
         # check whether it is in rttm fotmat
-        for seg in sample['spk']:
+        for seg in sample['lab']:
             label_str, st, et = seg
             label_id = label2id[label_str]
             if label_str in label2id:
@@ -149,22 +149,22 @@ def get_random_chunk_timestamps(data, label, chunk_len_sp, sample_rate=16000):
 
 
 def timestamps_to_labelvec(data, shift_sec, label2id, reco2dur):
-    """ Replace 'spk' segment field with frame-level label vector.
+    """ Replace 'lab' segment field with frame-level label vector.
     Args:
-        samples (List[Dict]): each sample has 'spk', 'wav'
+        samples (List[Dict]): each sample has 'lab', 'wav'
         shift_sec (float): frame shift
-        spk2id (Dict[str, int]): label to id
+        lab2id (Dict[str, int]): label to id
         reco2dur (Dict[str, float]): utterance duration
     Yields:
         sample['label'] replaced by frame-level label vector
-        #note that sample['spk'] has str as label, ['label'] has number as id
+        #note that sample['lab'] has str as label, ['label'] has number as id
         #TODO to be consistent.
     """
 
     for sample in data:
         assert 'label' in sample
         assert 'key' in sample
-        label = sample['spk']
+        label = sample['lab']
         # dur = reco2dur[sample['key']], may chunked, so need to use updated duration.  # noqa
         # TODO duration is calculated too many times, save duration info to data using processor.pt  # noqa
         # Lin 20250524: we need to transfer dur in case rttm doesn't cover all durations.  # noqa
@@ -200,8 +200,8 @@ def filter_timestamps(data,
     import copy
     for sample in data:
         assert 'key' in sample
-        assert 'spk' in sample
-        label = sample['spk']
+        assert 'lab' in sample
+        label = sample['lab']
         new_label = copy.deepcopy(label)
 
         if data_type == 'feat':
@@ -217,7 +217,7 @@ def filter_timestamps(data,
                 feat, new_label = get_random_chunk_timestamps(
                     feat, label, max_num_frames, sample['sample_rate'])
             sample['feat'] = feat
-            sample['spk'] = label
+            sample['lab'] = label
         else:
             assert 'sample_rate' in sample
             assert 'wav' in sample
@@ -233,7 +233,7 @@ def filter_timestamps(data,
                 wav, new_label = get_random_chunk_timestamps(
                     wav, label, max_len, sample['sample_rate'])
             sample['wav'] = wav.unsqueeze(0)
-            sample['spk'] = new_label
+            sample['lab'] = new_label
 
         yield sample
 
@@ -251,8 +251,8 @@ def random_chunk_timestamps(data, chunk_len, data_type='shard/raw/feat'):
     for sample in data:
         # print(sample['key'])
         assert 'key' in sample
-        assert 'spk' in sample
-        label = sample['spk']
+        assert 'lab' in sample
+        label = sample['lab']
 
         if data_type == 'feat':
             assert 'feat' in sample
@@ -266,7 +266,7 @@ def random_chunk_timestamps(data, chunk_len, data_type='shard/raw/feat'):
             wav, new_label = get_random_chunk_timestamps(
                 wav, label, chunk_len, sample['sample_rate'])
             sample['wav'] = wav.unsqueeze(0)
-            sample['spk'] = new_label
+            sample['lab'] = new_label
         yield sample
 
 
@@ -274,8 +274,8 @@ def update_label_with_rttm(data, rttm):
     # rttm = get_rttm(rttm_file)
     for sample in data:
         assert 'key' in sample
-        assert 'spk' in sample
-        sample['spk'] = rttm[sample['key']]
+        assert 'lab' in sample
+        sample['lab'] = rttm[sample['key']]
         yield sample
 
 

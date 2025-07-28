@@ -73,11 +73,11 @@ def set_seed(seed=42):
     torch.backends.cudnn.benchmark = True
 
 
-def spk2id(utt_spk_list):
-    _, spk_list = zip(*utt_spk_list)
-    spk_list = sorted(set(spk_list))  # remove overlap and sort
+def lab2id(utt_lab_list):
+    _, lab_list = zip(*utt_lab_list)
+    lab_list = sorted(set(lab_list))  # remove overlap and sort
 
-    spk2id_dict = {}
-    for i, spk in enumerate(spk_list):
-        spk2id_dict[spk] = i
-    return spk2id_dict
+    lab2id_dict = {}
+    for i, lab in enumerate(lab_list):
+        lab2id_dict[lab] = i
+    return lab2id_dict

@@ -18,7 +18,7 @@
 local/prepare_data.sh [LPS_dir] [data]
 
 Download LlamaPartialSpoof database,
-and prepare data dir for partial spoof evaluation: wav.scp, utt2cls, cls2utt, utt2dur, dur2utt
+and prepare data dir for partial spoof evaluation: wav.scp, utt2lab, lab2utt, utt2dur, dur2utt
 """
 
 #
@@ -41,8 +41,8 @@ fi
 mkdir -p ${data}/0a
 find ${LPS_dir}/R01TTS.0.a/ -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort >${data}/0a/wav.scp
 sed -i 's/\.wav / /g' ${data}/0a/wav.scp
-cut -d' ' -f1,3 ${LPS_dir}/label_R01TTS.0.a.txt > ${data}/0a/utt2cls
-./tools/utt2spk_to_spk2utt.pl ${data}/0a/utt2cls >${data}/0a/cls2utt
+cut -d' ' -f1,3 ${LPS_dir}/label_R01TTS.0.a.txt > ${data}/0a/utt2lab
+./tools/utt2lab_to_lab2utt.pl ${data}/0a/utt2lab >${data}/0a/lab2utt
 python tools/wav2dur.py ${data}/0a/wav.scp ${data}/0a/utt2dur
-echo "Prepared data folder for partialspoof, including wav.scp, utt2cls, cls2utt"
+echo "Prepared data folder for partialspoof, including wav.scp, utt2lab, lab2utt"
 

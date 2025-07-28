@@ -17,7 +17,7 @@
 #local/prepare_data.sh [ASVspoof5_dir] [data_dir]
 #
 #Download ASVspoof5 database,
-#and prepare data dir for partial spoof: wav.scp, utt2cls, cls2utt, utt2dur
+#and prepare data dir for partial spoof: wav.scp, utt2lab, lab2utt, utt2dur
 
 set -xe
 
@@ -46,17 +46,17 @@ for i in "${!DSETs[@]}"; do
   # check row number.
 
 
-  # produce utt2cls from protocols
+  # produce utt2lab from protocols
   if [ "$dset" = "T"  ]; then
     cut -d' ' -f2,9 ${ASVspoof5_dir}/ASVspoof5.${dset_full}.tsv \
-	    > ${data_dir}/flac_${dset}_all/utt2cls
+	    > ${data_dir}/flac_${dset}_all/utt2lab
   else
     cut -d' ' -f2,9 ${ASVspoof5_dir}/ASVspoof5.${dset_full}.track_1.tsv \
-	    > ${data_dir}/flac_${dset}_all/utt2cls
+	    > ${data_dir}/flac_${dset}_all/utt2lab
   fi
 
-  ./tools/utt2spk_to_spk2utt.pl ${data_dir}/flac_${dset}_all/utt2cls \
-	  >${data_dir}/flac_${dset}_all/cls2utt
+  ./tools/utt2lab_to_lab2utt.pl ${data_dir}/flac_${dset}_all/utt2lab \
+	  >${data_dir}/flac_${dset}_all/lab2utt
 
   #we are using wav2dur.py, but quite slow.
   python tools/wav2dur.py ${data_dir}/flac_${dset}_all/wav.scp ${data_dir}/flac_${dset}_all/utt2dur
@@ -71,7 +71,7 @@ for i in "${!DSETs[@]}"; do
       if [ ! -d ${data_dir}/flac_${dset} ]; then
             mkdir -p ${data_dir}/flac_${dset}
       fi
-     for fname in wav.scp utt2cls cls2utt utt2dur; do
+     for fname in wav.scp utt2lab lab2utt utt2dur; do
          if [ ! -f ${data_dir}/flac_${dset}/${fname} ]; then
 		 awk '(NR==FNR){FILE[$2]}(NR!=FNR){
 			 if($1 in FILE){print}
@@ -80,10 +80,10 @@ for i in "${!DSETs[@]}"; do
 			 > ${data_dir}/flac_${dset}/${fname}
 	 fi
      done
-     ./tools/utt2spk_to_spk2utt.pl ${data_dir}/flac_${dset}/utt2cls \
-	  >${data_dir}/flac_${dset}/cls2utt
+     ./tools/utt2lab_to_lab2utt.pl ${data_dir}/flac_${dset}/utt2lab \
+	  >${data_dir}/flac_${dset}/lab2utt
   fi
 done
 
-echo "Prepared data folder for partialspoof, including wav.scp, utt2cls, cls2utt"
+echo "Prepared data folder for partialspoof, including wav.scp, utt2lab, lab2utt"
 

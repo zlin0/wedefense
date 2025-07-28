@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 # Copyright 2010-2011 Microsoft Corporation
+# original name: spk2utt_to_utt2spk.pl
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,25 +15,14 @@
 # See the Apache 2 License for the specific language governing permissions and
 # limitations under the License.
 
-# converts an utt2cls file to a cls2utt file.
-# Takes input from the stdin or from a file argument;
-# output goes to the standard out.
-
-if ( @ARGV > 1 ) {
-    die "Usage: utt2spk_to_spk2utt.pl [ utt2cls ] > cls2utt";
-}
 
 while(<>){
     @A = split(" ", $_);
-    @A == 2 || die "Invalid line in utt2cls file: $_";
-    ($u,$s) = @A;
-    if(!$seen_spk{$s}) {
-        $seen_spk{$s} = 1;
-        push @spklist, $s;
+    @A > 1 || die "Invalid line in lab2utt file: $_";
+    $s = shift @A;
+    foreach $u ( @A ) {
+        print "$u $s\n";
     }
-    push (@{$spk_hash{$s}}, "$u");
 }
-foreach $s (@spklist) {
-    $l = join(' ',@{$spk_hash{$s}});
-    print "$s $l\n";
-}
+
+

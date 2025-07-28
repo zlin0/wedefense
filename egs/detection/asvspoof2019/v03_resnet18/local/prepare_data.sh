@@ -18,7 +18,7 @@
 local/prepare_data.sh [ASVspoof2019_dir] [data]
 
 Download ASVspoof2019 database,
-and prepare data dir for partial spoof: wav.scp, utt2cls, cls2utt, utt2dur, dur2utt
+and prepare data dir for partial spoof: wav.scp, utt2lab, lab2utt, utt2dur, dur2utt
 Note that we only implemented LA
 """
 set -ex
@@ -41,18 +41,18 @@ for dset in train dev eval; do
   sed -i 's/\.flac / /g' ${data}/${dset}/wav.scp
   # check row number.
 
-  # produce utt2cls from protocols
+  # produce utt2lab from protocols
   if [ "${dset}" == "train"  ]; then
-      cut -d' ' -f2,5 ${ASVspoof2019_dir}/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.${dset}.trn.txt > ${data}/${dset}/utt2cls
+      cut -d' ' -f2,5 ${ASVspoof2019_dir}/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.${dset}.trn.txt > ${data}/${dset}/utt2lab
   else
-      cut -d' ' -f2,5 ${ASVspoof2019_dir}/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.${dset}.trl.txt > ${data}/${dset}/utt2cls
+      cut -d' ' -f2,5 ${ASVspoof2019_dir}/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.${dset}.trl.txt > ${data}/${dset}/utt2lab
   fi
 
-  ./tools/utt2spk_to_spk2utt.pl ${data}/${dset}/utt2cls >${data}/${dset}/cls2utt
+  ./tools/utt2lab_to_lab2utt.pl ${data}/${dset}/utt2lab >${data}/${dset}/lab2utt
 
   #we are using wav2dur.py, but quite slow.
   python tools/wav2dur.py ${data}/${dset}/wav.scp ${data}/${dset}/utt2dur
 done
 
-echo "Prepared data folder for ASVspoof2019, including wav.scp, utt2cls, cls2utt"
+echo "Prepared data folder for ASVspoof2019, including wav.scp, utt2lab, lab2utt"
 

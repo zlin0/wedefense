@@ -35,7 +35,7 @@ from wedefense.utils.checkpoint import load_checkpoint, save_checkpoint
 from wedefense.utils.executor import train_epoch, val_epoch
 from wedefense.utils.file_utils import read_table
 from wedefense.utils.utils import get_logger, parse_config_or_kwargs, set_seed, \
-    spk2id
+    lab2id
 
 import wedefense.dataset.customize_collate_fn as nii_collate_fn
 
@@ -44,7 +44,7 @@ import time
 
 
 def train(config='conf/config.yaml', **kwargs):
-    """Trains a model on the given features and spk labels.
+    """Trains a model on the given features and lab labels.
 
     :config: A training configuration. Note that all parameters in the
              config can also be manually adjusted with --ARG VALUE
@@ -106,12 +106,12 @@ def train(config='conf/config.yaml', **kwargs):
 
     # train data
     train_label = configs['train_label']
-    train_utt_cls_list = read_table(train_label)
-    spk2id_dict = spk2id(train_utt_cls_list)
+    train_utt_lab_list = read_table(train_label)
+    lab2id_dict = lab2id(train_utt_lab_list)
     if rank == 0:
         logger.info("<== Data statistics ==>")
         logger.info("train data num: {}, class num: {}".format(
-            len(train_utt_cls_list), len(spk2id_dict)))
+            len(train_utt_lab_list), len(lab2id_dict)))
 
     batch_size = configs['dataloader_args']['batch_size']
     whole_utt = configs['dataset_args'].get(
@@ -143,7 +143,7 @@ def train(config='conf/config.yaml', **kwargs):
     train_dataset = Dataset(configs['data_type'],
                             configs['train_data'],
                             configs['dataset_args'],
-                            spk2id_dict,
+                            lab2id_dict,
                             whole_utt=configs['dataset_args'].get('whole_utt'),
                             reverb_lmdb_file=configs.get('reverb_data', None),
                             noise_lmdb_file=configs.get('noise_data', None),
@@ -156,20 +156,20 @@ def train(config='conf/config.yaml', **kwargs):
     if configs['dataset_args'].get('sample_num_per_epoch', 0) > 0:
         sample_num_per_epoch = configs['dataset_args']['sample_num_per_epoch']
     else:
-        sample_num_per_epoch = len(train_utt_cls_list)
+        sample_num_per_epoch = len(train_utt_lab_list)
     epoch_iter = sample_num_per_epoch // world_size // batch_size
 
     # validation data
     val_dataloader = None
     if configs.get('val_label'):
         val_label = configs['val_label']
-        val_utt_cls_list = read_table(val_label)
-        val_lines = len(val_utt_cls_list)
+        val_utt_lab_list = read_table(val_label)
+        val_lines = len(val_utt_lab_list)
         val_iter = val_lines // 2 // world_size // batch_size
 
         if rank == 0:
             logger.info("validation data num: {}".format(
-                len(val_utt_cls_list)))
+                len(val_utt_lab_list)))
 
         val_dur = os.path.join(os.path.dirname(val_label), 'utt2dur')
 
@@ -177,7 +177,7 @@ def train(config='conf/config.yaml', **kwargs):
             configs['data_type'],
             configs['val_data'],
             configs['dataset_args'],
-            spk2id_dict,
+            lab2id_dict,
             whole_utt=configs['dataset_args'].get('whole_utt'),
             reverb_lmdb_file=configs.get('reverb_data', None),
             noise_lmdb_file=configs.get('noise_data', None),
@@ -236,11 +236,11 @@ def train(config='conf/config.yaml', **kwargs):
     else:
         configs['projection_args']['embed_dim'] = configs['model_args'][
             'embed_dim']
-    configs['projection_args']['num_class'] = len(spk2id_dict)
+    configs['projection_args']['num_class'] = len(lab2id_dict)
     configs['projection_args']['do_lm'] = configs.get('do_lm', False)
     if configs['data_type'] != 'feat' and configs['dataset_args'][
             'speed_perturb']:
-        # diff speed is regarded as diff spk
+        # diff speed is regarded as diff lab
         configs['projection_args']['num_class'] *= 3
         if configs.get('do_lm', False):
             logger.info(

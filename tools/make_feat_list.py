@@ -21,7 +21,7 @@ import json
 def get_args():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('feat_file', help='feat file')
-    parser.add_argument('utt2spk_file', help='utt2spk file')
+    parser.add_argument('utt2lab_file', help='utt2lab file')
     parser.add_argument('feat_list', help='output feat list file')
     args = parser.parse_args()
     return args
@@ -41,18 +41,18 @@ def main():
             feat_table[key] = arr[1]
 
     data = []
-    with open(args.utt2spk_file, 'r', encoding='utf8') as fin:
+    with open(args.utt2lab_file, 'r', encoding='utf8') as fin:
         for line in fin:
             arr = line.strip().split(maxsplit=1)
             key = arr[0]  # os.path.splitext(arr[0])[0]
-            spk = arr[1]
+            lab = arr[1]
             assert key in feat_table
             feat = feat_table[key]
-            data.append((key, spk, feat))
+            data.append((key, lab, feat))
 
     with open(args.feat_list, 'w', encoding='utf8') as fout:
-        for key, spk, feat in data:
-            line = dict(key=key, spk=spk, feat=feat)
+        for key, lab, feat in data:
+            line = dict(key=key, lab=lab, feat=feat)
             json_line = json.dumps(line, ensure_ascii=False)
             fout.write(json_line + '\n')
 

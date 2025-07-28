@@ -17,7 +17,7 @@
 #local/prepare_data.sh [SpoofCeleb_dir] [data_dir]
 #
 #Download SpoofCeleb database,
-#and prepare data dir for partial spoof: wav.scp, utt2cls, cls2utt, utt2dur
+#and prepare data dir for partial spoof: wav.scp, utt2lab, lab2utt, utt2dur
 
 set -xe
 
@@ -59,13 +59,13 @@ for i in "${!DSETs[@]}"; do
     echo "${dset}/wav.scp does NOT have correct row. Please have a check. It has $(wc -l < ${data_dir}/${dset}/wav.scp) lines."
   fi
 
-  # produce utt2cls from protocols
+  # produce utt2lab from protocols
   awk -F',' '(NR>1){if($3=="a00"){label="bonafide"}else{label="spoof"}
       print($1, label)
-  }' ${SpoofCeleb_dir}/metadata/$dset.csv > ${data_dir}/$dset/utt2cls
+  }' ${SpoofCeleb_dir}/metadata/$dset.csv > ${data_dir}/$dset/utt2lab
 
-  ./tools/utt2spk_to_spk2utt.pl ${data_dir}/${dset}/utt2cls \
-	  >${data_dir}/${dset}/cls2utt
+  ./tools/utt2lab_to_lab2utt.pl ${data_dir}/${dset}/utt2lab \
+	  >${data_dir}/${dset}/lab2utt
 
   #we are using wav2dur.py, but quite slow.
   nj=10  # number of parallel jobs
@@ -95,5 +95,5 @@ for i in "${!DSETs[@]}"; do
 
 done
 
-echo "Prepared data folder for SpoofCeleb, including wav.scp, utt2cls, cls2utt"
+echo "Prepared data folder for SpoofCeleb, including wav.scp, utt2lab, lab2utt"
 

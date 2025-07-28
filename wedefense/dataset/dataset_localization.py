@@ -191,7 +191,7 @@ class DataList(IterableDataset):
 def Dataset(data_type,
             data_list_file,
             configs,
-            spk2id_dict,
+            lab2id_dict,
             whole_utt=False,
             reverb_lmdb_file=None,
             noise_lmdb_file=None,
@@ -211,7 +211,7 @@ def Dataset(data_type,
             data_type(str): shard/raw/feat
             data_list_file: data list file
             configs: dataset configs
-            spk2id_dict: spk2id dict
+            lab2id_dict: lab2id dict
             reverb_lmdb_file: reverb data source lmdb file
             noise_lmdb_file: noise data source lmdb file
             whole_utt: use whole utt or random chunk
@@ -298,7 +298,7 @@ def Dataset(data_type,
         speed_perturb_flag = configs.get('speed_perturb', True)
         if speed_perturb_flag:
             dataset = Processor(dataset, processor.speed_perturb,
-                                len(spk2id_dict))
+                                len(lab2id_dict))
         if not whole_utt:
             # random chunk
             num_frms = configs.get('num_frms', 200)
@@ -329,14 +329,14 @@ def Dataset(data_type,
 
     # TODO: move to make_shard/raw_list.py
     # Then rttm and contain_label can be remove
-    # spk2id
+    # lab2id
     if (contain_label):
         dataset = Processor(dataset, processor_time.label_to_id_timestamps,
-                            spk2id_dict)
+                            lab2id_dict)
         # Convert timestamps to frame-level label vector
         # Put to the final step after all chunk/shuffle.
         dataset = Processor(dataset, processor_time.timestamps_to_labelvec,
-                            output_reso, spk2id_dict,
+                            output_reso, lab2id_dict,
                             utt2dur)  # we use 0.01sec as unit.
 
         # keep timestamps will get error when collect.py:138

@@ -28,7 +28,7 @@ gpus="[0]"
 . tools/parse_options.sh || exit 1
 
 #######################################################################################
-# Stage 1. Preparing data folder for LlamaPartialSpoof: wav.scp, utt2cls, cls2utt, reco2dur
+# Stage 1. Preparing data folder for LlamaPartialSpoof: wav.scp, utt2lab, lab2utt, reco2dur
 #######################################################################################
 if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
   echo "Prepare datasets ..."
@@ -45,11 +45,11 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
           --num_threads 8 \
           --prefix shards \
           --shuffle \
-          ${data}/0a/wav.scp ${data}/0a/utt2cls \
+          ${data}/0a/wav.scp ${data}/0a/utt2lab \
           ${data}/0a/shards ${data}/0a/shard.list
   else
       python tools/make_raw_list.py --vad_file ${data}/0a/vad ${data}/0a/wav.scp \
-          ${data}/0a/utt2cls ${data}/0a/raw.list
+          ${data}/0a/utt2lab ${data}/0a/raw.list
   fi
 fi
 
@@ -101,8 +101,8 @@ if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
   echo "Convert logits to llr ..."
   python wedefense/bin/logits_to_llr.py \
 	  --logits_scp_path ${exp_dir}/posteriors/0a/logits.scp \
-	  --training_counts ${trained_data}/train/cls2num_utts \
-	  --train_label ${trained_data}/train/utt2cls \
+	  --training_counts ${trained_data}/train/lab2num_utts \
+	  --train_label ${trained_data}/train/utt2lab \
 	  --pi_spoof 0.05
 
 fi
@@ -115,7 +115,7 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
   # Preparing trails
   # filename        cm-label
   echo "filename cm-label" > ${data}/0a/cm_key_file.txt
-  cat ${data}/0a/utt2cls >> ${data}/0a/cm_key_file.txt
+  cat ${data}/0a/utt2lab >> ${data}/0a/cm_key_file.txt
   sed -i "s/ /\t/g" ${data}/0a/cm_key_file.txt
 
   echo "Measuring LlamaPartialSpoof 0a"

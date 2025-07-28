@@ -78,7 +78,7 @@ def tar_file_and_group(data):
             data: Iterable[{src, stream}]
 
         Returns:
-            Iterable[{key, wav, spk, sample_rate}]
+            Iterable[{key, wav, lab, sample_rate}]
     """
     for sample in data:
         assert 'stream' in sample
@@ -99,7 +99,7 @@ def tar_file_and_group(data):
                 valid = True
             with stream.extractfile(tarinfo) as file_obj:
                 try:
-                    if postfix in ['spk']:
+                    if postfix in ['lab']:
                         example[postfix] = file_obj.read().decode(
                             'utf8').strip()
                     elif postfix in AUDIO_FORMAT_SETS:
@@ -122,13 +122,13 @@ def tar_file_and_group(data):
 
 
 def parse_raw(data):
-    """ Parse key/wav/spk from json line
+    """ Parse key/wav/lab from json line
 
         Args:
-            data: Iterable[str], str is a json line has key/wav/spk
+            data: Iterable[str], str is a json line has key/wav/lab
 
         Returns:
-            Iterable[{key, wav, spk, sample_rate}]
+            Iterable[{key, wav, lab, sample_rate}]
     """
 
     def read_audio(wav):
@@ -155,17 +155,17 @@ def parse_raw(data):
         obj = json.loads(json_line)
         assert 'key' in obj
         assert 'wav' in obj
-        assert 'spk' in obj
+        assert 'lab' in obj
         key = obj['key']
         wav_file = obj['wav']
-        spk = obj['spk']
+        lab = obj['lab']
         try:
             waveform, sample_rate = read_audio(wav_file)
             if 'vad' in obj:
                 waveform, sample_rate = apply_vad(waveform, sample_rate,
                                                   obj['vad'])
             example = dict(key=key,
-                           spk=spk,
+                           lab=lab,
                            wav=waveform,
                            sample_rate=sample_rate)
             yield example
@@ -174,13 +174,13 @@ def parse_raw(data):
 
 
 def parse_feat(data):
-    """ Parse key/feat/spk from json line
+    """ Parse key/feat/lab from json line
 
         Args:
-            data: Iterable[str], str is a json line has key/feat/spk
+            data: Iterable[str], str is a json line has key/feat/lab
 
         Returns:
-            Iterable[{key, feat, spk}]
+            Iterable[{key, feat, lab}]
     """
     for sample in data:
         assert 'src' in sample
@@ -188,13 +188,13 @@ def parse_feat(data):
         obj = json.loads(json_line)
         assert 'key' in obj
         assert 'feat' in obj
-        assert 'spk' in obj
+        assert 'lab' in obj
         key = obj['key']
         feat_ark = obj['feat']
-        spk = obj['spk']
+        lab = obj['lab']
         try:
             feat = torch.from_numpy(kaldiio.load_mat(feat_ark))
-            example = dict(key=key, spk=spk, feat=feat)
+            example = dict(key=key, lab=lab, feat=feat)
             yield example
         except Exception as ex:
             logging.warning('Failed to load {}'.format(feat_ark))
@@ -204,11 +204,11 @@ def shuffle(data, shuffle_size=2500):
     """ Local shuffle the data
 
         Args:
-            data: Iterable[{key, wav/feat, spk}]
+            data: Iterable[{key, wav/feat, lab}]
             shuffle_size: buffer size for shuffle
 
         Returns:
-            Iterable[{key, wav/feat, spk}]
+            Iterable[{key, wav/feat, lab}]
     """
     buf = []
     for sample in data:
@@ -224,20 +224,20 @@ def shuffle(data, shuffle_size=2500):
         yield x
 
 
-def spk_to_id(data, spk2id):
-    """ Parse spk id
+def lab_to_id(data, lab2id):
+    """ Parse lab id
 
         Args:
-            data: Iterable[{key, wav/feat, spk}]
-            spk2id: Dict[str, int] i.e.:{'bonafide': 1, 'spoof': 0}
+            data: Iterable[{key, wav/feat, lab}]
+            lab2id: Dict[str, int] i.e.:{'bonafide': 1, 'spoof': 0}
 
         Returns:
             Iterable[{key, wav/feat, label}]
     """
     for sample in data:
-        assert 'spk' in sample
-        if sample['spk'] in spk2id:
-            label = spk2id[sample['spk']]
+        assert 'lab' in sample
+        if sample['lab'] in lab2id:
+            label = lab2id[sample['lab']]
         else:
             label = -1
         sample['label'] = label
@@ -265,7 +265,7 @@ def resample(data, resample_rate=16000):
         yield sample
 
 
-def speed_perturb(data, num_spks):
+def speed_perturb(data, num_labs):
     """ Apply speed perturb to the data.
         Inplace operation.
 
@@ -288,7 +288,7 @@ def speed_perturb(data, num_spks):
                 [['speed', str(speeds[speed_idx])], ['rate',
                                                      str(sample_rate)]])
             sample['wav'] = wav
-            sample['label'] = sample['label'] + num_spks * speed_idx
+            sample['label'] = sample['label'] + num_labs * speed_idx
 
         yield sample
 

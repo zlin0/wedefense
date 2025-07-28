@@ -190,7 +190,7 @@ class DataList(IterableDataset):
 def Dataset(data_type,
             data_list_file,
             configs,
-            spk2id_dict,
+            lab2id_dict,
             whole_utt=False,
             reverb_lmdb_file=None,
             noise_lmdb_file=None,
@@ -207,7 +207,7 @@ def Dataset(data_type,
             data_type(str): shard/raw/feat
             data_list_file: data list file
             configs: dataset configs
-            spk2id_dict: spk2id dict
+            lab2id_dict: lab2id dict
             reverb_lmdb_file: reverb data source lmdb file
             noise_lmdb_file: noise data source lmdb file
             whole_utt: use whole utt or random chunk
@@ -272,8 +272,8 @@ def Dataset(data_type,
         dataset = Processor(dataset, processor.shuffle,
                             **configs['shuffle_args'])
 
-    # spk2id
-    dataset = Processor(dataset, processor.spk_to_id, spk2id_dict)
+    # lab2id
+    dataset = Processor(dataset, processor.lab_to_id, lab2id_dict)
 
     if data_type == 'feat':
         if not whole_utt:
@@ -289,7 +289,7 @@ def Dataset(data_type,
         speed_perturb_flag = configs.get('speed_perturb', True)
         if speed_perturb_flag:
             dataset = Processor(dataset, processor.speed_perturb,
-                                len(spk2id_dict))
+                                len(lab2id_dict))
         if not whole_utt:
             # random chunk
             num_frms = configs.get('num_frms', 200)

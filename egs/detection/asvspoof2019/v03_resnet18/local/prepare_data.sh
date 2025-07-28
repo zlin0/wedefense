@@ -48,7 +48,7 @@ for dset in train dev eval; do
       cut -d' ' -f2,5 ${ASVspoof2019_dir}/LA/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.${dset}.trl.txt > ${data}/${dset}/utt2lab
   fi
 
-  ./tools/utt2spk_to_spk2utt.pl ${data}/${dset}/utt2lab >${data}/${dset}/lab2utt
+  ./tools/utt2lab_to_lab2utt.pl ${data}/${dset}/utt2lab >${data}/${dset}/lab2utt
 
   #we are using wav2dur.py, but quite slow.
   python tools/wav2dur.py ${data}/${dset}/wav.scp ${data}/${dset}/utt2dur

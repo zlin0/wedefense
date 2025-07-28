@@ -55,7 +55,7 @@ for i in "${!DSETs[@]}"; do
 	    > ${data_dir}/flac_${dset}_all/utt2lab
   fi
 
-  ./tools/utt2spk_to_spk2utt.pl ${data_dir}/flac_${dset}_all/utt2lab \
+  ./tools/utt2lab_to_lab2utt.pl ${data_dir}/flac_${dset}_all/utt2lab \
 	  >${data_dir}/flac_${dset}_all/lab2utt
 
   #we are using wav2dur.py, but quite slow.
@@ -80,7 +80,7 @@ for i in "${!DSETs[@]}"; do
 			 > ${data_dir}/flac_${dset}/${fname}
 	 fi
      done
-     ./tools/utt2spk_to_spk2utt.pl ${data_dir}/flac_${dset}/utt2lab \
+     ./tools/utt2lab_to_lab2utt.pl ${data_dir}/flac_${dset}/utt2lab \
 	  >${data_dir}/flac_${dset}/lab2utt
   fi
 done

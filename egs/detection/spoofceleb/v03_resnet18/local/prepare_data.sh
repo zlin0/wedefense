@@ -64,7 +64,7 @@ for i in "${!DSETs[@]}"; do
       print($1, label)
   }' ${SpoofCeleb_dir}/metadata/$dset.csv > ${data_dir}/$dset/utt2lab
 
-  ./tools/utt2spk_to_spk2utt.pl ${data_dir}/${dset}/utt2lab \
+  ./tools/utt2lab_to_lab2utt.pl ${data_dir}/${dset}/utt2lab \
 	  >${data_dir}/${dset}/lab2utt
 
   #we are using wav2dur.py, but quite slow.

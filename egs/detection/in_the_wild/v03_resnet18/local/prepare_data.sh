@@ -49,7 +49,7 @@ tail -n +2 ${ITW_dir}/meta.csv | cut -d',' -f1,3 > ${data_dir}/utt2lab
 sed -i 's/bona-fide/bonafide/g' ${data_dir}/utt2lab
 sed -i 's/,/ /g' ${data_dir}/utt2lab
 
-./tools/utt2spk_to_spk2utt.pl ${data_dir}/utt2lab \
+./tools/utt2lab_to_lab2utt.pl ${data_dir}/utt2lab \
         >${data_dir}/lab2utt
 
 #we are using wav2dur.py, but quite slow.

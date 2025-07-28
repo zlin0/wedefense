@@ -41,7 +41,7 @@ for dset in train dev eval; do
   # produce utt2lab from protocols
   cut -d' ' -f2,5 ${PS_dir}/protocols/PartialSpoof_LA_cm_protocols/PartialSpoof.LA.cm.${dset}.trl.txt > ${data}/${dset}/utt2lab
 
-  ./tools/utt2spk_to_spk2utt.pl ${data}/${dset}/utt2lab >${data}/${dset}/lab2utt
+  ./tools/utt2lab_to_lab2utt.pl ${data}/${dset}/utt2lab >${data}/${dset}/lab2utt
 
   #we are using wav2dur.py, but quite slow.
   python tools/wav2dur.py ${data}/${dset}/wav.scp ${data}/${dset}/utt2dur

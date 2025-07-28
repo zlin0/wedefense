@@ -142,7 +142,7 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
 	    # Preparing trials
 	    # filename        cm-label
 	    echo "filename cm-label" > ${data}/${dset}/cm_key_file.txt
-	    cat ${data}/${dset}/utt2cls >> ${data}/${dset}/cm_key_file.txt
+	    cat ${data}/${dset}/utt2lab >> ${data}/${dset}/cm_key_file.txt
 	    sed -i "s/ /\t/g" ${data}/${dset}/cm_key_file.txt
 	    echo $exp_dir/input_scores//$dset/$sys/llr.txt
 	    echo "Measuring " $dset

@@ -106,12 +106,12 @@ def train(config='conf/config.yaml', **kwargs):
 
     # train data
     train_label = configs['train_label']
-    train_utt_cls_list = read_table(train_label)
-    lab2id_dict = lab2id(train_utt_cls_list)
+    train_utt_lab_list = read_table(train_label)
+    lab2id_dict = lab2id(train_utt_lab_list)
     if rank == 0:
         logger.info("<== Data statistics ==>")
         logger.info("train data num: {}, class num: {}".format(
-            len(train_utt_cls_list), len(lab2id_dict)))
+            len(train_utt_lab_list), len(lab2id_dict)))
 
     batch_size = configs['dataloader_args']['batch_size']
     whole_utt = configs['dataset_args'].get(
@@ -156,20 +156,20 @@ def train(config='conf/config.yaml', **kwargs):
     if configs['dataset_args'].get('sample_num_per_epoch', 0) > 0:
         sample_num_per_epoch = configs['dataset_args']['sample_num_per_epoch']
     else:
-        sample_num_per_epoch = len(train_utt_cls_list)
+        sample_num_per_epoch = len(train_utt_lab_list)
     epoch_iter = sample_num_per_epoch // world_size // batch_size
 
     # validation data
     val_dataloader = None
     if configs.get('val_label'):
         val_label = configs['val_label']
-        val_utt_cls_list = read_table(val_label)
-        val_lines = len(val_utt_cls_list)
+        val_utt_lab_list = read_table(val_label)
+        val_lines = len(val_utt_lab_list)
         val_iter = val_lines // 2 // world_size // batch_size
 
         if rank == 0:
             logger.info("validation data num: {}".format(
-                len(val_utt_cls_list)))
+                len(val_utt_lab_list)))
 
         val_dur = os.path.join(os.path.dirname(val_label), 'utt2dur')
 

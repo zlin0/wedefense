@@ -14,17 +14,17 @@
 # See the Apache 2 License for the specific language governing permissions and
 # limitations under the License.
 
-# converts an utt2cls file to a cls2utt file.
+# converts an utt2lab file to a lab2utt file.
 # Takes input from the stdin or from a file argument;
 # output goes to the standard out.
 
 if ( @ARGV > 1 ) {
-    die "Usage: utt2spk_to_spk2utt.pl [ utt2cls ] > cls2utt";
+    die "Usage: utt2spk_to_spk2utt.pl [ utt2lab ] > lab2utt";
 }
 
 while(<>){
     @A = split(" ", $_);
-    @A == 2 || die "Invalid line in utt2cls file: $_";
+    @A == 2 || die "Invalid line in utt2lab file: $_";
     ($u,$s) = @A;
     if(!$seen_spk{$s}) {
         $seen_spk{$s} = 1;

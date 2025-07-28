@@ -21,7 +21,7 @@ from tqdm import tqdm
 from wespeaker.utils.utils import validate_path
 
 
-def compute_vector_mean(lab2utt, xvector_scp, lab_xvector_ark):
+def compute_vector_mean(lab2utt, vector_scp, lab_vector_ark):
     # read lab2utt
     lab2utt_dict = {}
     with open(lab2utt, 'r', encoding='utf-8') as fin:
@@ -31,14 +31,14 @@ def compute_vector_mean(lab2utt, xvector_scp, lab_xvector_ark):
             lab2utt_dict[line[0]] = line[1:]
 
     utt2embs = {}
-    for utt, emb in kaldiio.load_scp_sequential(xvector_scp):
+    for utt, emb in kaldiio.load_scp_sequential(vector_scp):
         utt2embs[utt] = emb
 
-    validate_path(lab_xvector_ark)
-    lab_xvector_ark = os.path.abspath(lab_xvector_ark)
-    lab_xvector_scp = lab_xvector_ark[:-3] + "scp"
-    with kaldiio.WriteHelper('ark,scp:' + lab_xvector_ark + "," +
-                             lab_xvector_scp) as writer:
+    validate_path(lab_vector_ark)
+    lab_vector_ark = os.path.abspath(lab_vector_ark)
+    lab_vector_scp = lab_vector_ark[:-3] + "scp"
+    with kaldiio.WriteHelper('ark,scp:' + lab_vector_ark + "," +
+                             lab_vector_scp) as writer:
         for lab in tqdm(lab2utt_dict.keys()):
             utts = lab2utt_dict[lab]
             mean_vec = None
@@ -56,11 +56,11 @@ def compute_vector_mean(lab2utt, xvector_scp, lab_xvector_ark):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='compute the mean of vector')
     parser.add_argument('--lab2utt', type=str, default='', help='lab2utt file')
-    parser.add_argument('--xvector_scp',
+    parser.add_argument('--vector_scp',
                         type=str,
                         default='',
-                        help='xvector file (kaldi format)')
-    parser.add_argument('--lab_xvector_ark', type=str, default='')
+                        help='vector file (kaldi format)')
+    parser.add_argument('--lab_vector_ark', type=str, default='')
     args = parser.parse_args()
 
-    compute_vector_mean(args.lab2utt, args.xvector_scp, args.lab_xvector_ark)
+    compute_vector_mean(args.lab2utt, args.vector_scp, args.lab_vector_ark)

@@ -28,7 +28,7 @@ top_n=300
 num_gpus=$(echo $gpus | awk -F ',' '{print NF}')
 
 #######################################################################################
-# Stage 1. Preparing data folder for partialspoof: wav.scp, utt2cls, cls2utt, reco2dur
+# Stage 1. Preparing data folder for partialspoof: wav.scp, utt2lab, lab2utt, reco2dur
 #######################################################################################
 if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
   echo "Prepare datasets ..."
@@ -47,11 +47,11 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
               --num_threads 8 \
               --prefix shards \
               --shuffle \
-              ${data}/$dset/wav.scp ${data}/$dset/utt2cls \
+              ${data}/$dset/wav.scp ${data}/$dset/utt2lab \
               ${data}/$dset/shards ${data}/$dset/shard.list
       else
           python tools/make_raw_list.py --vad_file ${data}/$dset/vad ${data}/$dset/wav.scp \
-              ${data}/$dset/utt2cls ${data}/$dset/raw.list
+              ${data}/$dset/utt2lab ${data}/$dset/raw.list
       fi
   done
 
@@ -85,9 +85,9 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         --num_avg ${num_avg} \
         --data_type "${data_type}" \
         --train_data ${data}/train/${data_type}.list \
-        --train_label ${data}/train/utt2cls \
+        --train_label ${data}/train/utt2lab \
         --val_data ${data}/dev/${data_type}.list \
-        --val_label ${data}/dev/utt2cls \
+        --val_label ${data}/dev/utt2lab \
         ${checkpoint:+--checkpoint $checkpoint}
         #--reverb_data data/rirs/lmdb \
         #--noise_data data/musan/lmdb \
@@ -140,13 +140,13 @@ fi
 #######################################################################################
 if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
   echo "Convert logits to llr ..."
-  cut -f2 -d" " ${data}/train/utt2cls | sort | uniq -c | awk '{print $2 " " $1}' > ${data}/train/cls2num_utts
+  cut -f2 -d" " ${data}/train/utt2lab | sort | uniq -c | awk '{print $2 " " $1}' > ${data}/train/lab2num_utts
   for dset in dev eval; do
       echo $dset
       python wedefense/bin/logits_to_llr.py \
 	  --logits_scp_path ${exp_dir}/posteriors/$dset/logits.scp \
-	  --training_counts ${data}/train/cls2num_utts \
-	  --train_label ${data}/train/utt2cls \
+	  --training_counts ${data}/train/lab2num_utts \
+	  --train_label ${data}/train/utt2lab \
 	  --pi_spoof 0.05
 
   done
@@ -161,7 +161,7 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
     # Preparing trails
     # filename        cm-label
     echo "filename cm-label" > ${data}/${dset}/cm_key_file.txt
-    cat ${data}/${dset}/utt2cls >> ${data}/${dset}/cm_key_file.txt
+    cat ${data}/${dset}/utt2lab >> ${data}/${dset}/cm_key_file.txt
     sed -i "s/ /\t/g" ${data}/${dset}/cm_key_file.txt
 
     echo "Measuring " $dset

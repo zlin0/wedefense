@@ -18,7 +18,7 @@
 local/prepare_data.sh [PS_dir] [data]
 
 Download partialspoof database,
-and prepare data dir for partial spoof: wav.scp, utt2cls, cls2utt, utt2dur, dur2utt
+and prepare data dir for partial spoof: wav.scp, utt2lab, lab2utt, utt2dur, dur2utt
 """
 
 #
@@ -38,14 +38,14 @@ for dset in train dev eval; do
   sed -i 's/\.wav / /g' ${data}/${dset}/wav.scp
   # check row number.
 
-  # produce utt2cls from protocols
-  cut -d' ' -f2,5 ${PS_dir}/protocols/PartialSpoof_LA_cm_protocols/PartialSpoof.LA.cm.${dset}.trl.txt > ${data}/${dset}/utt2cls
+  # produce utt2lab from protocols
+  cut -d' ' -f2,5 ${PS_dir}/protocols/PartialSpoof_LA_cm_protocols/PartialSpoof.LA.cm.${dset}.trl.txt > ${data}/${dset}/utt2lab
 
-  ./tools/utt2spk_to_spk2utt.pl ${data}/${dset}/utt2cls >${data}/${dset}/cls2utt
+  ./tools/utt2spk_to_spk2utt.pl ${data}/${dset}/utt2lab >${data}/${dset}/lab2utt
 
   #we are using wav2dur.py, but quite slow.
   python tools/wav2dur.py ${data}/${dset}/wav.scp ${data}/${dset}/utt2dur
 done
 
-echo "Prepared data folder for partialspoof, including wav.scp, utt2cls, cls2utt"
+echo "Prepared data folder for partialspoof, including wav.scp, utt2lab, lab2utt"
 

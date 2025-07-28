@@ -32,7 +32,7 @@ eval_reso=10
 . tools/parse_options.sh || exit 1
 
 #######################################################################################
-# Stage 1. Preparing data folder for partialspoof: wav.scp, utt2cls, cls2utt, reco2dur
+# Stage 1. Preparing data folder for partialspoof: wav.scp, utt2lab, lab2utt, reco2dur
 #######################################################################################
 if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
   echo "Prepare datasets ..."
@@ -51,11 +51,11 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
               --num_threads 8 \
               --prefix shards \
               --shuffle \
-              ${data}/$dset/wav.scp ${data}/$dset/utt2cls \
+              ${data}/$dset/wav.scp ${data}/$dset/utt2lab \
               ${data}/$dset/shards ${data}/$dset/shard.list
       else
           python tools/make_raw_list.py --vad_file ${data}/$dset/vad ${data}/$dset/wav.scp \
-              ${data}/$dset/utt2cls ${data}/$dset/raw.list
+              ${data}/$dset/utt2lab ${data}/$dset/raw.list
       fi
 
       # For localization
@@ -101,7 +101,7 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         --train_label ${data}/train/rttm_localization \
         ${checkpoint:+--checkpoint $checkpoint}
         # Note, label was assigned in stage 2,
-	# utt2cls here only for label2id.
+	# utt2lab here only for label2id.
         #--reverb_data data/rirs/lmdb \
         #--noise_data data/musan/lmdb \
 	#TODO, currently also moved from local/extract_emb.sh, flexible to control musan/rirs.
@@ -156,7 +156,7 @@ fi
 #######################################################################################
 if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
   echo "Convert logits to llr ..."
-  cut -f2 -d" " ${data}/train/utt2cls | sort | uniq -c | awk '{print $2 " " $1}' > ${data}/train/cls2num_utts
+  cut -f2 -d" " ${data}/train/utt2lab | sort | uniq -c | awk '{print $2 " " $1}' > ${data}/train/lab2num_utts
   for dset in dev eval; do
       echo $dset
       python wedefense/utils/print_frame_logits.py \

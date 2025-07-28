@@ -17,7 +17,7 @@
 #local/prepare_data.sh [ITW_dir] [data_dir]
 #
 #Download ITW database,
-#and prepare data dir for partial spoof: wav.scp, utt2cls, cls2utt, utt2dur
+#and prepare data dir for partial spoof: wav.scp, utt2lab, lab2utt, utt2dur
 
 set -xe
 
@@ -45,12 +45,12 @@ find "${ITW_dir}" -name "*.wav" | awk -v prefix="${ITW_dir}/" '{
   sort -n > ${data_dir}/wav.scp
 
 
-tail -n +2 ${ITW_dir}/meta.csv | cut -d',' -f1,3 > ${data_dir}/utt2cls
-sed -i 's/bona-fide/bonafide/g' ${data_dir}/utt2cls
-sed -i 's/,/ /g' ${data_dir}/utt2cls
+tail -n +2 ${ITW_dir}/meta.csv | cut -d',' -f1,3 > ${data_dir}/utt2lab
+sed -i 's/bona-fide/bonafide/g' ${data_dir}/utt2lab
+sed -i 's/,/ /g' ${data_dir}/utt2lab
 
-./tools/utt2spk_to_spk2utt.pl ${data_dir}/utt2cls \
-        >${data_dir}/cls2utt
+./tools/utt2spk_to_spk2utt.pl ${data_dir}/utt2lab \
+        >${data_dir}/lab2utt
 
 #we are using wav2dur.py, but quite slow.
 nj=10  # number of parallel jobs
@@ -77,5 +77,5 @@ rm -r "$split_dir"
 echo "Done: utt2dur saved to $output_dir/utt2dur"
 
 
-echo "Prepared data folder for ITW, including wav.scp, utt2cls, cls2utt"
+echo "Prepared data folder for ITW, including wav.scp, utt2lab, lab2utt"
 

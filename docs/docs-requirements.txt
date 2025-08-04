@@ -1,0 +1,7 @@
+sphinx>=7.3.0
+myst-parser
+sphinx-copybutton
+sphinx-design
+sphinx-rtd-theme
+sphinx-markdown-tables
+sphinxcontrib-youtube==1.4.1

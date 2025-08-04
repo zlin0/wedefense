@@ -31,7 +31,6 @@ import wedefense.models.ssl_backend as ssl_backend
 import wedefense.models.lcnn_lstm as lcnn_lstm
 
 
-
 def get_model(model_name: str):
     if model_name.startswith("XVEC"):
         return getattr(tdnn, model_name)

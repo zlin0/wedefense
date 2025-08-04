@@ -92,9 +92,8 @@ class BatchNorm1d(nn.Module):
             if x.ndim == 3:
                 x = x.reshape(shape_or[0] * shape_or[1], shape_or[2])
             else:
-                x = x.reshape(
-                    shape_or[0] * shape_or[1], shape_or[3], shape_or[2]
-                )
+                x = x.reshape(shape_or[0] * shape_or[1], shape_or[3],
+                              shape_or[2])
 
         elif not self.skip_transpose:
             x = x.transpose(-1, 1)
@@ -110,12 +109,12 @@ class BatchNorm1d(nn.Module):
 
 
 class whisper_PMFA(torch.nn.Module):
-    def __init__(
-            self,
-            output_size=1280,
-            embedding_dim=192,
-            pooling_func='ASTP',
-            global_context_att=True):
+
+    def __init__(self,
+                 output_size=1280,
+                 embedding_dim=192,
+                 pooling_func='ASTP',
+                 global_context_att=True):
         super(whisper_PMFA, self).__init__()
         self.pooling = getattr(pooling_layers, pooling_func)(
             in_dim=output_size, global_context_att=global_context_att)
@@ -134,6 +133,4 @@ class whisper_PMFA(torch.nn.Module):
 
 
 def whisper_PMFA_large_v2(feat_dim, embed_dim):
-    return whisper_PMFA(output_size=feat_dim,
-                        embedding_dim=embed_dim
-                        )
+    return whisper_PMFA(output_size=feat_dim, embedding_dim=embed_dim)

@@ -14,7 +14,7 @@ dataloader_args:
   batch_size: 128
   num_workers: 6
   pin_memory: False
-  prefetch_factor: 8 
+  prefetch_factor: 8
   drop_last: True
 
 dataset_args:
@@ -44,9 +44,9 @@ dataset_args:
     max_t: 10
     max_f: 8
     prob: 0.6
-  #TODO move rawboost parameters to here.  
+  #TODO move rawboost parameters to here.
 
-model: LCNN_LSTM 
+model: LCNN_LSTM
 model_init: null
 model_args:
   feat_dim: 80

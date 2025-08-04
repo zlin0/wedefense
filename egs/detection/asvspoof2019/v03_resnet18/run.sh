@@ -28,7 +28,7 @@ top_n=300
 num_gpus=$(echo $gpus | awk -F ',' '{print NF}')
 
 #######################################################################################
-# Stage 1. Preparing data folder for partialspoof: wav.scp, utt2cls, cls2utt, reco2dur
+# Stage 1. Preparing data folder for partialspoof: wav.scp, utt2lab, lab2utt, reco2dur
 #######################################################################################
 if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
   echo "Prepare datasets ..."
@@ -36,22 +36,22 @@ if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
 fi
 
 #######################################################################################
-# Stage 2. Preapring shard data for partialspoof and musan/rirs 
+# Stage 2. Preapring shard data for partialspoof and musan/rirs
 #######################################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Convert train and test data to ${data_type}..."
-  # We don't use VAD here 
+  # We don't use VAD here
   for dset in train dev eval;do
       if [ $data_type == "shard" ]; then
           python tools/make_shard_list.py --num_utts_per_shard 1000 \
               --num_threads 8 \
               --prefix shards \
               --shuffle \
-              ${data}/$dset/wav.scp ${data}/$dset/utt2cls \
+              ${data}/$dset/wav.scp ${data}/$dset/utt2lab \
               ${data}/$dset/shards ${data}/$dset/shard.list
       else
           python tools/make_raw_list.py --vad_file ${data}/$dset/vad ${data}/$dset/wav.scp \
-              ${data}/$dset/utt2cls ${data}/$dset/raw.list
+              ${data}/$dset/utt2lab ${data}/$dset/raw.list
       fi
   done
 
@@ -61,7 +61,7 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   #RIRs_dir=/share/workspace/shared_datasets/speechdata/21_RIRS_NOISES/RIRS_NOISES/
   #find ${RIRs_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
   ## Convert all musan data to LMDB. But note that lmdb does not work on NFS!
-  #python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb 
+  #python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb
   #rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
   ## Convert all rirs data to LMDB
   #python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
@@ -85,9 +85,9 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         --num_avg ${num_avg} \
         --data_type "${data_type}" \
         --train_data ${data}/train/${data_type}.list \
-        --train_label ${data}/train/utt2cls \
+        --train_label ${data}/train/utt2lab \
         --val_data ${data}/dev/${data_type}.list \
-        --val_label ${data}/dev/utt2cls \
+        --val_label ${data}/dev/utt2lab \
         ${checkpoint:+--checkpoint $checkpoint}
         #--reverb_data data/rirs/lmdb \
         #--noise_data data/musan/lmdb \
@@ -120,12 +120,12 @@ if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
 fi
 
 #######################################################################################
-# Stage 5. Extract logits and posterior 
+# Stage 5. Extract logits and posterior
 #######################################################################################
 if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   echo "Extract logits and posteriors ..."
   for dset in dev eval;do
-      mkdir -p ${exp_dir}/posteriors/$dset 
+      mkdir -p ${exp_dir}/posteriors/$dset
       echo $dset
       python wedefense/bin/infer.py --model_path $model_path \
 	  --config ${exp_dir}/config.yaml \
@@ -136,32 +136,32 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
 fi
 
 #######################################################################################
-# Stage 6. Convert logits to llr 
+# Stage 6. Convert logits to llr
 #######################################################################################
 if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
   echo "Convert logits to llr ..."
-  cut -f2 -d" " ${data}/train/utt2cls | sort | uniq -c | awk '{print $2 " " $1}' > ${data}/train/cls2num_utts
+  cut -f2 -d" " ${data}/train/utt2lab | sort | uniq -c | awk '{print $2 " " $1}' > ${data}/train/lab2num_utts
   for dset in dev eval; do
       echo $dset
       python wedefense/bin/logits_to_llr.py \
 	  --logits_scp_path ${exp_dir}/posteriors/$dset/logits.scp \
-	  --training_counts ${data}/train/cls2num_utts \
-	  --train_label ${data}/train/utt2cls \
+	  --training_counts ${data}/train/lab2num_utts \
+	  --train_label ${data}/train/utt2lab \
 	  --pi_spoof 0.05
 
   done
 fi
 
 #######################################################################################
-# Stage 7. Measuring performance 
+# Stage 7. Measuring performance
 #######################################################################################
 if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
   echo "Measuring Performance ..."
   for dset in dev eval; do
     # Preparing trails
     # filename        cm-label
-    echo "filename cm-label" > ${data}/${dset}/cm_key_file.txt	  
-    cat ${data}/${dset}/utt2cls >> ${data}/${dset}/cm_key_file.txt
+    echo "filename cm-label" > ${data}/${dset}/cm_key_file.txt
+    cat ${data}/${dset}/utt2lab >> ${data}/${dset}/cm_key_file.txt
     sed -i "s/ /\t/g" ${data}/${dset}/cm_key_file.txt
 
     echo "Measuring " $dset
@@ -173,7 +173,7 @@ if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
 fi
 
 #######################################################################################
-# Stage 8. Analyses 
+# Stage 8. Analyses
 #######################################################################################
 # TODO
 # 1. significant test

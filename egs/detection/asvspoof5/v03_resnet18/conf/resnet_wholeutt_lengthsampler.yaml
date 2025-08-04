@@ -14,7 +14,7 @@ dataloader_args:
   batch_size: 64
   num_workers: 6
   pin_memory: False
-  prefetch_factor: 8 
+  prefetch_factor: 8
   drop_last: True
 
 dataset_args:

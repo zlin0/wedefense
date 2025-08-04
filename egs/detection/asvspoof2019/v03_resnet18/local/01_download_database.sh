@@ -6,7 +6,7 @@ link=https://datashare.ed.ac.uk/download/DS_10283_3336.zip
 
 if [ ! -d ${ASVspoof2019_dir} ]; then
     mkdir -p "${ASVspoof2019_dir}"
-    
+
     cd ${ASVspoof2019_dir}
     wget -q --show-progress -c "${link}" -O asvspoof2019.zip
     unzip ${ASVspoof2019_dir}/asvspoof2019.zip

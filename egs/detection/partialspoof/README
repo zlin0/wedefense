@@ -13,6 +13,7 @@ v12_ssl_res1d
 v13_ssl_assist
 v14_ssl_sls
 v15_ssl_mhfa
+v16_ssl_nes2net
 
 XAI:
 x12: grad_cam for ssl_res1d: [How Do Neural Spoofing Countermeasures Detect Partially Spoofed Audio?](https://arxiv.org/pdf/2406.02483)

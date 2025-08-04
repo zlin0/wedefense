@@ -20,15 +20,15 @@ Reference:
 for speaker recognition. IEEE Signal Processing Letters, 28, 1385-1389.
 '''
 
-
 import torch
 import wedefense.models.ecapa_tdnn as ecapa_tdnn
 import wedefense.models.tdnn as tdnn
 
 
-
-
-def XI_VEC_ECAPA_TDNN_c1024(feat_dim, embed_dim, pooling_func='XI', emb_bn=False):
+def XI_VEC_ECAPA_TDNN_c1024(feat_dim,
+                            embed_dim,
+                            pooling_func='XI',
+                            emb_bn=False):
     return ecapa_tdnn.ECAPA_TDNN(channels=1024,
                                  feat_dim=feat_dim,
                                  embed_dim=embed_dim,
@@ -36,7 +36,10 @@ def XI_VEC_ECAPA_TDNN_c1024(feat_dim, embed_dim, pooling_func='XI', emb_bn=False
                                  emb_bn=emb_bn)
 
 
-def XI_VEC_ECAPA_TDNN_c512(feat_dim, embed_dim, pooling_func='XI', emb_bn=False):
+def XI_VEC_ECAPA_TDNN_c512(feat_dim,
+                           embed_dim,
+                           pooling_func='XI',
+                           emb_bn=False):
     return ecapa_tdnn.ECAPA_TDNN(channels=512,
                                  feat_dim=feat_dim,
                                  embed_dim=embed_dim,
@@ -44,9 +47,10 @@ def XI_VEC_ECAPA_TDNN_c512(feat_dim, embed_dim, pooling_func='XI', emb_bn=False)
                                  emb_bn=emb_bn)
 
 
-
 def XI_VEC_XVEC(feat_dim, embed_dim, pooling_func='XI'):
-    return tdnn.XVEC(feat_dim=feat_dim, embed_dim=embed_dim, pooling_func=pooling_func)
+    return tdnn.XVEC(feat_dim=feat_dim,
+                     embed_dim=embed_dim,
+                     pooling_func=pooling_func)
 
 
 if __name__ == '__main__':

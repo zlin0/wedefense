@@ -90,10 +90,10 @@ def write_tar_file(data_list, tar_file, index=0, total=1):
     with tarfile.open(tar_file, "w") as tar:
         for item in data_list:
             if len(item) == 3:
-                key, spk, wav = item
+                key, lab, wav = item
                 vad = None
             else:
-                key, spk, wav, vad = item
+                key, lab, wav, vad = item
 
             if wav.endswith('|'):
                 suffix = 'wav'
@@ -114,14 +114,14 @@ def write_tar_file(data_list, tar_file, index=0, total=1):
             if vad is not None:
                 data = apply_vad(data, vad)
             read_time += (time.time() - ts)
-            assert isinstance(spk, str)
+            assert isinstance(lab, str)
             ts = time.time()
-            spk_file = key + '.spk'
-            spk = spk.encode('utf8')
-            spk_data = io.BytesIO(spk)
-            spk_info = tarfile.TarInfo(spk_file)
-            spk_info.size = len(spk)
-            tar.addfile(spk_info, spk_data)
+            lab_file = key + '.lab'
+            lab = lab.encode('utf8')
+            lab_data = io.BytesIO(lab)
+            lab_info = tarfile.TarInfo(lab_file)
+            lab_info.size = len(lab)
+            tar.addfile(lab_info, lab_data)
 
             wav_file = key + '.' + suffix
             wav_data = io.BytesIO(data)
@@ -154,7 +154,7 @@ def get_args():
                         help='vad file',
                         default='non_exist')
     parser.add_argument('wav_file', help='wav file')
-    parser.add_argument('utt2spk_file', help='utt2spk file')
+    parser.add_argument('utt2lab_file', help='utt2lab file')
     parser.add_argument('shards_dir', help='output shards dir')
     parser.add_argument('shards_list', help='output shards list file')
     args = parser.parse_args()
@@ -187,27 +187,27 @@ def main():
         vad_dict = None
 
     data = []
-    with open(args.utt2spk_file, 'r', encoding='utf8') as fin:
+    with open(args.utt2lab_file, 'r', encoding='utf8') as fin:
         for line in fin:
             arr = line.strip().split(maxsplit=1)
             key = arr[0]  # key = os.path.splitext(arr[0])[0]
-            spk = arr[1]
+            lab = arr[1]
             assert key in wav_table
             wav = wav_table[key]
             if vad_dict is None:
-                data.append((key, spk, wav))
+                data.append((key, lab, wav))
             else:
                 """
                 if key not in vad_dict:
                     continue
                 vad = vad_dict[key]
-                data.append((key, spk, wav, vad))
+                data.append((key, lab, wav, vad))
                 """
                 if key not in vad_dict:
-                    data.append((key, spk, wav))
+                    data.append((key, lab, wav))
                 else:
                     vad = vad_dict[key]
-                    data.append((key, spk, wav, vad))
+                    data.append((key, lab, wav, vad))
 
     if args.shuffle:
         random.shuffle(data)

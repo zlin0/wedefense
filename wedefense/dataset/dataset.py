@@ -2,7 +2,7 @@
 #               2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
 #               2022 Hongji Wang (jijijiang77@gmail.com)
 #               2023 Zhengyang Chen (chenzhengyang117@gmail.com)
-#               2025 Lin Zhang, Xin Wang (lzhang.as@gmail.com, wangxin@nii.ac.jp)
+#               2025 Lin Zhang, Xin Wang (lzhang.as@gmail.com, wangxin@nii.ac.jp)  # noqa
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ from wedefense.utils.file_utils import read_lists, read_table, read_json_list
 from wedefense.dataset.lmdb_data import LmdbData
 import wedefense.dataset.processor as processor
 import wedefense.dataset.shuffle_random_tools as shuffle_tools
+
 
 class Processor(IterableDataset):
     # https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.IterableDataset
@@ -56,13 +57,14 @@ class Processor(IterableDataset):
 class DistributedSampler:
     """ Sampler for distributed training
     """
+
     def __init__(self, shuffle=True, partition=True, block_shuffle_size=0):
         """ Initialzie DistributedSampler
 
             Args:
-                shuffle (bool): whether shuffle data list. 
+                shuffle (bool): whether shuffle data list.
                     Default to True
-                partition (bool): whether divide file list based on world_size. 
+                partition (bool): whether divide file list based on world_size.
                     Default to True
                 block_shuffle_size (int): if larger than 0, shuffle by block
                     [1,2,3,4,5,6] -> shuffle_blck_size with 3 -> [3,1,2,5,4,6]
@@ -111,17 +113,20 @@ class DistributedSampler:
             if self.shuffle and self.block_shuffle_size > 0:
                 # shuffle within blocks
                 # e.g., [1,2,3,4,5,6], block_size=3 -> [3,1,2,5,4,6]
-                shuffle_tools.f_shuffle_in_block_inplace(data, self.block_shuffle_size, self.epoch)
+                shuffle_tools.f_shuffle_in_block_inplace(
+                    data, self.block_shuffle_size, self.epoch)
                 # shuffle blocks
                 # e.g., [3,1,2,5,4,6], block_size=3 -> [5,4,6,3,1,2]
-                shuffle_tools.f_shuffle_blocks_inplace(data, self.block_shuffle_size, self.epoch)
-                
+                shuffle_tools.f_shuffle_blocks_inplace(data,
+                                                       self.block_shuffle_size,
+                                                       self.epoch)
+
             elif self.shuffle:
                 # default shuffle
                 random.Random(self.epoch).shuffle(data)
             else:
                 pass
-            
+
             data = data[self.rank::self.world_size]
         data = data[self.worker_id::self.num_workers]
         return data
@@ -131,20 +136,20 @@ class DataList(IterableDataset):
     """
     Dataset based on torch IterableDataset
     """
-    
+
     def __init__(self,
                  lists,
                  shuffle=True,
                  partition=True,
                  repeat_dataset=True,
-                 block_shuffle_size = 0):
+                 block_shuffle_size=0):
         """ Initialize DataList.
 
             Args:
                 lists (list): list of data files
-                shuffle (bool): whether shuffle data list. 
+                shuffle (bool): whether shuffle data list.
                     Default to True
-                partition (bool): whether divide file list based on world_size. 
+                partition (bool): whether divide file list based on world_size.
                     Default to True
                 repeat_dataset (bool): whether repeat_dataset during loading.
                     Default to True
@@ -152,12 +157,13 @@ class DataList(IterableDataset):
                     [1,2,3,4,5,6] -> shuffle_blck_size with 3 -> [3,1,2,5,4,6]
                     Default to 0
 
-            When block_shuffle_size > 0, we assume that lists is a sorted list of 
-            file paths, wherein the sorting is based on the duration of each file.
+            When block_shuffle_size > 0, we assume that lists is a sorted list of  # noqa
+            file paths, wherein the sorting is based on the duration of each file.  # noqa
         """
         self.lists = lists
         self.repeat_dataset = repeat_dataset
-        self.sampler = DistributedSampler(shuffle, partition, block_shuffle_size)
+        self.sampler = DistributedSampler(shuffle, partition,
+                                          block_shuffle_size)
 
     def set_epoch(self, epoch):
         self.sampler.set_epoch(epoch)
@@ -184,13 +190,13 @@ class DataList(IterableDataset):
 def Dataset(data_type,
             data_list_file,
             configs,
-            spk2id_dict,
+            lab2id_dict,
             whole_utt=False,
             reverb_lmdb_file=None,
             noise_lmdb_file=None,
             repeat_dataset=True,
             data_dur_file=None,
-            block_shuffle_size = 0):
+            block_shuffle_size=0):
     """ Construct dataset from arguments
 
         We have two shuffle stage in the Dataset. The first is global
@@ -201,13 +207,13 @@ def Dataset(data_type,
             data_type(str): shard/raw/feat
             data_list_file: data list file
             configs: dataset configs
-            spk2id_dict: spk2id dict
+            lab2id_dict: lab2id dict
             reverb_lmdb_file: reverb data source lmdb file
             noise_lmdb_file: noise data source lmdb file
             whole_utt: use whole utt or random chunk
             repeat_dataset: True for training while False for testing
             data_dur_file (str): path to the utterance duration file
-            block_shuffle_size (int): size of block shuffle. 
+            block_shuffle_size (int): size of block shuffle.
                     Default to 0, no block shuffle
     """
     assert data_type in ['shard', 'raw', 'feat']
@@ -216,14 +222,14 @@ def Dataset(data_type,
 
     # lists of file
     lists = read_lists(data_list_file)
-        
+
     # block_shuffle is to be used, sort the file list based on duration
     if block_shuffle_size > 0:
         assert data_dur_file is not None, "utt2dur is required"
         assert data_type == 'raw', "block shuffle requires raw data type"
 
         # load duration
-        uttdur = {x[0]:float(x[1]) for x in read_table(data_dur_file)}
+        uttdur = {x[0]: float(x[1]) for x in read_table(data_dur_file)}
         # data_list_file is not necessarily aligned with the utt2dur file
         js = read_json_list(data_list_file)
         u2d = [uttdur[x['key']] if x['key'] in uttdur else -1 for x in js]
@@ -237,12 +243,11 @@ def Dataset(data_type,
     #   set in train.py to keep consistent with wespeaker.
     # whole_utt = configs.get('whole_utt', False)
     # Global shuffle
-    dataset = DataList(
-        lists,
-        shuffle=shuffle,
-        repeat_dataset=repeat_dataset,
-        block_shuffle_size=block_shuffle_size)
-    
+    dataset = DataList(lists,
+                       shuffle=shuffle,
+                       repeat_dataset=repeat_dataset,
+                       block_shuffle_size=block_shuffle_size)
+
     if data_type == 'shard':
         dataset = Processor(dataset, processor.url_opener)
         dataset = Processor(dataset, processor.tar_file_and_group)
@@ -267,8 +272,8 @@ def Dataset(data_type,
         dataset = Processor(dataset, processor.shuffle,
                             **configs['shuffle_args'])
 
-    # spk2id
-    dataset = Processor(dataset, processor.spk_to_id, spk2id_dict)
+    # lab2id
+    dataset = Processor(dataset, processor.lab_to_id, lab2id_dict)
 
     if data_type == 'feat':
         if not whole_utt:
@@ -284,7 +289,7 @@ def Dataset(data_type,
         speed_perturb_flag = configs.get('speed_perturb', True)
         if speed_perturb_flag:
             dataset = Processor(dataset, processor.speed_perturb,
-                                len(spk2id_dict))
+                                len(lab2id_dict))
         if not whole_utt:
             # random chunk
             num_frms = configs.get('num_frms', 200)
@@ -294,11 +299,11 @@ def Dataset(data_type,
                          frame_length) * resample_rate // 1000
             dataset = Processor(dataset, processor.random_chunk, chunk_len,
                                 data_type)
-            
+
         # process Rawboost:
         rawboost_flag = configs.get('rawboost', False)
         if (rawboost_flag):
-            dataset = Processor(dataset, processor.rawboost, algo = 5)
+            dataset = Processor(dataset, processor.rawboost, algo=5)
         # add reverb & noise
         aug_prob = configs.get('aug_prob', 0.6)
         if (reverb_lmdb_file and noise_lmdb_file) and (aug_prob > 0.0):
@@ -311,7 +316,7 @@ def Dataset(data_type,
         codec_flag = configs.get('codec_aug', False)
         if codec_flag:
             dataset = Processor(dataset, processor.codec)
-            
+
         # compute fbank
         if frontend_type == 'fbank':
             dataset = Processor(dataset, processor.compute_fbank,

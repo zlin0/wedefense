@@ -105,11 +105,11 @@ declare -A eval_scores=(
 # declare -a systems=('PS_v15')
 # fusion_name=fusion-PS_v15
 
-### Table V, row 7 
+### Table V, row 7
 # declare -a systems=('A5_v14' 'A5_v15')
 # fusion_name=fusion-A5_v14-A5_v15
 
-### Table V, row 6 
+### Table V, row 6
 # declare -a systems=('PS_v13' 'PS_v15')
 # fusion_name=fusion-PS_v13-PS_v15
 
@@ -123,8 +123,8 @@ p_tar=0.95
 c_fr=1
 c_fa=10
 # Neutral
-#p_tar=0.5 
-#c_fr=1 
+#p_tar=0.5
+#c_fr=1
 #c_fa=1
 
 
@@ -151,9 +151,9 @@ if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
     done
 fi
 
-	       
+
 ###############################################################################
-# Stage 2. Check performance of individual systems. 
+# Stage 2. Check performance of individual systems.
 ###############################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
 
@@ -163,10 +163,10 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
 	    echo $sys
 	    # Preparing trials
 	    # filename        cm-label
-	    echo "filename cm-label" > ${data}/${dset}/cm_key_file.txt    
-	    cat ${data}/${dset}/utt2cls >> ${data}/${dset}/cm_key_file.txt
+	    echo "filename cm-label" > ${data}/${dset}/cm_key_file.txt
+	    cat ${data}/${dset}/utt2lab >> ${data}/${dset}/cm_key_file.txt
 	    sed -i "s/ /\t/g" ${data}/${dset}/cm_key_file.txt
-	    echo $exp_dir/input_scores//$dset/$sys/llr.txt 
+	    echo $exp_dir/input_scores//$dset/$sys/llr.txt
 	    echo "Measuring " $dset
         python wedefense/metrics/detection/evaluation.py \
 	    --m t1 \
@@ -176,9 +176,9 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
     done
 fi
 
-		   
+
 ###############################################################################
-# Stage 3. Train logisic regression fusion / calibration model. 
+# Stage 3. Train logisic regression fusion / calibration model.
 ###############################################################################
 if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
     echo "Estimate calibration parameters ..."
@@ -199,7 +199,7 @@ fi
 
 
 ###############################################################################
-# Stage 4. Create fused scores 
+# Stage 4. Create fused scores
 ###############################################################################
 if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
     echo "Compute fused scores ..."
@@ -214,7 +214,7 @@ fi
 
 
 ###############################################################################
-# Stage 5. Measuring performance 
+# Stage 5. Measuring performance
 ###############################################################################
 if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
     for dset in flac_D flac_E_eval; do

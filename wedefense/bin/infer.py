@@ -14,61 +14,61 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import fire
 import kaldiio
 import numpy as np
 import torch
 from wedefense.utils.utils import parse_config_or_kwargs
 from wedefense.models.projections import get_projection
-import os.path
 from scipy.special import softmax
 
-def main(model_path, config, num_classes, embedding_scp_path, out_path, data_type="raw"):
-    # data_type is just used for seting up the projection properly.
-    
-    print("model_path {}".format( model_path  ) )
-    print("config {}".format( config ) )
-    print("embedding_scp_path {}".format( embedding_scp_path ) )
-    print("out_path {}".format( out_path ) )
 
-    
-    utt  = []
+def main(model_path,
+         config,
+         num_classes,
+         embedding_scp_path,
+         out_path,
+         data_type="raw"):
+    # data_type is just used for seting up the projection properly.
+
+    print("model_path {}".format(model_path))
+    print("config {}".format(config))
+    print("embedding_scp_path {}".format(embedding_scp_path))
+    print("out_path {}".format(out_path))
+
+    utt = []
     embd = []
-    for k, v in kaldiio.load_scp_sequential( embedding_scp_path ):
-        utt.append( k )
-        embd.append( v )
-    embd = np.vstack( embd )    
-    print(embd.shape)    
+    for k, v in kaldiio.load_scp_sequential(embedding_scp_path):
+        utt.append(k)
+        embd.append(v)
+    embd = np.vstack(embd)
+    print(embd.shape)
 
     checkpoint = torch.load(model_path, map_location='cpu')
-    
 
     configs = parse_config_or_kwargs(config)
 
     # projection layer
-    if(configs['model_args']['embed_dim'] < 0): #TODO check
-        # #if emb_dim <0, we will reduce dim by emb_dim. like -2 will be dim/2
-        if 'multireso' in configs['model'] and configs['model_args']['num_scale'] > 0:
-            # If we are using multireso structure, dim will reduced by 
-            #['embed_dim'] in ['num_scale'] times.
+    if (configs['model_args']['embed_dim'] < 0):  # TODO check
+        # if emb_dim <0, we will reduce dim by emb_dim. like -2 will be dim/2
+        if 'multireso' in configs[
+                'model'] and configs['model_args']['num_scale'] > 0:
+            # If we are using multireso structure, dim will reduced by
+            # ['embed_dim'] in ['num_scale'] times.
             configs['projection_args']['embed_dim'] = int(
-                    configs['model_args']['feat_dim'] / 
-                    pow(abs(configs['model_args']['embed_dim']), 
-                        configs['model_args']['num_scale'])
-                    )
+                configs['model_args']['feat_dim'] /
+                pow(abs(configs['model_args']['embed_dim']),
+                    configs['model_args']['num_scale']))
         else:
             configs['projection_args']['embed_dim'] = int(
-                    configs['model_args']['feat_dim'] / 
-                    abs(configs['model_args']['embed_dim'])
-                    )
+                configs['model_args']['feat_dim'] /
+                abs(configs['model_args']['embed_dim']))
     else:
         configs['projection_args']['embed_dim'] = configs['model_args'][
             'embed_dim']
     configs['projection_args']['num_class'] = num_classes
     configs['projection_args']['do_lm'] = configs.get('do_lm', False)
-    if data_type != 'feat' and configs['dataset_args'][
-            'speed_perturb']:
+    if data_type != 'feat' and configs['dataset_args']['speed_perturb']:
         # diff speed is regarded as diff spk
         configs['projection_args']['num_class'] *= 3
         if configs.get('do_lm', False):
@@ -77,46 +77,48 @@ def main(model_path, config, num_classes, embedding_scp_path, out_path, data_typ
             configs['dataset_args']['speed_perturb'] = False
     projection = get_projection(configs['projection_args'])
 
-
     # trick
     new_checkpoint = {}
     for k in checkpoint.keys():
         if 'projection.' in k:
-            new_checkpoint[k.replace('projection.','')] = checkpoint[k]
+            new_checkpoint[k.replace('projection.', '')] = checkpoint[k]
     missing_keys, unexpected_keys = projection.load_state_dict(new_checkpoint,
                                                                strict=False)
-    if (len(missing_keys)>0):
-        print( "WARNING: {} missing_keys.".format( len(missing_keys)  ))
-    if (len(unexpected_keys)>0):
-        print( "WARNING: {} unexpected_keys.".format( len(unexpected_keys)  ))
+    if (len(missing_keys) > 0):
+        print("WARNING: {} missing_keys.".format(len(missing_keys)))
+    if (len(unexpected_keys) > 0):
+        print("WARNING: {} unexpected_keys.".format(len(unexpected_keys)))
 
     device = torch.device("cpu")
     projection.to(device).eval()
 
-    # Need to add something here to set margin to zero in case of margin based losses
+    # Need to add something here to set margin to zero in case of margin based losses  # noqa
     # Also a dummy label need to be provided below
 
     with torch.no_grad():
-        output = projection(torch.from_numpy(embd), torch.from_numpy(np.zeros(embd.shape[0])))
+        output = projection(torch.from_numpy(embd),
+                            torch.from_numpy(np.zeros(embd.shape[0])))
         if isinstance(output, tuple):
             # some projection layers return output and loss
             output = output[0].detach().numpy()
         else:
             output = output.detach().numpy()
-    
+
     print(output.shape)
-    #print(output)
+    # print(output)
 
     # out_path = os.path.dirname(embedding_scp_path)
     print(out_path)
-    with kaldiio.WriteHelper('ark,scp:' + out_path + "/logits.ark," + out_path + "/logits.scp") as writer:
+    with kaldiio.WriteHelper('ark,scp:' + out_path + "/logits.ark," +
+                             out_path + "/logits.scp") as writer:
         for i, utt in enumerate(utt):
             writer(utt, output[i])
 
-    with kaldiio.WriteHelper('ark,scp:' + out_path + "/posteriors.ark," + out_path + "/posteriors.scp") as writer:
+    with kaldiio.WriteHelper('ark,scp:' + out_path + "/posteriors.ark," +
+                             out_path + "/posteriors.scp") as writer:
         for i, utt in enumerate(utt):
             writer(utt, softmax(output[i]))
 
+
 if __name__ == "__main__":
     fire.Fire(main)
-

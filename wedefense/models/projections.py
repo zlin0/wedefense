@@ -474,8 +474,8 @@ class SphereProduct(nn.Module):
 
 class MSEp2sgrad(nn.Module):
     r"""Implement of MSE loss with p2sgrad
-    P2sGrad: 
-    Zhang, X. et al. P2sgrad: Refined gradients for optimizing 
+    P2sGrad:
+    Zhang, X. et al. P2sgrad: Refined gradients for optimizing
     deep face models. in Proc. CVPR 9906-9914, 2019
 
     Args:
@@ -491,7 +491,7 @@ class MSEp2sgrad(nn.Module):
         self.weight = nn.Parameter(torch.FloatTensor(out_features,
                                                      in_features))
         nn.init.xavier_uniform_(self.weight)
-        
+
     def forward(self, input, label):
         # ---------------- cos(theta) & phi(theta) ---------------
         cosine = F.linear(F.normalize(input), F.normalize(self.weight))
@@ -509,7 +509,8 @@ class MSEp2sgrad(nn.Module):
     def __repr__(self):
         return self.__class__.__name__ + '(' \
             + 'in_features=' + str(self.in_features) \
-            + ', out_features=' + str(self.out_features)  + ')'
+            + ', out_features=' + str(self.out_features) + ')'
+
 
 class Linear(nn.Module):
     """
@@ -523,21 +524,22 @@ class Linear(nn.Module):
                                    nn.ReLU(inplace=True),
                                    nn.Linear(emb_dim, class_num))
 
-    def forward(self, input, label):
+    def forward(self, input, label=None):
         out = self.trans(input)
         return out
+
 
 class TanhLinear(nn.Module):
     """
     The linear transform for simple softmax loss
-    
+
     Simpler without batchnorm and ReLU
     """
+
     def __init__(self, emb_dim=512, class_num=1000):
         super(TanhLinear, self).__init__()
 
-        self.trans = nn.Sequential(nn.Tanh(),
-                                   nn.Linear(emb_dim, class_num))
+        self.trans = nn.Sequential(nn.Tanh(), nn.Linear(emb_dim, class_num))
 
     def forward(self, input, label):
         out = self.trans(input)

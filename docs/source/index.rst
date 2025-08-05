@@ -44,7 +44,7 @@ WeDefense is a toolkit tailored to defend against fake audio.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Getting Started
 
    installation.md

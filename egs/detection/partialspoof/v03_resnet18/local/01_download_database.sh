@@ -16,4 +16,4 @@ for file in ${FILE_NAMEs}; do
     fi
 done
 cd -
-echo 'We have PartialSpoof database on '${PS_PATH}' now'
+echo 'We have PartialSpoof database on '${PS_dir}' now'

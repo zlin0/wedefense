@@ -9,10 +9,11 @@ set -x
 stage=3
 stop_stage=7
 
-PS_dir=/gs/bs/tgh-25IAC/ud03523/DATA/PartialSpoof/database
+PS_dir=/path/to/PartialSpoof/database
+MUSAN_dir=/path/to/musan
+PS_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database
 data=data/partialspoof # data folder
-#data_type="shard"  # shard/raw
-data_type="raw"  # shard/raw
+data_type="shard"  # shard/raw
 
 config=conf/resnet.yaml
 exp_dir=exp/ResNet18-i5p5-smallWeightDecay-earlystop
@@ -56,7 +57,6 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   done
 
   #TODO: wespeaker doesn't support multi-channel wavs.
-  MUSAN_dir=/share/workspace/shared_datasets/speechdata/14_musan/
   find ${MUSAN_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/musan/wav.scp
   RIRs_dir=/share/workspace/shared_datasets/speechdata/21_RIRS_NOISES/RIRS_NOISES/
   find ${RIRs_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp

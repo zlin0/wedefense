@@ -3,28 +3,31 @@
 # Copyright 2025 Johan Rohdin, Lin Zhang (rohdin@fit.vut.cz, partialspoof@gmail.com)
 #
 
-set -x
+set -e -o pipefail -x
 . ./path.sh || exit 1
 
 stage=3
 stop_stage=7
 
-PS_dir=/path/to/PartialSpoof/database
-MUSAN_dir=/path/to/musan
+# TODO Please modify the following paths to your own data directories
 PS_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database
+MUSAN_dir=/path/to/musan # e.g., /export/fs05/arts/dataset/musan
+RIRS_dir=/path/to/rirs # e.g., /export/fs05/arts/dataset/RIRS_NOISES
 data=data/partialspoof # data folder
 data_type="shard"  # shard/raw
 
 config=conf/resnet.yaml
 exp_dir=exp/resnet
 
-gpus="[0]"
-num_avg=2 # how many models you want to average
+gpus="[0]" # how many gpu you want to use
+num_avg=2 # Number of models to average. Set to > 0 to activate model averaging.
+          # Set to 0 or a negative value to use the single best_model.pt.
 checkpoint=
 
 . tools/parse_options.sh || exit 1
 
-num_gpus=$(echo $gpus | awk -F ',' '{print NF}')
+# Count the number of GPUs, handling potential spaces
+num_gpus=$(echo "$gpus" | tr -d '[] ' | awk -F',' '{print NF}')
 
 #######################################################################################
 # Stage 1. Preparing data folder for partialspoof: wav.scp, utt2lab, lab2utt, reco2dur
@@ -35,10 +38,10 @@ if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
 fi
 
 #######################################################################################
-# Stage 2. Preapring shard data for partialspoof and musan/rirs
+# Stage 2. Preparing shard data for partialspoof and musan/rirs
 #######################################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
-  echo "Covert train and test data to ${data_type}..."
+  echo "Convert train and test data to ${data_type}..."
   # We don't use VAD here
   for dset in train dev eval;do
     (
@@ -59,9 +62,10 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
 
   #TODO: wespeaker doesn't support multi-channel wavs.
   find ${MUSAN_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/musan/wav.scp
-  RIRs_dir=/share/workspace/shared_datasets/speechdata/21_RIRS_NOISES/RIRS_NOISES/
-  find ${RIRs_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
-  # Convert all musan data to LMDB. But note that lmdb does not work on NFS!
+  find ${RIRS_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
+  # Convert all musan data to LMDB.
+  # But NOTE that lmdb does not work on NFS! So we run lmdb on local dir,
+  # then move to the working folder
   python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb
   rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
   # Convert all rirs data to LMDB
@@ -77,9 +81,9 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
   if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then
      gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
   fi
-    #python -m pdb \
-    #torchrun --standalone --nnodes=1 --nproc_per_node=$num_gpus \
-    torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((RANDOM)) --nnodes=1 --nproc_per_node=$num_gpus \
+
+  # Use a random port for torchrun from the dynamic port range
+  torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((RANDOM % 16384 + 49152)) --nnodes=1 --nproc_per_node=$num_gpus \
       wedefense/bin/train.py --config $config \
         --exp_dir ${exp_dir} \
         --gpus $gpus \
@@ -93,21 +97,24 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         #--reverb_data data/rirs/lmdb \
         #--noise_data data/musan/lmdb \
 	#TODO, currently also moved from local/extract_emb.sh, flexible to control musan/rirs.
-fi || { echo "Failed to train the model!" >&2; exit 1;  }
+fi
 
-#avg_model=$exp_dir/models/avg_model.pt
-#model_path=$avg_model
+avg_model=$exp_dir/models/avg_model.pt
 best_model=$exp_dir/models/best_model.pt
-model_path=$best_model
+if [ ${num_avg} -gt 0 ]; then
+  model_path=$avg_model
+else
+  model_path=$best_model
+fi
 #######################################################################################
 # Stage 4. Averaging the model, and extract embeddings
 #######################################################################################
 if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
-  echo "Do model average ..."
-  python wedefense/bin/average_model.py \
-    --dst_model $avg_model \
-    --src_path $exp_dir/models \
-    --num ${num_avg}
+  if [ ${num_avg} -gt 0 ]; then
+    echo "Do model average ..."
+    python wedefense/bin/average_model.py \
+      --dst_model $avg_model --src_path $exp_dir/models --num ${num_avg}
+  fi
 
   echo "Extract embeddings ..."
   if [[ $(hostname -f) == *fit.vutbr.cz ]]; then
@@ -181,6 +188,3 @@ fi
 # 3. embedding visulization
 
 exit 0
-
-
-

@@ -20,7 +20,7 @@ config=conf/resnet.yaml
 exp_dir=exp/resnet
 
 gpus="[0]" # Specify GPUs to use, e.g., "[0]" or "[0,1]"
-num_avg=2 # Number of models to average.
+num_avg=-1 # Number of models to average.
           # Set to > 0 to activate model averaging and use the averaged model.
           # Set to 0 or a negative value to use the single best_model.pt.
 checkpoint=
@@ -43,35 +43,46 @@ fi
 #######################################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Convert train and test data to ${data_type}..."
-  # We don't use VAD here
+  # The python script is multi-threaded, so we run the loop sequentially
+  # to avoid excessive resource usage.
   for dset in train dev eval;do
-    (
-      if [ $data_type == "shard" ]; then
-          python tools/make_shard_list.py --num_utts_per_shard 1000 \
-              --num_threads 8 \
-              --prefix shards \
-              --shuffle \
-              ${data}/$dset/wav.scp ${data}/$dset/utt2lab \
-              ${data}/$dset/shards ${data}/$dset/shard.list
-      else
-          python tools/make_raw_list.py --vad_file ${data}/$dset/vad ${data}/$dset/wav.scp \
-              ${data}/$dset/utt2lab ${data}/$dset/raw.list
-      fi
-    ) &
+    if [ "${data_type}" == "shard" ]; then
+        # We don't use VAD for this recipe
+        python tools/make_shard_list.py --num_utts_per_shard 1000 \
+            --num_threads 8 \
+            --prefix shards \
+            --shuffle \
+            "${data}/${dset}/wav.scp" "${data}/${dset}/utt2lab" \
+            "${data}/${dset}/shards" "${data}/${dset}/shard.list"
+    else
+        # Note that we don't use VAD for this recipe, so the --vad_file argument is removed
+        python tools/make_raw_list.py \
+            "${data}/${dset}/wav.scp" \
+            "${data}/${dset}/utt2lab" "${data}/${dset}/raw.list"
+    fi
   done
-  wait
 
-  #TODO: wespeaker doesn't support multi-channel wavs.
-  find ${MUSAN_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/musan/wav.scp
-  find ${RIRS_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
-  # Convert all musan data to LMDB.
-  # But NOTE that lmdb does not work on NFS! So we run lmdb on local dir,
-  # then move to the working folder
-  python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb
-  rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
-  # Convert all rirs data to LMDB
-  python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
-  rsync -av ${HOME}/local_lmdb/rirs/lmdb data/rirs/lmdb
+  echo "Preparing augmentation data (MUSAN and RIRS)..."
+  # Check if the augmentation data directories are provided
+  if [ -d "${MUSAN_dir}" ] && [ -d "${RIRS_dir}" ]; then
+    # Create wav.scp for MUSAN and RIRS
+    find "${MUSAN_dir}" -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/musan/wav.scp
+    find "${RIRS_dir}" -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
+
+    # Convert augmentation data to LMDB in parallel for speed.
+    # NOTE: LMDB may not work on NFS. We create it locally and then rsync.
+    (
+      python tools/make_lmdb.py data/musan/wav.scp "${HOME}/local_lmdb/musan/lmdb" && \
+      rsync -av "${HOME}/local_lmdb/musan/lmdb" data/musan/lmdb
+    ) &
+    (
+      python tools/make_lmdb.py data/rirs/wav.scp "${HOME}/local_lmdb/rirs/lmdb" && \
+      rsync -av "${HOME}/local_lmdb/rirs/lmdb" data/rirs/lmdb
+    ) &
+    wait
+  else
+    echo "Warning: MUSAN_dir or RIRS_dir not set. Skipping augmentation data preparation."
+  fi
 fi
 
 #######################################################################################

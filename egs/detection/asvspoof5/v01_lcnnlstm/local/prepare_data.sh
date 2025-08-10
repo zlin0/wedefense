@@ -14,12 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#local/prepare_data.sh [ASVspoof5_dir] [data_dir]
-#
-#Download ASVspoof5 database,
-#and prepare data dir for partial spoof: wav.scp, utt2lab, lab2utt, utt2dur
 
-set -xe
+# This script prepares the data directory for the ASVspoof 2024 (ASVspoof5)
+# dataset in a Kaldi-style format.
+# It generates: wav.scp, utt2lab, lab2utt, and utt2dur for train, dev, and eval sets.
+
+# Usage:
+#   local/prepare_data.sh <path/to/asvspoof5> <output/data/dir>
+
+
+set -ex -o pipefail # Fail on error, undefined variable, or pipe failure
 
 ASVspoof5_dir=$1
 data_dir=$2
@@ -27,63 +31,66 @@ data_dir=$2
 DSETs=(T D E_eval)
 DSETs_full=(train dev eval)
 
-if [ ! -d ${ASVspoof5_dir} ]; then
-    mkdir -p ${ASVspoof5_dir}
-    bash ./01_download_database.sh ${ASVspoof5_dir}
+if [ ! -d "${ASVspoof5_dir}" ]; then
+    echo "ASVspoof5 directory not found at ${ASVspoof5_dir}. Attempting to download."
+    mkdir -p "${ASVspoof5_dir}"
+    bash ./local/01_download_database.sh "${ASVspoof5_dir}"
 fi
 
 for i in "${!DSETs[@]}"; do
-  dset=${DSETs[$i]}
+  dset_short=${DSETs[$i]}
   dset_full=${DSETs_full[$i]}
+  out_dir_all="${data_dir}/flac_${dset_short}_all"
+  out_dir_final="${data_dir}/flac_${dset_short}"
 
-  if [ ! -d ${data_dir}/flac_${dset}_all ]; then
-     mkdir -p ${data_dir}/flac_${dset}_all
-  fi
+  echo "Processing ${dset_full} set (from ${dset_short}), outputting to ${out_dir_final}"
+  mkdir -p "${out_dir_all}"
 
-  find ${ASVspoof5_dir}/flac_${dset}/ -name "*.flac" | awk -F"/" '{print $NF,$0}' |\
-          sort > ${data_dir}/flac_${dset}_all/wav.scp
-  sed -i 's/\.flac / /g' ${data_dir}/flac_${dset}_all/wav.scp
-  # check row number.
+  # Create wav.scp for all files in the original directory
+  find "${ASVspoof5_dir}/flac_${dset_short}/" -name "*.flac" | awk -F"/" '{print $NF,$0}' | \
+          sort > "${out_dir_all}/wav.scp"
+  sed -i 's/\.flac / /' "${out_dir_all}/wav.scp"
 
-
-  # produce utt2lab from protocols
-  if [ "$dset" = "T"  ]; then
-    cut -d' ' -f2,9 ${ASVspoof5_dir}/ASVspoof5.${dset_full}.tsv \
-	    > ${data_dir}/flac_${dset}_all/utt2lab
+  # produce utt2lab from protocols <uttid> <label>
+  if [ "${dset_short}" = "T"  ]; then
+    # Train set has a single protocol file
+    cut -d' ' -f2,9 "${ASVspoof5_dir}/ASVspoof5.${dset_full}.tsv" \
+	    > "${out_dir_all}/utt2lab"
   else
-    cut -d' ' -f2,9 ${ASVspoof5_dir}/ASVspoof5.${dset_full}.track_1.tsv \
-	    > ${data_dir}/flac_${dset}_all/utt2lab
+    # Dev and Eval sets have track-specific protocols
+    cut -d' ' -f2,9 "${ASVspoof5_dir}/ASVspoof5.${dset_full}.track_1.tsv" \
+	    > "${out_dir_all}/utt2lab"
   fi
 
-  ./tools/utt2lab_to_lab2utt.pl ${data_dir}/flac_${dset}_all/utt2lab \
-	  >${data_dir}/flac_${dset}_all/lab2utt
+  ./tools/utt2lab_to_lab2utt.pl "${out_dir_all}/utt2lab" \
+	  > "${out_dir_all}/lab2utt"
 
-  #we are using wav2dur.py, but quite slow.
-  python tools/wav2dur.py ${data_dir}/flac_${dset}_all/wav.scp ${data_dir}/flac_${dset}_all/utt2dur
+  # Create utt2dur: <utt_id> <duration_in_seconds>
+  # The outer loop runs sequentially, so we can use all available cores for each set.
+  nj=$(nproc)
+  tools/wav_to_duration.sh --nj "${nj}" "${out_dir_all}/wav.scp" "${out_dir_all}/utt2dur"
 
-
-  # Extract list for track1 - deepfake detection
-  if [ "$dset" = "T"  ]; then
-      if [ ! -e ${data_dir}/flac_${dset} ]; then
-          ln -s flac_${dset}_all ${data_dir}/flac_${dset}
-      fi
+  # For ASVspoof5, we are interested in Track 1 (deepfake detection).
+  # The train set uses all data, while dev and eval sets are filtered.
+  if [ "${dset_short}" = "T"  ]; then
+      # For the training set, just create a symlink
+      ln -snf "${dset_full}_all" "${out_dir_final}"
   else
-      if [ ! -d ${data_dir}/flac_${dset} ]; then
-            mkdir -p ${data_dir}/flac_${dset}
-      fi
-     for fname in wav.scp utt2lab lab2utt utt2dur; do
-         if [ ! -f ${data_dir}/flac_${dset}/${fname} ]; then
-		 awk '(NR==FNR){FILE[$2]}(NR!=FNR){
-			 if($1 in FILE){print}
-		 }' ${ASVspoof5_dir}/ASVspoof5.${dset_full}.track_1.tsv \
-			 ${data_dir}/flac_${dset}_all/${fname} \
-			 > ${data_dir}/flac_${dset}/${fname}
-	 fi
-     done
-     ./tools/utt2lab_to_lab2utt.pl ${data_dir}/flac_${dset}/utt2lab \
-	  >${data_dir}/flac_${dset}/lab2utt
+      # For dev and eval, filter the files based on the track 1 protocol file.
+      mkdir -p "${out_dir_final}"
+      track1_keys="${ASVspoof5_dir}/ASVspoof5.${dset_full}.track_1.tsv"
+      for fname in wav.scp utt2lab lab2utt utt2dur; do
+          awk '
+            # Load the keys from the protocol file into an array
+            NR==FNR { keys[$2]; next }
+            # For the other files, print the line if the first field (utt_id) is in our keys
+            ($1 in keys) { print }
+          ' "${track1_keys}" "${out_dir_all}/${fname}" > "${out_dir_final}/${fname}"
+      done
+      # Re-generate lab2utt for the filtered set
+      ./tools/utt2lab_to_lab2utt.pl "${out_dir_final}/utt2lab" > "${out_dir_final}/lab2utt"
   fi
+  ln -s flac_${dset_short} ${data_dir}/${dset_full}
 done
 
-echo "Prepared data folder for partialspoof, including wav.scp, utt2lab, lab2utt"
-
+echo "Successfully prepared data for ASVspoof5 in ${data

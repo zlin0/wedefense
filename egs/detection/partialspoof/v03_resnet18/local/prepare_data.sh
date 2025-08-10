@@ -14,22 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-This script downloads the PartialSpoof database and prepares the data directory
-  in a Kaldi-style format.
-  It generates: wav.scp, utt2lab, lab2utt, and utt2dur.
 
-Usage:
-  local/prepare_data.sh <path/to/partialspoof/database> <output/data/dir>
-"""
+# This script downloads the PartialSpoof database and prepares the data directory
+#   in a Kaldi-style format.
+#   It generates: wav.scp, utt2lab, lab2utt, and utt2dur.
 
-set -e -u -o pipefail # Fail on error, undefined variable, or pipe failure
+# Usage:
+#   local/prepare_data.sh <path/to/partialspoof/database> <output/data/dir>
+
+
+set -ex -u -o pipefail # Fail on error, undefined variable, or pipe failure
 
 PS_dir=$1
 data=$2
 
 echo "Stage 0: Downloading PartialSpoof database if not present..."
-local/01_download_database.sh "${PS_dir}"
+./local/01_download_database.sh "${PS_dir}"
 
 for dset in train dev eval; do
 (
@@ -59,3 +59,4 @@ done
 wait
 
 echo "Successfully prepared data in ${data}"
+

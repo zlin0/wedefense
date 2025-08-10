@@ -10,17 +10,18 @@ stage=3
 stop_stage=7
 
 # TODO Please modify the following paths to your own data directories
-PS_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database
-MUSAN_dir=/path/to/musan # e.g., /export/fs05/arts/dataset/musan
-RIRS_dir=/path/to/rirs # e.g., /export/fs05/arts/dataset/RIRS_NOISES
+PS_dir=/export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database #path/to/database
+MUSAN_dir=/path/to/your/musan # e.g., /export/fs05/arts/dataset/musan
+RIRS_dir=/path/to/your/rirs # e.g., /share/workspace/shared_datasets/speechdata/21_RIRS_NOISES/RIRS_NOISES
 data=data/partialspoof # data folder
 data_type="shard"  # shard/raw
 
 config=conf/resnet.yaml
 exp_dir=exp/resnet
 
-gpus="[0]" # how many gpu you want to use
-num_avg=2 # Number of models to average. Set to > 0 to activate model averaging.
+gpus="[0]" # Specify GPUs to use, e.g., "[0]" or "[0,1]"
+num_avg=2 # Number of models to average.
+          # Set to > 0 to activate model averaging and use the averaged model.
           # Set to 0 or a negative value to use the single best_model.pt.
 checkpoint=
 
@@ -101,11 +102,13 @@ fi
 
 avg_model=$exp_dir/models/avg_model.pt
 best_model=$exp_dir/models/best_model.pt
+
 if [ ${num_avg} -gt 0 ]; then
   model_path=$avg_model
 else
   model_path=$best_model
 fi
+
 #######################################################################################
 # Stage 4. Averaging the model, and extract embeddings
 #######################################################################################

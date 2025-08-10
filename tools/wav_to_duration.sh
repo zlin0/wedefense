@@ -11,7 +11,7 @@ data=$(dirname ${inscp})
 if [ $# -eq 3 ]; then
   logdir=$3
 else
-  logdir=${data}/log
+  logdir=${data}/logs
 fi
 mkdir -p ${logdir}
 

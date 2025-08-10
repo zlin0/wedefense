@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # encoding: utf-8
+"""
+Calculate audio file durations using torchaudio.
+Note: This script can be slow when run on the CPU.
+"""
 
 import sys
 

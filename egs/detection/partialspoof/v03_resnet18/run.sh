@@ -16,13 +16,11 @@ data=data/partialspoof # data folder
 data_type="shard"  # shard/raw
 
 config=conf/resnet.yaml
-exp_dir=exp/ResNet18-i5p5-smallWeightDecay-earlystop
+exp_dir=exp/resnet
 
-gpus="[0,1]"
+gpus="[0]"
 num_avg=2 # how many models you want to average
 checkpoint=
-score_norm_method="asnorm"  # asnorm/snorm
-top_n=300
 
 . tools/parse_options.sh || exit 1
 
@@ -43,6 +41,7 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Covert train and test data to ${data_type}..."
   # We don't use VAD here
   for dset in train dev eval;do
+    (
       if [ $data_type == "shard" ]; then
           python tools/make_shard_list.py --num_utts_per_shard 1000 \
               --num_threads 8 \
@@ -54,7 +53,9 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
           python tools/make_raw_list.py --vad_file ${data}/$dset/vad ${data}/$dset/wav.scp \
               ${data}/$dset/utt2lab ${data}/$dset/raw.list
       fi
+    ) &
   done
+  wait
 
   #TODO: wespeaker doesn't support multi-channel wavs.
   find ${MUSAN_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/musan/wav.scp
@@ -92,7 +93,7 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         #--reverb_data data/rirs/lmdb \
         #--noise_data data/musan/lmdb \
 	#TODO, currently also moved from local/extract_emb.sh, flexible to control musan/rirs.
-fi
+fi || { echo "Failed to train the model!" >&2; exit 1;  }
 
 #avg_model=$exp_dir/models/avg_model.pt
 #model_path=$avg_model

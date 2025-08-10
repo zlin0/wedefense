@@ -65,6 +65,7 @@ def train(config='conf/config.yaml', **kwargs):
     wandb_run = wandb.init(
         project=os.path.dirname(project_name).replace(os.sep, "_"),
         name=run_name,
+        group=model_name,
         config={
             "model": configs['model'],
         },

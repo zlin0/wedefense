@@ -256,9 +256,10 @@ def train(config='conf/config.yaml', **kwargs):
         # !!!IMPORTANT!!!
         # Try to export the model by script, if fails, we should refine
         # the code to satisfy the script export requirements
-        if frontend_type == 'fbank':
-            script_model = torch.jit.script(model)
-            script_model.save(os.path.join(model_dir, 'init.zip'))
+        # TODO 0810: temporary comment out. remember to recover when fix.
+        # if frontend_type == 'fbank':
+        #    script_model = torch.jit.script(model)
+        #    script_model.save(os.path.join(model_dir, 'init.zip'))
 
     # If specify checkpoint, load some info from checkpoint.
     # For checkpoint, frontend, speaker model, and projection layer
@@ -380,7 +381,9 @@ def train(config='conf/config.yaml', **kwargs):
                     logger.info(
                         f"No improvement for {val_no_improvement_count} validation checks"
                     )
-                    if val_no_improvement_count >= early_stop_patience:
+                    # Only trigger early stopping if patience > 0
+                    if early_stop_patience > 0 and \
+                       val_no_improvement_count >= early_stop_patience:
                         logger.info(
                             f"Early stopping triggered after {epoch} epochs")
                         save_checkpoint(model,

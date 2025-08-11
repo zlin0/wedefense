@@ -5,7 +5,7 @@
 #           2025 Johan Rohdin, Lin Zhang (rohdin@fit.vut.cz, partialspoof@gmail.com)
 #           2025 Junyi Peng (pengjy@fit.vut.cz)
 
-set -x
+set -e -o pipefail -x
 . ./path.sh || exit 1
 
 stage=3

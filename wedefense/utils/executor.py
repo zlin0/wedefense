@@ -2,6 +2,7 @@
 #               2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
 #               2025 Lin Zhang (partialspoof@gmail.com)
 #                    Shuai Wang (wsstriving@gmail.com)
+#                    Junyi Peng (pengjy@fit.vut.cz)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,13 +21,14 @@ import torch
 import torchnet as tnt
 
 from wedefense.dataset.dataset_utils import apply_cmvn, spec_aug
+from wedefense.utils.prune_utils import pruning_loss
 
 
 def train_epoch(dataloader,
                 epoch_iter,
                 model,
                 criterion,
-                optimizer,
+                optimizers,
                 scheduler,
                 margin_scheduler,
                 epoch,
@@ -42,7 +44,7 @@ def train_epoch(dataloader,
         epoch_iter: Number of iterations per epoch
         model: Model to train
         criterion: Loss criterion
-        optimizer: Optimizer
+        optimizers: A tuple containing the main optimizer and regularization optimizer.
         scheduler: Learning rate scheduler
         margin_scheduler: Margin scheduler
         epoch: Current epoch number
@@ -55,15 +57,36 @@ def train_epoch(dataloader,
         tuple: (training loss, training accuracy, last batch index)
     """
     model.train()
+
+    optimizer, optimizer_reg = optimizers
+
     # By default use average pooling
     loss_meter = tnt.meter.AverageValueMeter()
     acc_meter = tnt.meter.ClassErrorMeter(accuracy=True)
+
+    cls_loss_meter = tnt.meter.AverageValueMeter() 
+    pruning_loss_meter = tnt.meter.AverageValueMeter()
+    use_pruning      = configs.get('use_pruning_loss', False) 
+    if use_pruning:
+        target_sp        = configs.get('target_sparsity', 0.5)
+        l1, l2           = configs.get('lambda_pair', (1.0, 5.0))
+        orig_params      = float(configs.get('original_ssl_num_params', 1.0))
+        warmup_epochs    = configs.get('sparsity_warmup_epochs', 5)
+
 
     frontend_type = configs['dataset_args'].get('frontend', 'fbank')
     for i, batch in enumerate(dataloader):
         cur_iter = (epoch - 1) * epoch_iter + i
         scheduler.step(cur_iter)
         margin_scheduler.step(cur_iter)
+
+        if use_pruning:
+            warmup_iters = warmup_epochs * epoch_iter # warmup epochs
+            if cur_iter < warmup_iters:
+                # linearly increase the target sparsity
+                target_sp_cur = target_sp * cur_iter / warmup_iters
+            else:
+                target_sp_cur = target_sp 
 
         targets = batch['label']
         targets = targets.long().to(device)  # (B)
@@ -92,18 +115,39 @@ def train_epoch(dataloader,
             embeds = outputs[-1] if isinstance(outputs, tuple) else outputs
             outputs = model.module.projection(embeds, targets)
             if isinstance(outputs, tuple):
-                outputs, loss = outputs
+                outputs, cls_loss = outputs
             else:
-                loss = criterion(outputs, targets)
+                cls_loss = criterion(outputs, targets)
+        
+        if use_pruning:
+            cur_params = model.module.frontend.get_num_params()
+            prune_loss, exp_sp = pruning_loss(
+                cur_params, orig_params, target_sp_cur, l1, l2
+            )            
+            total_loss = cls_loss + prune_loss  
+        else:
+            prune_loss, exp_sp = 0.0, None
+            total_loss = cls_loss
 
         # loss, acc
-        loss_meter.add(loss.item())
+        loss_meter.add(total_loss.item())
         acc_meter.add(outputs.cpu().detach().numpy(), targets.cpu().numpy())
+
+        if use_pruning:
+            cls_loss_meter.add(cls_loss.item())
+            pruning_loss_meter.add(prune_loss.item())
+
 
         # update the model
         optimizer.zero_grad()
+        if use_pruning:
+            optimizer_reg.zero_grad()
         # scaler does nothing here if enable_amp=False
-        scaler.scale(loss).backward()
+        scaler.scale(total_loss).backward()
+        if use_pruning:
+            scaler.step(optimizer_reg)
+            with torch.no_grad():
+                l1.clamp_(min=0.0)  # clip l1
         scaler.step(optimizer)
         scaler.update()
 
@@ -115,23 +159,37 @@ def train_epoch(dataloader,
             })
         # log
         if (i + 1) % configs['log_batch_interval'] == 0:
-            logger.info(
-                tp.row((epoch, i + 1, scheduler.get_lr(),
-                        margin_scheduler.get_margin()) +
-                       (loss_meter.value()[0], acc_meter.value()[0]),
-                       width=10,
-                       style='grid'))
+            row = [epoch, i + 1, scheduler.get_lr(),
+                   margin_scheduler.get_margin(),
+                   round(loss_meter.value()[0], 4),
+                   round(acc_meter.value()[0], 2)]
+            if use_pruning:
+                row += [
+                    round(cls_loss_meter.value()[0], 4),
+                    round(pruning_loss_meter.value()[0], 4),
+                    f"{target_sp_cur:.4f}",
+                    f"{exp_sp:.4f}"
+                ]
+            logger.info(tp.row(tuple(row), width=10, style='grid'))
 
         if (i + 1) == epoch_iter:
             break
 
     # Final log for this epoch
-    logger.info(
-        tp.row(
-            (epoch, i + 1, scheduler.get_lr(), margin_scheduler.get_margin()) +
-            (loss_meter.value()[0], acc_meter.value()[0]),
-            width=10,
-            style='grid'))
+    summary = [epoch, i + 1,
+               scheduler.get_lr(),
+               margin_scheduler.get_margin(),
+               round(loss_meter.value()[0], 4),
+               round(acc_meter.value()[0], 2)]
+    if use_pruning:
+        summary += [
+            round(cls_loss_meter.value()[0], 4),
+            round(pruning_loss_meter.value()[0], 4),
+            f"{target_sp_cur:.4f}",
+            f"{exp_sp:.4f}"
+        ]    
+    logger.info(tp.row(tuple(summary), width=10, style='grid'))
+    
 
 
 def val_epoch(val_dataloader,

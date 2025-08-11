@@ -97,16 +97,16 @@ TODO: check type
 | SSL-SLS                         |      |                                                              |                             | ✅       |
 |                                 |      |                                                              |                             |         |
 | **<u>Boundary-aware</u>**       |      |                                                              |                             |         |
-| SSL-BAM                         | 2025 | [paper](https://arxiv.org/abs/2407.21611)                    |                             | ✅       |
-| CFPRF                           | 2024 | [paper](https://arxiv.org/abs/2407.16554)                    |                             |         |
+| SSL-BAM                         | 2025 | [paper](https://arxiv.org/abs/2407.21611) \| [code](https://github.com/media-sec-lab/BAM) |                             | ✅       |
+| CFPRF                           | 2024 | [paper](https://arxiv.org/abs/2407.16554) \| [code](https://github.com/ItzJuny/CFPRF) |                             |         |
 |                                 |      |                                                              |                             |         |
 | PET                             | 2024 | [paper](https://ieeexplore.ieee.org/document/10889913/)      |                             |         |
 | AGO                             | 2025 | [paper](https://ieeexplore.ieee.org/document/10890470)       |                             |         |
 | GNCL                            | 2025 | [paper](https://ieeexplore.ieee.org/document/10888281)       |                             |         |
-| UMMAformer                      | 2023 | [paper](https://arxiv.org/abs/2308.14395) \| [code](https://github.com/ymhzyj/UMMAFormer) |                             |         |
+| UMMAformer                      | 2023 | [paper](https://arxiv.org/abs/2308.14395) \| [code](https://github.com/ymhzyj/UMMAFormer) |                             | ⏳       |
 | W-TDL                           | 2024 | [paper](https://dl.acm.org/doi/10.1145/3689092.3689410)      |                             |         |
-| BA-TFD                          | 2022 | [paper](https://arxiv.org/abs/2204.06228) \|[code](https://github.com/ControlNet/LAV-DF) | baseline for AV-Deepfake-1M |         |
-| BA-TFD+                         | 2023 | [paper](https://arxiv.org/abs/2305.01979) \|[code](https://github.com/ControlNet/LAV-DF) | baseline for AV-Deepfake-1M |         |
+| BA-TFD                          | 2022 | [paper](https://arxiv.org/abs/2204.06228) \|[code](https://github.com/ControlNet/LAV-DF) | baseline for AV-Deepfake-1M | ⏳       |
+| BA-TFD+                         | 2023 | [paper](https://arxiv.org/abs/2305.01979) \|[code](https://github.com/ControlNet/LAV-DF) | baseline for AV-Deepfake-1M | ⏳       |
 | VIGO                            | 2024 | [paper](https://dl.acm.org/doi/10.1145/3664647.3688983)      |                             |         |
 |                                 |      |                                                              |                             |         |
 |                                 |      |                                                              |                             |         |

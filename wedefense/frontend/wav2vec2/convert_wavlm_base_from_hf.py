@@ -47,14 +47,14 @@ def convert_wavlm(
     model_id = MODEL_ID_MAP[model_size]
     out_path = os.path.join(exp_dir, f"{model_size}.hf.pth")
     
-    YOUR_HF_TOKEN = "hf_ccYour_HF_Token" # Your Token
     
     # 1) Load (or download) from Hugging Face
+    # For private models, authenticate beforehand using the terminal:
+    # `huggingface-cli login`
     original = WavLMModel.from_pretrained(
         model_id,
         cache_dir=hf_cache_dir,
         local_files_only=local_files_only,
-        token=YOUR_HF_TOKEN,
     )
 
     # 2) Convert to WeSpeaker structure

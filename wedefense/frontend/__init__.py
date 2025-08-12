@@ -15,10 +15,12 @@
 from .get_s3prl import S3prlFrontend
 from .whisper_encoder import whisper_encoder
 from .get_hf_ssl_pruning import HuggingfaceFrontend
+from .get_hf_dasheng import HuggingfaceFrontend_Dasheng
 
 frontend_class_dict = {
     'fbank': None,
     's3prl': S3prlFrontend,
     'whisper_encoder': whisper_encoder,
-    'huggingface': HuggingfaceFrontend
+    'huggingface': HuggingfaceFrontend,
+    'dasheng': HuggingfaceFrontend_Dasheng
 }

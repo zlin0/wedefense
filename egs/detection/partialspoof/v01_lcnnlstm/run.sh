@@ -20,9 +20,12 @@ config=conf/lcnn_lstm_tanh.yaml
 exp_dir=exp/LCNN_LSTM-TSTP-emb256-fbank80-frms300-noaug-spFalse-saFalse-Softmax-SGD-epoch100
 
 gpus="[0]" # Specify GPUs to use, e.g., "[0]" or "[0,1]"
-num_avg=2 # Number of models to average.
+num_avg=0 # Number of models to average.
           # Set to > 0 to activate model averaging and use the averaged model.
-          # Set to 0 or a negative value to use the single best_model.pt.
+          # Set to <=0 to use the single best_model.pt.
+early_stop_patience=-1 # Early stop based on the performance on Val, <0 for no early stop.
+validate_interval=1 # Evaluate validation set every N epochs.
+save_epoch_interval=1 # Save model each N epoch
 checkpoint=
 
 . tools/parse_options.sh || exit 1

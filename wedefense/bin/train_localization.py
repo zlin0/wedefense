@@ -316,14 +316,13 @@ def train(config='conf/config.yaml', **kwargs):
                   configs=configs)
 
         if rank == 0:
-            if epoch % configs['save_epoch_interval'] == 0 or epoch > configs[
-                    'num_epochs'] - configs['num_avg']:
-                save_checkpoint(
-                    model, os.path.join(model_dir,
-                                        'model_{}.pt'.format(epoch)))
+            if (epoch % configs['save_epoch_interval'] == 0
+                    or epoch > configs['num_epochs'] - configs['num_avg']):
+                save_checkpoint(model,
+                                os.path.join(model_dir, f'model_{epoch}.pt'))
 
     if rank == 0:
-        os.symlink('model_{}.pt'.format(configs['num_epochs']),
+        os.symlink(f"model_{configs['num_epochs']}.pt",
                    os.path.join(model_dir, 'final_model.pt'))
         logger.info(tp.bottom(len(header), width=10, style='grid'))
 

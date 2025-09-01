@@ -256,10 +256,9 @@ def train(config='conf/config.yaml', **kwargs):
         # !!!IMPORTANT!!!
         # Try to export the model by script, if fails, we should refine
         # the code to satisfy the script export requirements
-        # TODO 0810: temporary comment out. remember to recover when fix.
-        # if frontend_type == 'fbank':
-        #    script_model = torch.jit.script(model)
-        #    script_model.save(os.path.join(model_dir, 'init.zip'))
+        if frontend_type == 'fbank':
+            script_model = torch.jit.script(model)
+            script_model.save(os.path.join(model_dir, 'init.zip'))
 
     # If specify checkpoint, load some info from checkpoint.
     # For checkpoint, frontend, speaker model, and projection layer
@@ -391,11 +390,10 @@ def train(config='conf/config.yaml', **kwargs):
                         break
 
         if rank == 0:
-            if epoch % configs['save_epoch_interval'] == 0 or epoch > configs[
-                    'num_epochs'] - configs['num_avg']:
-                save_checkpoint(
-                    model, os.path.join(model_dir,
-                                        'model_{}.pt'.format(epoch)))
+            if (epoch % configs['save_epoch_interval'] == 0
+                    or epoch > configs['num_epochs'] - configs['num_avg']):
+                save_checkpoint(model,
+                                os.path.join(model_dir, f'model_{epoch}.pt'))
 
     if dist.is_initialized():
         dist.destroy_process_group()

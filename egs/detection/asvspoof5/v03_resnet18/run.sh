@@ -23,8 +23,9 @@ gpus="[0]" # Specify GPUs to use, e.g., "[0]" or "[0,1]"
 num_avg=2 # Number of models to average.
           # Set to > 0 to activate model averaging and use the averaged model.
           # Set to 0 or a negative value to use the single best_model.pt.
-early_stop_patience=-1 # Set to > 0 to activate early stopping, or <= 0 to disable.
-validate_interval=1 # Each 5 Epochs, validate once
+save_epoch_interval=5 # Save model each N epoch
+early_stop_patience=-1 # Early stop based on the performance on Val, <0 for no early stop.
+validate_interval=1 # Evaluate validation set every N epochs.
 checkpoint=
 
 . tools/parse_options.sh || exit 1

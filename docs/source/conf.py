@@ -24,9 +24,11 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx_copybutton',
     'sphinx_design',
-    'sphinx_markdown_tables',
+    # 'sphinx_markdown_tables',
     'myst_parser',
+    'myst_nb',
 ]
+nb_execution_mode = "off"
 
 # Napoleon settings
 napoleon_google_docstring = False
@@ -43,9 +45,9 @@ napoleon_use_rtype = True
 
 # Intersphinx mapping:
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/', None),
-    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
-    'torch': ('https://pytorch.org/docs/master/', None),
+    'python': ('https://docs.python.org/3/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+    'torch': ('https://pytorch.org/docs/stable/', None),
     'torchaudio': ('https://pytorch.org/audio/stable/', None),
 }
 
@@ -76,6 +78,7 @@ html_static_path = ['_static']
 
 source_suffix = {
     '.rst': 'restructuredtext',
-    '.txt': 'markdown',
-    '.md': 'markdown',
+    # '.txt': 'myst',
+    '.md': 'myst',
+    '.ipynb': 'myst-nb',
 }

@@ -47,20 +47,20 @@ WeDefense is a toolkit tailored to defend against fake audio.
    :maxdepth: 1
    :caption: Getting Started
 
-   installation.md
-   quick_start.md
-   contributing.md
-   faq.md
+   installation
+   quick_start
+   contributing
+   faq
 
 
 .. toctree::
    :maxdepth: 2
    :caption: Tutorial
 
-   tutorials/augmentation.ipynb
-   tutorials/tasks/detection.ipynb
-   tutorials/tasks/localization.ipynb
-   tutorials/deployment/export-with-torch-jit-script.md
+   tutorials/augmentation
+   tutorials/tasks/detection
+   tutorials/tasks/localization
+   tutorials/deployment/export-with-torch-jit-script
 
 
 

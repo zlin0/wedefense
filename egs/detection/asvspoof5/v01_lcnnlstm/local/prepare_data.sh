@@ -93,4 +93,5 @@ for i in "${!DSETs[@]}"; do
   ln -s flac_${dset_short} ${data_dir}/${dset_full}
 done
 
-echo "Successfully prepared data for ASVspoof5 in ${data
+echo "Successfully prepared data for ASVspoof5 in ${data}"
+

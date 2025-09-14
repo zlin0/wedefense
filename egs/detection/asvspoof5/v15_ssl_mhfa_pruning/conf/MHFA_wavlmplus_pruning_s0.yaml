@@ -71,9 +71,6 @@ use_pruning_loss: False # whether use pruning loss, if True, the pruning loss wi
 target_sparsity: 0.1
 initial_reg_lr: 5.0e-2
 sparsity_warmup_epochs: 5
-# 渐进式剪枝配置
-sparsity_schedule: "cosine"  # 可选: linear, cosine, exponential, sigmoid
-min_sparsity: 0.0  # 初始稀疏度
 
 margin_scheduler: MarginScheduler
 margin_update:

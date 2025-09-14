@@ -188,6 +188,7 @@ def train_epoch(dataloader,
                     f"{target_sp_cur:.4f}",
                     f"{exp_sp:.4f}"
                 ]
+            
             logger.info(tp.row(tuple(row), width=10, style='grid'))
 
         if (i + 1) == epoch_iter:

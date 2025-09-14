@@ -68,13 +68,14 @@ projection_args:
   easy_margin: False
 
 use_pruning_loss: True # whether use pruning loss, if True, the pruning loss will be added to the training loss
-target_sparsity: 0.1
+target_sparsity: 0.3
 initial_reg_lr: 5.0e-2
 sparsity_warmup_epochs: 5
 
 # Progressive pruning configuration
 sparsity_schedule: "cosine"  # Options: linear, cosine, exponential, sigmoid
 min_sparsity: 0.0  # Initial sparsity level
+
 
 margin_scheduler: MarginScheduler
 margin_update:

@@ -21,7 +21,7 @@ import torch
 import torchnet as tnt
 
 from wedefense.dataset.dataset_utils import apply_cmvn, spec_aug
-from wedefense.utils.prune_utils import pruning_loss
+from wedefense.utils.prune_utils import pruning_loss, get_progressive_sparsity
 
 
 def train_epoch(dataloader,
@@ -64,14 +64,19 @@ def train_epoch(dataloader,
     loss_meter = tnt.meter.AverageValueMeter()
     acc_meter = tnt.meter.ClassErrorMeter(accuracy=True)
 
+    # Initialize loss meters
     cls_loss_meter = tnt.meter.AverageValueMeter() 
     pruning_loss_meter = tnt.meter.AverageValueMeter()
-    use_pruning      = configs.get('use_pruning_loss', False) 
+    
+    # Pruning configuration
+    use_pruning = configs.get('use_pruning_loss', False) 
     if use_pruning:
-        target_sp        = configs.get('target_sparsity', 0.5)
-        l1, l2           = configs.get('lambda_pair', (1.0, 5.0))
-        orig_params      = float(configs.get('original_ssl_num_params', 1.0))
-        warmup_epochs    = configs.get('sparsity_warmup_epochs', 5)
+        target_sp = configs.get('target_sparsity', 0.5)
+        l1, l2 = configs.get('lambda_pair', (1.0, 5.0))
+        orig_params = float(configs.get('original_ssl_num_params', 1.0))
+        warmup_epochs = configs.get('sparsity_warmup_epochs', 5)
+        sparsity_schedule = configs.get('sparsity_schedule', 'cosine')
+        min_sparsity = configs.get('min_sparsity', 0.0)
 
 
     frontend_type = configs['dataset_args'].get('frontend', 'fbank')
@@ -80,12 +85,20 @@ def train_epoch(dataloader,
         scheduler.step(cur_iter)
         margin_scheduler.step(cur_iter)
 
+        # Calculate current target sparsity for progressive pruning
         if use_pruning:
-            warmup_iters = warmup_epochs * epoch_iter # warmup epochs
+            warmup_iters = warmup_epochs * epoch_iter
             if cur_iter < warmup_iters:
-                # linearly increase the target sparsity
-                target_sp_cur = target_sp * cur_iter / warmup_iters
+                # Use progressive pruning strategy during warmup
+                target_sp_cur = get_progressive_sparsity(
+                    current_iter=cur_iter,
+                    total_warmup_iters=warmup_iters,
+                    target_sparsity=target_sp,
+                    schedule_type=sparsity_schedule,
+                    min_sparsity=min_sparsity
+                )
             else:
+                # Use final target sparsity after warmup
                 target_sp_cur = target_sp 
 
         targets = batch['label']
@@ -119,6 +132,7 @@ def train_epoch(dataloader,
             else:
                 cls_loss = criterion(outputs, targets)
         
+        # Calculate total loss with optional pruning regularization
         if use_pruning:
             cur_params = model.module.frontend.get_num_params()
             prune_loss, exp_sp = pruning_loss(
@@ -133,21 +147,24 @@ def train_epoch(dataloader,
         loss_meter.add(total_loss.item())
         acc_meter.add(outputs.cpu().detach().numpy(), targets.cpu().numpy())
 
+        # Update loss meters
         if use_pruning:
             cls_loss_meter.add(cls_loss.item())
             pruning_loss_meter.add(prune_loss.item())
 
-
-        # update the model
+        # Update model parameters
         optimizer.zero_grad()
         if use_pruning:
             optimizer_reg.zero_grad()
-        # scaler does nothing here if enable_amp=False
+        
+        # Backward pass with gradient scaling
         scaler.scale(total_loss).backward()
+        
+        # Update optimizers
         if use_pruning:
             scaler.step(optimizer_reg)
             with torch.no_grad():
-                l1.clamp_(min=0.0)  # clip l1
+                l1.clamp_(min=0.0)  # Ensure lambda1 >= 0
         scaler.step(optimizer)
         scaler.update()
 
@@ -157,12 +174,13 @@ def train_epoch(dataloader,
                 "train/loss": loss_meter.value()[0],
                 "train/acc": acc_meter.value()[0]
             })
-        # log
+        # Log training progress
         if (i + 1) % configs['log_batch_interval'] == 0:
             row = [epoch, i + 1, scheduler.get_lr(),
                    margin_scheduler.get_margin(),
                    round(loss_meter.value()[0], 4),
                    round(acc_meter.value()[0], 2)]
+            
             if use_pruning:
                 row += [
                     round(cls_loss_meter.value()[0], 4),
@@ -181,6 +199,7 @@ def train_epoch(dataloader,
                margin_scheduler.get_margin(),
                round(loss_meter.value()[0], 4),
                round(acc_meter.value()[0], 2)]
+    
     if use_pruning:
         summary += [
             round(cls_loss_meter.value()[0], 4),
@@ -188,6 +207,7 @@ def train_epoch(dataloader,
             f"{target_sp_cur:.4f}",
             f"{exp_sp:.4f}"
         ]    
+    
     logger.info(tp.row(tuple(summary), width=10, style='grid'))
     
 

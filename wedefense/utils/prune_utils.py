@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import torch
@@ -85,6 +86,67 @@ def make_pruning_param_groups(
     return param_groups, (lambda1, lambda2)
 
 
+def get_progressive_sparsity(
+    current_iter: int,
+    total_warmup_iters: int,
+    target_sparsity: float,
+    schedule_type: str = "cosine",
+    min_sparsity: float = 0.0,
+) -> float:
+    """Calculate progressive sparsity based on training progress.
+    
+    This function implements various scheduling strategies for progressive pruning,
+    allowing the model to gradually increase sparsity during the warmup period.
+    
+    Args:
+        current_iter: Current training iteration.
+        total_warmup_iters: Total number of warmup iterations.
+        target_sparsity: Final target sparsity level (0.0 to 1.0).
+        schedule_type: Type of schedule ('linear', 'cosine', 'exponential', 'sigmoid').
+        min_sparsity: Minimum sparsity at the beginning (0.0 to 1.0).
+    
+    Returns:
+        Current target sparsity value (0.0 to 1.0).
+        
+    Raises:
+        ValueError: If schedule_type is not supported.
+    """
+    if current_iter >= total_warmup_iters:
+        return target_sparsity
+    
+    progress = current_iter / total_warmup_iters
+    sparsity_range = target_sparsity - min_sparsity
+    
+    if schedule_type == "linear":
+        current_sparsity = min_sparsity + sparsity_range * progress
+        
+    elif schedule_type == "cosine":
+        # Cosine annealing schedule - smooth start and end
+        # Standard cosine annealing: 0.5 * (1 + cos(π * (1 - progress)))
+        current_sparsity = min_sparsity + sparsity_range * (
+            0.5 * (1 + math.cos(math.pi * (1 - progress)))
+        )
+        
+    elif schedule_type == "exponential":
+        # Exponential schedule - slow start, fast end
+        current_sparsity = min_sparsity + sparsity_range * (progress ** 2)
+        
+    elif schedule_type == "sigmoid":
+        # Sigmoid schedule - very gradual start and end
+        current_sparsity = min_sparsity + sparsity_range / (
+            1 + math.exp(-10 * (progress - 0.5))
+        )
+        
+    else:
+        supported_types = ["linear", "cosine", "exponential", "sigmoid"]
+        raise ValueError(
+            f"Unknown schedule type: {schedule_type}. "
+            f"Supported types: {supported_types}"
+        )
+    
+    return current_sparsity
+
+
 def pruning_loss(
     current_params: float,
     original_params: float,
@@ -96,23 +158,27 @@ def pruning_loss(
 
     This function computes the Lagrangian term used to enforce a target
     sparsity level. The loss penalizes deviations between the current expected
-    sparsity and the target sparsity.
+    sparsity and the target sparsity using a quadratic penalty function.
 
     Args:
         current_params: The number of unpruned parameters at the current step.
         original_params: The total number of prunable parameters at the start.
-        target_sparsity: The desired sparsity level (e.g., 0.7 for 70% sparsity).
-        lambda1: The first Lagrange multiplier tensor.
-        lambda2: The second Lagrange multiplier tensor.
+        target_sparsity: The desired sparsity level (0.0 to 1.0, e.g., 0.7 for 70% sparsity).
+        lambda1: The first Lagrange multiplier tensor (linear penalty coefficient).
+        lambda2: The second Lagrange multiplier tensor (quadratic penalty coefficient).
 
     Returns:
         A tuple containing:
         - The calculated regularization loss as a PyTorch tensor.
-        - The current expected sparsity as a float.
+        - The current expected sparsity as a float (0.0 to 1.0).
     """
     expected_sparsity = 1.0 - (current_params / original_params)
     sparsity_difference = expected_sparsity - target_sparsity
+    
+    # Quadratic penalty: linear + quadratic terms
     regularization_term = (
-        lambda1 * sparsity_difference + lambda2 * sparsity_difference**2
+        lambda1 * sparsity_difference + 
+        lambda2 * sparsity_difference ** 2
     )
+    
     return regularization_term, expected_sparsity

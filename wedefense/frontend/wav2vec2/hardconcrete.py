@@ -12,17 +12,21 @@ import torch.nn as nn
 
 
 class HardConcrete(nn.Module):
-    """A HarcConcrete module.
-    Use this module to create a mask of size N, which you can
-    then use to perform L0 regularization.
-
-    To obtain a mask, simply run a forward pass through the module
-    with no input data. The mask is sampled in training mode, and
-    fixed during evaluation mode, e.g.:
-
-    >>> module = HardConcrete(n_in=100)
-    >>> mask = module()
-    >>> norm = module.l0_norm()
+    """Hard Concrete distribution for structured pruning with L0 regularization.
+    
+    This module implements the Hard Concrete distribution, which provides a 
+    differentiable approximation to discrete binary masks. It's particularly
+    useful for structured pruning where you want to learn which channels,
+    heads, or layers to keep or remove.
+    
+    The module creates a learnable mask of size N that can be used for L0
+    regularization. During training, the mask is sampled stochastically,
+    while during evaluation, it uses a deterministic approximation.
+    
+    Example:
+        >>> module = HardConcrete(n_in=100)
+        >>> mask = module()  # Get binary-like mask
+        >>> norm = module.l0_norm()  # Get expected L0 norm
     """
 
     def __init__(
@@ -35,22 +39,16 @@ class HardConcrete(nn.Module):
         eps: float = 1e-6
     ) -> None:
         """Initialize the HardConcrete module.
-        Parameters
-        ----------
-        n_in : int
-            The number of hard concrete variables in this mask.
-        init_mean : float, optional
-            Initial drop rate for hard concrete parameter,
-            by default 0.5.,
-        init_std: float, optional
-            Used to initialize the hard concrete parameters,
-            by default 0.01.
-        temperature : float, optional
-            Temperature used to control the sharpness of the
-            distribution, by default 1.0
-        stretch : float, optional
-            Stretch the sampled value from [0, 1] to the interval
-            [-stretch, 1 + stretch], by default 0.1.
+        
+        Args:
+            n_in: The number of hard concrete variables in this mask.
+            init_mean: Initial drop rate for hard concrete parameter (0.0 to 1.0).
+            init_std: Standard deviation for initializing hard concrete parameters.
+            temperature: Temperature parameter controlling distribution sharpness.
+                Lower values make the distribution more peaked (closer to binary).
+            stretch: Stretch factor for the sampling interval. Values are sampled
+                from [-stretch, 1 + stretch] and then clamped to [0, 1].
+            eps: Small epsilon value for numerical stability in sampling.
         """
         super().__init__()
 
@@ -68,50 +66,65 @@ class HardConcrete(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        """Reset the parameters of this module."""
+        """Reset the parameters of this module.
+        
+        Initializes log_alpha parameters based on init_mean and init_std.
+        The initialization follows the logit space transformation to ensure
+        proper distribution of initial pruning probabilities.
+        """
         self.compiled_mask = None
+        # Convert init_mean to logit space for proper initialization
         mean = math.log(1 - self.init_mean) - math.log(self.init_mean)
-        # mean = 5    # https://github.com/princeton-nlp/LLM-Shearing/blob/main/llmshearing/models/l0_module.py#L46
+        # Alternative initialization (commented out):
+        # mean = 5  # From LLM-Shearing implementation
         self.log_alpha.data.normal_(mean, self.init_std)
 
     def l0_norm(self) -> torch.Tensor:
         """Compute the expected L0 norm of this mask.
-        Returns
-        -------
-        torch.Tensor
-            The expected L0 norm.
+        
+        The L0 norm represents the expected number of non-zero elements
+        in the mask, which is useful for monitoring pruning progress.
+        
+        Returns:
+            The expected L0 norm as a scalar tensor.
         """
         return (self.log_alpha + self.bias).sigmoid().sum()
 
     def forward(self) -> torch.Tensor:
         """Sample a hard concrete mask.
-        Returns
-        -------
-        torch.Tensor
-            The sampled binary mask
+        
+        During training, samples a stochastic mask using the reparameterization
+        trick. During evaluation, uses a deterministic approximation based on
+        the expected sparsity.
+        
+        Returns:
+            A binary-like mask tensor of shape (n_in,).
         """
         if self.training:
-            # Reset the compiled mask
+            # Reset the compiled mask for fresh sampling
             self.compiled_mask = None
-            # Sample mask dynamically
+            
+            # Sample mask using reparameterization trick
             u = self.log_alpha.new(self.n_in).uniform_(self.eps, 1 - self.eps)
             s = torch.sigmoid((torch.log(u / (1 - u)) + self.log_alpha) / self.beta)
             s = s * (self.limit_r - self.limit_l) + self.limit_l
             mask = s.clamp(min=0., max=1.)
 
         else:
-            # Compile new mask if not cached
+            # Use deterministic approximation during evaluation
             if self.compiled_mask is None:
-                # Get expected sparsity
+                # Calculate expected sparsity
                 expected_num_zeros = self.n_in - self.l0_norm().item()
                 num_zeros = round(expected_num_zeros)
-                # Approximate expected value of each mask variable z;
-                # We use an empirically validated magic number 0.8
+                
+                # Approximate expected value using empirical scaling factor
                 soft_mask = torch.sigmoid(self.log_alpha / self.beta * 0.8)
-                # Prune small values to set to 0
+                
+                # Set smallest values to zero to achieve target sparsity
                 _, indices = torch.topk(soft_mask, k=num_zeros, largest=False)
                 soft_mask[indices] = 0.
                 self.compiled_mask = soft_mask
+            
             mask = self.compiled_mask
 
         return mask

@@ -208,6 +208,8 @@ def train(config='conf/config.yaml', **kwargs):
                     'use_pruning_loss'       : False,  # disabled by default; enable with --use_pruning_loss True
                     'target_sparsity'        : 0.5,    # final sparsity ratio you want to reach
                     'sparsity_warmup_epochs' : 7,      # sparsity warmup epochs
+                    'sparsity_schedule'      : 'cosine', # progressive pruning schedule
+                    'min_sparsity'           : 0.0,    # initial sparsity level
                 }
             for k, v in prune_defaults.items():
                 configs.setdefault(k, v)

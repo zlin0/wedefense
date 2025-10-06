@@ -36,9 +36,10 @@ WeDefense is a toolkit tailored to defend against fake audio.
    If you use WeDefense in your research or business, please cite it using the following BibTeX entry:
 
    .. code-block:: bibtex
+
    @inproceedings{wedefense,
       title={WeDefense: A Toolkit to Defend Against Fake Audio},
-      author={Lin Zhang and Johan Rohdin and Xin Wang and Junyi Peng and Tianchi Liu and You Zhang and Hieu-Thi Luong and Shuai Wang and Anna Silnova and Chengdong Liang and Nicholas Evans} and
+      author={Lin Zhang and Johan Rohdin and Xin Wang and Junyi Peng and Tianchi Liu and You Zhang and Hieu-Thi Luong and Shuai Wang and Anna Silnova and Chengdong Liang and Nicholas Evans},
       year={2025},
    }
 
@@ -47,20 +48,20 @@ WeDefense is a toolkit tailored to defend against fake audio.
    :maxdepth: 1
    :caption: Getting Started
 
-   installation.md
-   quick_start.md
-   contributing.md
-   faq.md
-
+   installation
+   quick_start
+   contributing
+   faq
+   support_status
 
 .. toctree::
    :maxdepth: 2
    :caption: Tutorial
 
-   tutorials/augmentation.ipynb
-   tutorials/tasks/detection.ipynb
-   tutorials/tasks/localization.ipynb
-   tutorials/deployment/export-with-torch-jit-script.md
+   tutorials/augmentation
+   tutorials/tasks/detection
+   tutorials/tasks/localization
+   tutorials/deployment/export-with-torch-jit-script
 
 
 

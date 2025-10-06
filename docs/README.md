@@ -5,7 +5,7 @@
 cd /path/to/wedefense/docs
 pip install -r docs-requirements.txt
 make clean
-make html
+sphinx-build -M html source build
 cd build/html
 python3 -m http.server 8000
 ```

@@ -33,4 +33,3 @@ If it prints `True`, your GPU setup is working.
 
 
 - For more help, see the [FAQ](faq.md) or open an issue on [GitHub](https://github.com/zlin0/wedefense/issues).
----

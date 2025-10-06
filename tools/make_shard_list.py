@@ -26,7 +26,8 @@ from scipy.io import wavfile
 import numpy as np
 import struct
 
-AUDIO_FORMAT_SETS = set(['flac', 'mp3', 'm4a', 'ogg', 'opus', 'wav', 'wma'])
+AUDIO_FORMAT_SETS = set(
+    ['flac', 'mp3', 'm4a', 'ogg', 'opus', 'wav', 'wma', 'mp4'])
 
 
 def write_wav_to_bytesio(audio_data, sample_rate):
@@ -235,5 +236,36 @@ def main():
             fout.write(name + '\n')
 
 
+def debug_write_tar():
+    """Debug the write_tar_file function directly"""
+
+    # Create some test data
+    test_data = [
+        ("test1", "bonafide",
+         "/export/fs05/arts/dataset/LAV-DF/LAV-DF/train/000472.mp4"),
+        ("test2", "spoof",
+         "/export/fs05/arts/dataset/LAV-DF/LAV-DF/train/000473.mp4"),
+    ]
+
+    # Test file path
+    test_tar_file = "debug_test.tar"
+
+    print("=== Debug write_tar_file function ===")
+    print(f"Test data: {test_data}")
+    print(f"Output tar file: {test_tar_file}")
+    print("=" * 50)
+
+    # Call the function directly - you can set breakpoints here!
+    try:
+        write_tar_file(test_data, test_tar_file, index=0, total=1)
+        print("Function completed successfully!")
+    except Exception as e:
+        print(f"Function failed: {e}")
+        import traceback
+        traceback.print_exc()
+    args = get_args()
+
+
 if __name__ == '__main__':
+    # debug_write_tar()
     main()

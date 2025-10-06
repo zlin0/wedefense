@@ -24,11 +24,31 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx_copybutton',
     'sphinx_design',
-    # 'sphinx_markdown_tables',
-    'myst_parser',
     'myst_nb',
 ]
+
+# MyST configuration
+myst_enable_extensions = [
+    "colon_fence",
+    "deflist",
+    "dollarmath",
+    "html_admonition",
+    "html_image",
+    # "linkify",  # Disabled - requires linkify-it-py package
+    "replacements",
+    "smartquotes",
+    "substitution",
+    "tasklist",
+]
+
+# MyST parser configuration
+myst_heading_anchors = 3
+myst_footnote_transition = True
+myst_dmath_double_inline = True
+
+# Jupyter notebook configuration
 nb_execution_mode = "off"
+nb_execution_timeout = 60
 
 # Napoleon settings
 napoleon_google_docstring = False
@@ -78,7 +98,5 @@ html_static_path = ['_static']
 
 source_suffix = {
     '.rst': 'restructuredtext',
-    # '.txt': 'myst',
-    '.md': 'myst',
     '.ipynb': 'myst-nb',
 }

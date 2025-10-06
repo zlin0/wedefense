@@ -1,4 +1,5 @@
-"""Convert Hugging Face's WavLM (base or large) to WeSpeaker format."""
+# Copyright (c) 2025 Junyi Peng (pengjy@fit.vut.cz)
+"""Convert Hugging Face's WavLM (base or large) to WeDefense format."""
 
 import os
 from typing import Literal, Tuple, Dict, Any
@@ -9,10 +10,9 @@ from transformers import WavLMModel
 from wedefense.frontend.wav2vec2.model import wav2vec2_model
 from wedefense.frontend.wav2vec2.utils.import_huggingface_wavlm import import_huggingface_model
 
-
 MODEL_ID_MAP: Dict[str, str] = {
-    "wavlm_base":  "microsoft/wavlm-base",
-    "wavlm_base_plus":  "microsoft/wavlm-base-plus",
+    "wavlm_base": "microsoft/wavlm-base",
+    "wavlm_base_plus": "microsoft/wavlm-base-plus",
     "wavlm_large": "microsoft/wavlm-large",
 }
 
@@ -24,15 +24,17 @@ def convert_wavlm(
     local_files_only: bool = False,
 ) -> Tuple[str, Dict[str, Any]]:
     """
-    Download (if needed) a Hugging Face WavLM checkpoint and convert it to WeSpeaker format.
+    Download (if needed) a Hugging Face WavLM checkpoint and convert it to
+        WeDefense format.
 
     Args:
         model_size: Model size, either "base", "base_plus", "large".
                     "base_plus" maps to "microsoft/wavlm-base-plus".
         exp_dir: Output directory where the converted checkpoint will be saved.
                  The file will be named "wavlm-{model_size}.hf.pth".
-        hf_cache_dir: Local Hugging Face cache directory (will be created if missing).
-        local_files_only: If True, load only from local cache without downloading.
+        hf_cache_dir: Local Hugging Face cache directory
+                      (will be created if missing).
+        local_files_only: If True, load only from hf_cache_dir without download.
 
     Returns:
         A tuple of:
@@ -46,8 +48,7 @@ def convert_wavlm(
 
     model_id = MODEL_ID_MAP[model_size]
     out_path = os.path.join(exp_dir, f"{model_size}.hf.pth")
-    
-    
+
     # 1) Load (or download) from Hugging Face
     # For private models, authenticate beforehand using the terminal:
     # `huggingface-cli login`
@@ -70,16 +71,19 @@ def convert_wavlm(
             encoder_prune_attention_layer=False,
             encoder_prune_feed_forward_intermediate=False,
             encoder_prune_feed_forward_layer=False,
-        )
-    )
+        ))
 
     # 4) Save the converted checkpoint
-    torch.save({"state_dict": imported.state_dict(), "config": config}, out_path)
+    torch.save({
+        "state_dict": imported.state_dict(),
+        "config": config
+    }, out_path)
 
     # 5) Verify by loading into WeSpeaker's wav2vec2 model
     ckpt = torch.load(out_path, map_location="cpu")
     model = wav2vec2_model(**ckpt["config"])
-    missing, unexpected = model.load_state_dict(ckpt["state_dict"], strict=False)
+    missing, unexpected = model.load_state_dict(ckpt["state_dict"],
+                                                strict=False)
     print(f"[{model_size}] Missing keys: {missing}")
     print(f"[{model_size}] Unexpected keys: {unexpected}")
 
@@ -87,8 +91,8 @@ def convert_wavlm(
 
 
 if __name__ == "__main__":
-    HF_CACHE = "./hf_models/"
-    EXP_DIR  = "./hf_models_convert/"
+    HF_CACHE = "/export/fs06/lzhan268/hf_cache/"
+    EXP_DIR = "/export/fs06/lzhan268/hf_cache_convert/"
 
     # Convert wavlm_base (maps to microsoft/wavlm-base-plus)
     convert_wavlm(

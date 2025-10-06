@@ -7,7 +7,6 @@
 
 # set -x
 . ./path.sh || exit 1
-. ./lumi.sh || exit 1
 
 stage=3
 stop_stage=3
@@ -95,8 +94,7 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
       break
     fi
   done
-    # torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((port)) --nnodes=1 --nproc_per_node=$num_gpus \
-    python -m torch.distributed.launch --standalone --nnodes=1 --nproc_per_node=$num_gpus \
+    torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((port)) --nnodes=1 --nproc_per_node=$num_gpus \
       wedefense/bin/train.py --config $config \
         --exp_dir ${exp_dir} \
         --gpus $gpus \
@@ -107,7 +105,10 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         --train_lmdb ${data}/train/lmdb \
         --reverb_data data/rirs/lmdb \
         --noise_data data/musan/lmdb \
-        ${checkpoint:+--checkpoint $checkpoint} 
+        ${checkpoint:+--checkpoint $checkpoint}
+        # train_lmdb is used here because of lumi can not real many filed at once,
+	#     therefore, those files are packaged to lmdb,
+	#     remove --train_lmdb or the given folder was none will not affect the code.
 	#TODO, currently also moved from local/extract_emb.sh, flexible to control musan/rirs.
 fi
 
@@ -132,7 +133,7 @@ if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
     --out_dir ${exp_dir}/pruned_model
 
   pru_model_path=${exp_dir}/pruned_model/whole_pytorch_model.bin
-  
+
   exp_config=${exp_dir}/config.yaml
   pru_config="${exp_config%.yaml}_pruned.yaml"
   ori_config="${exp_config%.yaml}_ori.yaml"
@@ -143,7 +144,7 @@ if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
     -e 's|^( *pruning_units:).*|\1 ""|' \
     -e "s|^( *path_or_url:).*|\1 ${exp_dir}/pruned_model/pytorch_model.bin|" \
     "$ori_config" > "$pru_config"
-  
+
   echo "Extract embeddings ..."
   num_gpus=8
   if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then

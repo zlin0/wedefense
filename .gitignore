@@ -5,6 +5,8 @@ data
 exp/
 wandb/
 s3prl_hub/
+hf_models/
+hf_models_convert
 .nfs*
 note
 egs/*/*/*/data/

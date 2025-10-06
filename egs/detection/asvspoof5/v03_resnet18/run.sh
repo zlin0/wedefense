@@ -9,7 +9,7 @@ set -x
 stage=3
 stop_stage=3
 
-PS_dir=/gs/bs/tgh-25IAC/ud03523/DATA/ASVspoof5
+ASVspoof5_dir=/gs/bs/tgh-25IAC/ud03523/DATA/ASVspoof5
 data=data/asvspoof5 # data folder
 data_type="shard"  # shard/raw
 #data_type="raw"  # shard/raw
@@ -35,7 +35,7 @@ lm_config=conf/campplus_lm.yaml
 #######################################################################################
 if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
   echo "Prepare datasets ..."
-  ./local/prepare_data.sh ${PS_dir} ${data}
+  ./local/prepare_data.sh ${ASVspoof5_dir} ${data}
 fi
 
 #######################################################################################

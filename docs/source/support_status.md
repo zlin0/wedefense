@@ -6,7 +6,7 @@
 
 
 
-## Databases 
+## Databases
 
 TODO: check type
 
@@ -39,7 +39,7 @@ TODO: check type
 | PartialSpoof        | 2021    | [data](https://zenodo.org/records/5766198)                   | TTS/VC          | det, loc,      | ✅       |
 | LAV-DF              | 2022    | [data](https://huggingface.co/datasets/ControlNet/LAV-DF)    | TTS (av)        |                |         |
 | LlamaPartialSpoof   | 2025    | [data](https://huggingface.co/datasets/HaoY0001/LlamaPartialSpoof) | TTS             | Det, loc       | ⏳       |
-| PartialEdit         | 2025    | [paper]()                                                    | TTS             |                | ⏳       |
+| PartialEdit         | 2025    | [paper](https://arxiv.org/abs/2506.02958)                                                        | TTS             |                | ⏳       |
 |                     |         |                                                              |                 |                |         |
 |                     |         |                                                              |                 |                |         |
 

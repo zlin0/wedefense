@@ -29,6 +29,7 @@ WeDefense is a toolkit tailored to defend against fake audio.
 
    * Bypassing biometric authentication
    * Creating or enhancing systems that generate fake or deceptive audio
+
    Some of the models included here perform well on public datasets, but may not generalize to unseen or adversarial scenarios. Please be aware of these limitations and use this repository responsibly and ethically.
 
 .. dropdown:: Referencing WeDefense (BibTeX)
@@ -37,11 +38,11 @@ WeDefense is a toolkit tailored to defend against fake audio.
 
    .. code-block:: bibtex
 
-   @inproceedings{wedefense,
-      title={WeDefense: A Toolkit to Defend Against Fake Audio},
-      author={Lin Zhang and Johan Rohdin and Xin Wang and Junyi Peng and Tianchi Liu and You Zhang and Hieu-Thi Luong and Shuai Wang and Anna Silnova and Chengdong Liang and Nicholas Evans},
-      year={2025},
-   }
+      @inproceedings{wedefense,
+         title={WeDefense: A Toolkit to Defend Against Fake Audio},
+         author={Lin Zhang and Johan Rohdin and Xin Wang and Junyi Peng and Tianchi Liu and You Zhang and Hieu-Thi Luong and Shuai Wang and Anna Silnova and Chengdong Liang and Nicholas Evans},
+         year={2025},
+      }
 
 
 .. toctree::

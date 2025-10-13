@@ -33,7 +33,7 @@ from wedefense.frontend import *
 from wedefense.models.projections import get_projection
 from wedefense.models.get_model import get_model
 from wedefense.utils.checkpoint import load_checkpoint, save_checkpoint
-from wedefense.utils.executor import train_epoch, val_epoch
+from wedefense.utils.executor_pq import train_epoch, val_epoch
 from wedefense.utils.file_utils import read_table
 from wedefense.utils.utils import get_logger, parse_config_or_kwargs, set_seed, \
     lab2id
@@ -350,6 +350,7 @@ def train(config='conf/config.yaml', **kwargs):
         'dataloader_args']['batch_size'] / 64
     scheduler = getattr(schedulers,
                         configs['scheduler'])(optimizer,
+                                              model=model,
                                               **configs['scheduler_args'])
     if rank == 0:
         logger.info("<== Scheduler ==>")

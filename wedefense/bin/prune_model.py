@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, copy, json, fire, torch
+import os
+import copy
+import json
+import fire
+import torch
 from wedefense.frontend import frontend_class_dict
 from wedefense.models.get_model import get_model
 from wedefense.utils.checkpoint import load_checkpoint
@@ -27,7 +31,7 @@ def extract(config='conf/config.yaml', **kwargs):
     model_path = configs['model_path']
     out_dir = configs.get('out_dir', './pruned_model')
     os.makedirs(out_dir, exist_ok=True)
-    
+
     # ---------- build & load ------------------------------------------------
     test_conf = copy.deepcopy(configs['dataset_args'])
     # model: frontend (optional) => speaker model
@@ -42,76 +46,64 @@ def extract(config='conf/config.yaml', **kwargs):
         configs['model_args']['feat_dim'] = frontend.output_size()
         model = get_model(configs['model'])(**configs['model_args'])
         model.add_module("frontend", frontend)
-    
-    
+
     print('Load checkpoint ...')
     load_checkpoint(model, model_path)
 
-
     print('Start Pruning ...')
-    conv_config, use_attention, use_feed_forward, num_heads, remaining_heads, ff_interm_features = model.frontend.prune()
+    conv_config, use_attention, use_feed_forward, num_heads, remaining_heads, ff_interm_features = model.frontend.prune(
+    )
 
     pruned_config = model.frontend.upstream_config.copy()
-    if len(num_heads) == 0:     # for wavlm
+    if len(num_heads) == 0:  # for wavlm
         assert len(remaining_heads) > 0
-        pruned_config.update(
-            {
-                "encoder_remaining_heads": remaining_heads,
-            }
-        )
+        pruned_config.update({
+            "encoder_remaining_heads": remaining_heads,
+        })
     else:
-        pruned_config.update(
-            {
-                "encoder_num_heads": num_heads,
-            }
-        )
-    pruned_config.update(
-        {
-            "extractor_conv_layer_config": conv_config,
-            "encoder_use_attention": use_attention,
-            "encoder_use_feed_forward": use_feed_forward,
-            "encoder_ff_interm_features": ff_interm_features,
-            "extractor_prune_conv_channels": False,
-            "encoder_prune_attention_heads": False,
-            "encoder_prune_attention_layer": False,
-            "encoder_prune_feed_forward_intermediate": False,
-            "encoder_prune_feed_forward_layer": False,
-            "use_layerwise_prune": False
-        }
-    )
+        pruned_config.update({
+            "encoder_num_heads": num_heads,
+        })
+    pruned_config.update({
+        "extractor_conv_layer_config": conv_config,
+        "encoder_use_attention": use_attention,
+        "encoder_use_feed_forward": use_feed_forward,
+        "encoder_ff_interm_features": ff_interm_features,
+        "extractor_prune_conv_channels": False,
+        "encoder_prune_attention_heads": False,
+        "encoder_prune_attention_layer": False,
+        "encoder_prune_feed_forward_intermediate": False,
+        "encoder_prune_feed_forward_layer": False,
+        "use_layerwise_prune": False
+    })
 
     print('saving pruned model...')
     pruned_out_path = os.path.join(out_dir, 'pytorch_model.bin')
-    pruned_out_path_with_backend = os.path.join(out_dir, 'whole_pytorch_model.bin')
+    pruned_out_path_with_backend = os.path.join(out_dir,
+                                                'whole_pytorch_model.bin')
     torch.save(
         {
             "state_dict": model.frontend.upstream.state_dict(),
             "config": pruned_config,
-        },
-        pruned_out_path
-    )
-    torch.save(
-        model.state_dict(),
-        pruned_out_path_with_backend
-    )
+        }, pruned_out_path)
+    torch.save(model.state_dict(), pruned_out_path_with_backend)
     # pruned_config['wavlm_original_params'] = f'{original_num_params} M'
     print(f"Successfully saved pruned model weights and config to: {out_dir}")
-    
+
     # ---------- Verify & param count ----------
     ckpt = torch.load(pruned_out_path, map_location="cpu")
     model_verify = wav2vec2_model(**ckpt['config'])
 
     print(model_verify.load_state_dict(ckpt['state_dict'], strict=False))
-    cur_num_params = sum(
-        p.numel() for p in model_verify.parameters()
-    ) / 1e6
+    cur_num_params = sum(p.numel() for p in model_verify.parameters()) / 1e6
     print(f'current_num_params: {cur_num_params} M')
-    
+
     # ---------- Save config as JSON -----------
     json_out_path = os.path.join(out_dir, 'pruned_config.json')
     with open(json_out_path, 'w') as file:
         json.dump(pruned_config, file, indent=4)
     print(f"Successfully saved pruned config to: {json_out_path}")
+
 
 if __name__ == '__main__':
     fire.Fire(extract)

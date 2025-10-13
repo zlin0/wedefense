@@ -2,6 +2,7 @@
 #               2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
 #               2025 Lin Zhang (partialspoof@gmail.com)
 #                    Shuai Wang (wsstriving@gmail.com)
+#                    Junyi Peng (pengjy@fit.vut.cz)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,6 +39,7 @@ from wedefense.utils.utils import get_logger, parse_config_or_kwargs, set_seed, 
     lab2id
 
 import wedefense.dataset.customize_collate_fn as nii_collate_fn
+from wedefense.utils.prune_utils import make_pruning_param_groups
 
 import wandb
 import time
@@ -145,6 +147,7 @@ def train(config='conf/config.yaml', **kwargs):
                             configs['dataset_args'],
                             lab2id_dict,
                             whole_utt=configs['dataset_args'].get('whole_utt'),
+                            train_lmdb_file=configs.get('train_lmdb', None),
                             reverb_lmdb_file=configs.get('reverb_data', None),
                             noise_lmdb_file=configs.get('noise_data', None),
                             data_dur_file=train_dur,
@@ -195,10 +198,27 @@ def train(config='conf/config.yaml', **kwargs):
         if val_dataloader is not None:
             logger.info('validation dataloaders created')
             logger.info('Validation iteration number: {}'.format(val_iter))
-
+    # pruning related hyper-parameters
+    use_pruning = configs.get("use_pruning_loss", False)
+    if use_pruning:
+        if rank == 0:
+            logger.info("<== Pruning ==>")
+            logger.info("use pruning loss")
+            prune_defaults = {
+                'use_pruning_loss':
+                False,  # disabled by default; enable with --use_pruning_loss True
+                'target_sparsity':
+                0.5,  # final sparsity ratio you want to reach
+                'sparsity_warmup_epochs': 7,  # sparsity warmup epochs
+                'sparsity_schedule': 'cosine',  # progressive pruning schedule
+                'min_sparsity': 0.0,  # initial sparsity level
+            }
+            for k, v in prune_defaults.items():
+                configs.setdefault(k, v)
     # model: frontend (optional) => speaker model => projection layer
     logger.info("<== Model ==>")
     frontend_type = configs['dataset_args'].get('frontend', 'fbank')
+    configs['original_ssl_num_params'] = 0
     if frontend_type != "fbank" and not frontend_type.startswith('lfcc'):
         frontend_args = frontend_type + "_args"
         frontend = frontend_class_dict[frontend_type](
@@ -207,6 +227,9 @@ def train(config='conf/config.yaml', **kwargs):
         configs['model_args']['feat_dim'] = frontend.output_size()
         model = get_model(configs['model'])(**configs['model_args'])
         model.add_module("frontend", frontend)
+        if use_pruning:
+            configs['original_ssl_num_params'] = sum(
+                param.numel() for param in model.frontend.parameters())
     else:
         model = get_model(configs['model'])(**configs['model_args'])
     if rank == 0:
@@ -287,9 +310,32 @@ def train(config='conf/config.yaml', **kwargs):
         logger.info("loss criterion is: " + configs['loss'])
 
     configs['optimizer_args']['lr'] = configs['scheduler_args']['initial_lr']
-    optimizer = getattr(torch.optim,
-                        configs['optimizer'])(ddp_model.parameters(),
-                                              **configs['optimizer_args'])
+    optimizer_reg = None
+    if use_pruning:
+        reg_lr = configs.get('initial_reg_lr', 2e-2)
+        p_groups, lambda_pair = make_pruning_param_groups(
+            ddp_model,
+            cls_lr=configs['optimizer_args']['lr'],
+            reg_lr=reg_lr,
+        )
+        pg_main = [pg for pg in p_groups if pg['name'] == 'main']
+        pg_others = [pg for pg in p_groups if pg['name'] != 'main']
+
+        opt_kwargs = {
+            k: v
+            for k, v in configs['optimizer_args'].items()
+            if k not in ('lr', 'reg_lr')
+        }
+        optimizer = getattr(torch.optim, configs['optimizer'])(pg_main,
+                                                               **opt_kwargs)
+        optimizer_reg = getattr(torch.optim,
+                                configs['optimizer'])(pg_others, **opt_kwargs)
+        configs['reg_lr'] = reg_lr
+        configs['lambda_pair'] = lambda_pair
+    else:
+        optimizer = getattr(torch.optim,
+                            configs['optimizer'])(ddp_model.parameters(),
+                                                  **configs['optimizer_args'])
     if rank == 0:
         logger.info("<== Optimizer ==>")
         logger.info("optimizer is: " + configs['optimizer'])
@@ -318,15 +364,18 @@ def train(config='conf/config.yaml', **kwargs):
 
     # save config.yaml
     if rank == 0:
+        cfg_to_save = {k: v for k, v in configs.items() if k != "lambda_pair"}
         saved_config_path = os.path.join(configs['exp_dir'], 'config.yaml')
         with open(saved_config_path, 'w') as fout:
-            data = yaml.dump(configs)
+            data = yaml.dump(cfg_to_save)
             fout.write(data)
     # training
     dist.barrier(device_ids=[gpu])  # synchronize here
     if rank == 0:
         logger.info("<========== Training process ==========>")
         header = ['Epoch', 'Batch', 'Lr', 'Margin', 'Loss', "Acc"]
+        if use_pruning:
+            header += ["loss_cls", "loss_reg", "spa_tgt", "spa_cur"]
         for line in tp.header(header, width=10, style='grid').split('\n'):
             logger.info(line)
     dist.barrier(device_ids=[gpu])  # synchronize here
@@ -343,8 +392,7 @@ def train(config='conf/config.yaml', **kwargs):
         train_epoch(train_dataloader,
                     epoch_iter,
                     ddp_model,
-                    criterion,
-                    optimizer,
+                    criterion, (optimizer, optimizer_reg),
                     scheduler,
                     margin_scheduler,
                     epoch,

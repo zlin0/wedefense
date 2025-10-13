@@ -15,9 +15,9 @@ ASVspoof5_dir=/gs/bs/tgh-25IAC/ud03523/DATA/ASVspoof5
 data=data/asvspoof5 # data folder
 data_type="raw"  # shard/raw
 
-config=conf/MHFA_wav2vec2.yaml #wespeaker version
-exp_dir=exp/W2V2baseFrozen-MHFA-TSTP-emb256-num_frms150-aug0-spFalse-saFalse-Softmax-SGD-epoch20
-gpus="[0,1,2,3,4,5,6,7]"
+config=conf/MHFA_wavlmplus_pruning_s0.yaml #wespeaker version
+exp_dir=exp/MHFA_wavlmplus_pruning_s0
+gpus="[0]"
 num_avg=2 # how many models you want to average
 checkpoint=
 score_norm_method="asnorm"  # asnorm/snorm
@@ -146,7 +146,7 @@ if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
     "$ori_config" > "$pru_config"
 
   echo "Extract embeddings ..."
-  num_gpus=8
+  num_gpus=$(echo $gpus | awk -F ',' '{print NF}')
   if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then
      gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
   fi

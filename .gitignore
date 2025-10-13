@@ -5,6 +5,8 @@ data
 exp/
 wandb/
 s3prl_hub/
+hf_cache
+hf_cache_convert
 hf_models/
 hf_models_convert
 .nfs*

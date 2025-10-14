@@ -5,7 +5,7 @@
 #           2025 Johan Rohdin, Lin Zhang (rohdin@fit.vut.cz, partialspoof@gmail.com)
 #           2025 Junyi Peng (pengjy@fit.vut.cz)
 
-# set -x
+set -ex
 . ./path.sh || exit 1
 
 stage=3
@@ -74,6 +74,13 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   # Convert all rirs data to LMDB
   # python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
   # rsync -av ${HOME}/local_lmdb/rirs/lmdb data/rirs/lmdb
+  if [ $SLURM_CLUSTER_NAME == "lumi" ]; then
+    train_lmdb="${data}/train/lmdb"
+    python tools/make_lmdb.py ${data}/train/wav.scp ${train_lmdb}
+    # train_lmdb is used here because of lumi can not real many filed at once,
+    #     therefore, those files are packaged to lmdb,
+  fi
+
 fi
 
 #######################################################################################
@@ -102,14 +109,11 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         --data_type "${data_type}" \
         --train_data ${data}/train/${data_type}.list \
         --train_label ${data}/train/utt2lab \
-        --reverb_data ${data}/rirs/lmdb/lmdb \
-        --noise_data ${data}/musan/lmdb \
-        ${checkpoint:+--checkpoint $checkpoint}
-        # train_lmdb is used here because of lumi can not real many filed at once,
-	#     therefore, those files are packaged to lmdb,
-	#     remove --train_lmdb or the given folder was none will not affect the code.
+        --reverb_data data/rirs/lmdb \
+        --noise_data data/musan/lmdb \
+        ${train_lmdb:+--train_lmdb $train_lmdb} ${checkpoint:+--checkpoint $checkpoint}
 	#TODO, currently also moved from local/extract_emb.sh, flexible to control musan/rirs.
-fi
+fi || exit 1
 
 avg_model=$exp_dir/models/avg_model.pt
 model_path=$avg_model

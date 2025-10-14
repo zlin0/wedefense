@@ -95,16 +95,15 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
     fi
   done
     torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((port)) --nnodes=1 --nproc_per_node=$num_gpus \
-      wedefense/bin/train.py --config $config \
+      wedefense/bin/train_pq.py --config $config \
         --exp_dir ${exp_dir} \
         --gpus $gpus \
         --num_avg ${num_avg} \
         --data_type "${data_type}" \
         --train_data ${data}/train/${data_type}.list \
         --train_label ${data}/train/utt2lab \
-        --train_lmdb ${data}/train/lmdb \
-        --reverb_data data/rirs/lmdb \
-        --noise_data data/musan/lmdb \
+        --reverb_data ${data}/rirs/lmdb/lmdb \
+        --noise_data ${data}/musan/lmdb \
         ${checkpoint:+--checkpoint $checkpoint}
         # train_lmdb is used here because of lumi can not real many filed at once,
 	#     therefore, those files are packaged to lmdb,

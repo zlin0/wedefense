@@ -23,6 +23,7 @@ nj=4
 gpus="[0,1]"
 data_type="shard"  # shard/raw/feat
 data=''
+config_path=
 
 
 . tools/parse_options.sh
@@ -30,18 +31,33 @@ data=''
 data_name_array=("dev" "eval")
 data_list_path_array=("${data}/dev/${data_type}.list" "${data}/eval/${data_type}.list")
 data_scp_path_array=("${data}/dev/wav.scp" "${data}/eval/wav.scp") # to count the number of wavs
+data_lmdb_path_array=("${data}/dev/lmdb" "${data}/eval/lmdb") # to count the number of wavs
+use_lmdb=False
+
 nj_array=($nj $nj )
 batch_size_array=(1 1) # batch_size of test set must be 1 !!!
 num_workers_array=(1 1)
 count=${#data_name_array[@]}
 
+if [ -z "$config_path" ]; then
+  config_path="${exp_dir}/config.yaml"
+fi
 
 for i in $(seq 0 $(($count - 1))); do
   wavs_num=$(wc -l ${data_scp_path_array[$i]} | awk '{print $1}')
+
+  if [ "$use_lmdb" = "True" ]; then
+    data_lmdb=${data_lmdb_path_array[$i]}
+  else
+    data_lmdb=None
+  fi
+
   bash tools/extract_embedding.sh --exp_dir ${exp_dir} \
+    --config_path ${config_path} \
     --model_path $model_path \
     --data_type ${data_type} \
     --data_list ${data_list_path_array[$i]} \
+    --data_lmdb ${data_lmdb}\
     --wavs_num ${wavs_num} \
     --store_dir ${data_name_array[$i]} \
     --batch_size ${batch_size_array[$i]} \

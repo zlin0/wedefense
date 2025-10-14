@@ -1,26 +1,24 @@
 #!/bin/bash
-#
-# Copyright 2025 Johan Rohdin, Lin Zhang (rohdin@fit.vut.cz, partialspoof@gmail.com)
-#
 
-set -x
+# Copyright 2022 Hongji Wang (jijijiang77@gmail.com)
+#           2022 Chengdong Liang (liangchengdong@mail.nwpu.edu.cn)
+#           2025 Johan Rohdin, Lin Zhang (rohdin@fit.vut.cz, partialspoof@gmail.com)
+#           2025 Junyi Peng (pengjy@fit.vut.cz)
+
+# set -x
 . ./path.sh || exit 1
 
 stage=3
 stop_stage=3
 
 ASVspoof5_dir=/gs/bs/tgh-25IAC/ud03523/DATA/ASVspoof5
-data=data/asvspoof5 # data folder
-data_type="shard"  # shard/raw
-#data_type="raw"  # shard/raw
+data=data # data folder
+data_type="raw"  # shard/raw
 
-config=conf/resnet.yaml #wespeaker version
-exp_dir=exp/ResNet18-TSTP-emb256-fbank80-frms400-aug0-spFalse-saFalse-Softmax-SGD-epoch100
-#config=conf/resnet_wholeutt_noaug_nosampler.yaml
-#exp_dir=exp/ResNet18-TSTP-emb256-fbank80-wholeutt_nosampler-aug0-spFalse-saFalse-Softmax-SGD-epoch100
-
+config=conf/MHFA_wavlmplus_pruning_s0.yaml #wespeaker version
+exp_dir=exp/MHFA_wavlmplus_pruning_s0
 gpus="[0]"
-num_avg=10 # how many models you want to average
+num_avg=2 # how many models you want to average
 checkpoint=
 score_norm_method="asnorm"  # asnorm/snorm
 top_n=300
@@ -43,7 +41,13 @@ fi
 #######################################################################################
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "Covert train and test data to ${data_type}..."
+
+  cd ${data}
+  ln -s development dev
+  ln -s evaluation eval
+  cd -
   # We don't use VAD here
+
   for dset in train dev eval;do
       if [ $data_type == "shard" ]; then
           python tools/make_shard_list.py --num_utts_per_shard 1000 \
@@ -64,11 +68,11 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   #RIRs_dir=/export/fs05/arts/dataset/RIRS_NOISES/RIRS_NOISES
   #find ${RIRs_dir} -name "*.wav" | awk -F"/" '{print $NF,$0}' | sort > data/rirs/wav.scp
   # Convert all musan data to LMDB. But note that lmdb does not work on NFS!
-  python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb
-  rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
+  # python tools/make_lmdb.py data/musan/wav.scp ${HOME}/local_lmdb/musan/lmdb
+  # rsync -av ${HOME}/local_lmdb/musan/lmdb data/musan/lmdb
   # Convert all rirs data to LMDB
-  python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
-  rsync -av ${HOME}/local_lmdb/rirs/lmdb data/rirs/lmdb
+  # python tools/make_lmdb.py data/rirs/wav.scp ${HOME}/local_lmdb/rirs/lmdb
+  # rsync -av ${HOME}/local_lmdb/rirs/lmdb data/rirs/lmdb
 fi
 
 #######################################################################################
@@ -80,19 +84,29 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
   if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then
      gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
   fi
-    ##num_gpus=$(echo $gpus | awk -F ',' '{print NF}')
-    #python -m pdb \
-    torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((RANDOM)) --nnodes=1 --nproc_per_node=$num_gpus \
-      wedefense/bin/train.py --config $config \
+  num_gpus=$(echo $gpus | awk -F ',' '{print NF}')
+  # To avoid the randomly generated port is occuppied.
+  while :
+  do
+    port=$(( (RANDOM % 100) + 29500 ))
+    if ! lsof -i:$port >/dev/null; then
+      break
+    fi
+  done
+    torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((port)) --nnodes=1 --nproc_per_node=$num_gpus \
+      wedefense/bin/train_pq.py --config $config \
         --exp_dir ${exp_dir} \
         --gpus $gpus \
         --num_avg ${num_avg} \
         --data_type "${data_type}" \
         --train_data ${data}/train/${data_type}.list \
         --train_label ${data}/train/utt2lab \
+        --reverb_data ${data}/rirs/lmdb/lmdb \
+        --noise_data ${data}/musan/lmdb \
         ${checkpoint:+--checkpoint $checkpoint}
-        #--reverb_data data/rirs/lmdb \
-        #--noise_data data/musan/lmdb \
+        # train_lmdb is used here because of lumi can not real many filed at once,
+	#     therefore, those files are packaged to lmdb,
+	#     remove --train_lmdb or the given folder was none will not affect the code.
 	#TODO, currently also moved from local/extract_emb.sh, flexible to control musan/rirs.
 fi
 
@@ -102,6 +116,7 @@ model_path=$avg_model
 # Stage 4. Averaging the model, and extract embeddings
 #######################################################################################
 if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
+
   echo "Do model average ..."
   python wedefense/bin/average_model.py \
     --dst_model $avg_model \
@@ -109,14 +124,33 @@ if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
     --num ${num_avg}
 
 
+  echo "Do model pruning ..."
+  python wedefense/bin/prune_model.py \
+    --model_path $avg_model \
+    --config $config \
+    --out_dir ${exp_dir}/pruned_model
+
+  pru_model_path=${exp_dir}/pruned_model/whole_pytorch_model.bin
+
+  exp_config=${exp_dir}/config.yaml
+  pru_config="${exp_config%.yaml}_pruned.yaml"
+  ori_config="${exp_config%.yaml}_ori.yaml"
+
+  cp -f "$exp_config" "$ori_config"
+
+  sed -E \
+    -e 's|^( *pruning_units:).*|\1 ""|' \
+    -e "s|^( *path_or_url:).*|\1 ${exp_dir}/pruned_model/pytorch_model.bin|" \
+    "$ori_config" > "$pru_config"
+
   echo "Extract embeddings ..."
-  num_gpus=1
+  num_gpus=$(echo $gpus | awk -F ',' '{print NF}')
   if [[ $(hostname -f) == *fit.vutbr.cz   ]]; then
      gpus=$(python -c "from sys import argv; from safe_gpu import safe_gpu; safe_gpu.claim_gpus(int(argv[1])); print( safe_gpu.gpu_owner.devices_taken )" $num_gpus | sed "s: ::g")
   fi
 
   local/extract_emb.sh \
-     --exp_dir $exp_dir --model_path $model_path \
+     --exp_dir $exp_dir --model_path $pru_model_path --config_path $pru_config \
      --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}
 fi
 
@@ -135,6 +169,7 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
 	  --out_path ${exp_dir}/posteriors/$dset
   done
 fi
+
 
 #######################################################################################
 # Stage 6. Convert logits to llr
@@ -180,6 +215,5 @@ fi
 # 1. significant test
 # 2. boostrap testing
 # 3. embedding visulization
-
 exit 0
 

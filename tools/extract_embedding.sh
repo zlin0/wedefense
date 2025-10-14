@@ -28,6 +28,8 @@ reverb_data=data/rirs/lmdb
 noise_data=data/musan/lmdb
 aug_prob=0.0
 gpus="[0,1]"
+data_lmdb=
+config_path=
 
 . tools/parse_options.sh
 set -e
@@ -50,10 +52,11 @@ for suffix in $(seq 0 $(($nj - 1))); do
   data_list_subfile=${log_dir}/split_${suffix}
   embed_ark=${embed_dir}/embedding_${suffix}.ark
   CUDA_VISIBLE_DEVICES=${gpus[$idx]} python -u wedefense/bin/extract.py \
-    --config ${exp_dir}/config.yaml \
+    --config ${config_path} \
     --model_path ${model_path} \
     --data_type ${data_type} \
     --data_list ${data_list_subfile} \
+    --data_lmdb ${data_lmdb} \
     --embed_ark ${embed_ark} \
     --batch-size ${batch_size} \
     --num-workers ${num_workers} \

@@ -36,6 +36,8 @@ import torchaudio.transforms as torchaudio_T
 import wedefense.dataset.augmentation.rawboost_util as rawboost_util
 import wedefense.dataset.augmentation.codec_util as codec_util
 
+import lmdb
+
 AUDIO_FORMAT_SETS = set(['flac', 'mp3', 'm4a', 'ogg', 'opus', 'wav', 'wma'])
 
 
@@ -121,23 +123,30 @@ def tar_file_and_group(data):
         sample['stream'].close()
 
 
-def parse_raw(data):
+def parse_raw(data, lmdb_file_path=None):
     """ Parse key/wav/lab from json line
 
         Args:
             data: Iterable[str], str is a json line has key/wav/lab
-
+            lmdb_file_path (str, optional): Path to LMDB file containing audio data. 
+                If provided, audio will be loaded from LMDB using "wav" as the key.
         Returns:
             Iterable[{key, wav, lab, sample_rate}]
     """
 
-    def read_audio(wav):
-        if wav.endswith('|'):
-            p = Popen(wav[:-1], shell=True, stdout=PIPE)
-            data = p.stdout.read()
-            waveform, sample_rate = torchaudio.load(io.BytesIO(data))
+    def read_audio(wav, lmdb_file_path):
+        if lmdb_file_path is not None:
+            with lmdb.open(lmdb_file_path, readonly=True, lock=False) as env:
+                with env.begin() as txn:
+                    data = txn.get(wav.encode())
+                    waveform, sample_rate = torchaudio.load(io.BytesIO(data))
         else:
-            waveform, sample_rate = torchaudio.load(wav)
+            if wav.endswith('|'):
+                p = Popen(wav[:-1], shell=True, stdout=PIPE)
+                data = p.stdout.read()
+                waveform, sample_rate = torchaudio.load(io.BytesIO(data))
+            else:
+                waveform, sample_rate = torchaudio.load(wav)
         return waveform, sample_rate
 
     def apply_vad(waveform, sample_rate, vad):
@@ -160,7 +169,7 @@ def parse_raw(data):
         wav_file = obj['wav']
         lab = obj['lab']
         try:
-            waveform, sample_rate = read_audio(wav_file)
+            waveform, sample_rate = read_audio(wav_file, lmdb_file_path)
             if 'vad' in obj:
                 waveform, sample_rate = apply_vad(waveform, sample_rate,
                                                   obj['vad'])
@@ -434,7 +443,7 @@ def add_reverb_noise(data,
                         rir_audio,
                         int(len(rir_audio) / rir_sr * resample_rate))
                 rir_audio = rir_audio / np.sqrt(np.sum(rir_audio**2))
-                print(sample['key'], audio.shape, rir_audio.shape, audio_len)
+                # print(sample['key'], audio.shape, rir_audio.shape, audio_len)
                 out_audio = signal.convolve(audio, rir_audio,
                                             mode='full')[:audio_len]
             else:

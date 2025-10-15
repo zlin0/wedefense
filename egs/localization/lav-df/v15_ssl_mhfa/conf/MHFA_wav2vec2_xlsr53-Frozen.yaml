@@ -41,7 +41,7 @@ dataset_args:
     multilayer_feature: True
     layerwise_feature: True
     layer: -1
-    frozen: False
+    frozen: True
     frame_shift: 20
     frame_length: 20
   cmvn: True

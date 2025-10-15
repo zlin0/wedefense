@@ -13,10 +13,10 @@ stop_stage=3
 
 LAVDF_dir=/export/fs05/arts/dataset/LAV-DF/LAV-DF/
 data=data/lav-df # data folder
-data_type="shard"  # shard/raw
+data_type="raw"  # shard/raw
 
 config=conf/MHFA_wav2vec2_xlsr53-FT-1stage.yaml
-exp_dir=exp/debug_MHFA
+exp_dir=exp/MHFA_wav2vec2_xlsr53-FT-1stage
 gpus="[0]"
 num_avg=2 # how many models you want to average
 checkpoint=
@@ -94,10 +94,10 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         #--reverb_data data/rirs/lmdb \
         #--noise_data data/musan/lmdb \
 	#TODO, currently also moved from local/extract_emb.sh, flexible to control musan/rirs.
-fi
+fi || exit
 
 avg_model=$exp_dir/models/avg_model.pt
-model_path=$avg_model
+model_path=${checkpoint:-$avg_model}
 #######################################################################################
 # Stage 4. Averaging the model, and extract embeddings
 #######################################################################################
@@ -128,7 +128,7 @@ fi
 #######################################################################################
 if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   echo "Extract logits and posteriors ..."
-  for dset in dev eval;do
+  for dset in ${DSETs};do
       mkdir -p ${exp_dir}/posteriors/$dset
       echo $dset
       python wedefense/bin/infer_by_utt.py --model_path $model_path \
@@ -146,22 +146,22 @@ fi
 if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
   echo "Convert logits to llr ..."
   cut -f2 -d" " ${data}/train/utt2lab | sort | uniq -c | awk '{print $2 " " $1}' > ${data}/train/lab2num_utts
-  for dset in dev eval; do
+  for dset in ${DSETs};do
       echo $dset
       python wedefense/utils/print_frame_logits.py \
-	  --logits_scp_path ${exp_dir}/posteriors/$dset/logits.scp \
-	  --score_reso 20 \
-	  --eval_reso ${eval_reso} \
-	  --train_label ${data}/train/rttm \
-	  --eval_label ${data}/$dset/rttm
+        --logits_scp_path ${exp_dir}/posteriors/$dset/logits.scp \
+        --score_reso 20 \
+        --eval_reso ${eval_reso} \
+        --train_label ${data}/train/rttm \
+        --eval_label ${data}/$dset/rttm
       #comment out the last row for eval_label if you don't have the ground truth.
 
       # TODO
-#      python wedefense/utils/diatization/convert_frame_score_to_rttm.py \
-#	  --logits_scp_path ${exp_dir}/posteriors/$dset/logits.scp \
-#	  --score_reso 20 \
-#	  --output_rttm ${exp_dir}/posteriors/${dset}/logits_rttm.txt \
-#	  --frame_index True --label_exist True
+      python -m pdb wedefense/utils/diarization/convert_frame_score_to_rttm.py \
+	  --logits_scp_path ${exp_dir}/posteriors/$dset/logits.scp \
+	  --score_reso 20 \
+	  --output_rttm ${exp_dir}/posteriors/${dset}/logits_rttm.txt \
+	  --frame_index True --label_exist True
 
   done
 fi
@@ -171,7 +171,7 @@ fi
 #######################################################################################
 if [ ${stage} -le 7 ] && [ ${stop_stage} -ge 7 ]; then
   echo "Measuring Performance ..."
-  for dset in dev eval; do
+  for dset in ${DSETs};do
     # Preparing trails
 
     echo "Measuring " $dset

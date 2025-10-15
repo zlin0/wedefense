@@ -28,8 +28,8 @@ data=''
 . tools/parse_options.sh
 
 data_name_array=("dev" "test")
-data_list_path_array=("${data}/dev/${data_type}.list" "${data}/eval/${data_type}.list")
-data_scp_path_array=("${data}/dev/wav.scp" "${data}/eval/wav.scp") # to count the number of wavs
+data_list_path_array=("${data}/dev/${data_type}.list" "${data}/test/${data_type}.list")
+data_scp_path_array=("${data}/dev/wav.scp" "${data}/test/wav.scp") # to count the number of wavs
 nj_array=($nj $nj )
 batch_size_array=(1 1) # batch_size of test set must be 1 !!!
 num_workers_array=(1 1)

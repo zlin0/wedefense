@@ -20,21 +20,35 @@ Calculate frame-level eer
 import os
 import sys
 import fire
+import json
 import pandas as pd
 from wedefense.metrics.detection.calculate_modules import compute_eer
 from wedefense.utils.diarization.rttm_tool import get_rttm
 
 
+def get_label2id(label2id_dict):
+    assert os.path.isfile(label2id_file)
+    if (label2id_file.lower().endswith('.json')):
+        label2id_file = os.path.join(os.path.dirname(score_file),
+                                     'label2id.json')  # Construct the path
+        with open(label2id_file, 'r', encoding='utf-8') as f:
+            label2id_dict = json.load(
+                f)  # Load JSON data as a Python dictionary
+    else:
+        label2id_dict = {}
+        with open(label2id_file, "r") as f:
+            for line in f:
+                k, v = line.strip().split()
+                label2id_dict[k] = int(v)
+    return label2id_dict
+
+
 def process_score_file(score_file,
                        gt_exist=True,
                        label2id_file='data/partialspoof/train/label2id'):
-    assert os.path.isfile(label2id_file)
     # Got index of bonafide and spoof.
-    label2id_dict = {}
-    with open(label2id_file, "r") as f:
-        for line in f:
-            k, v = line.strip().split()
-            label2id_dict[k] = int(v)
+    label2id_dict = get_label2id(label2id_file)
+
     bonafide_idx = label2id_dict['bonafide']
     spoof_idx = label2id_dict['spoof']
 
@@ -45,10 +59,8 @@ def process_score_file(score_file,
         df = pd.read_csv(score_file, sep=r'\s+', header=None, names=col_names)
         # bona_cm = df[df['label'] == 'bonafide']['bonafide_score'].to_numpy()
         # spoof_cm = df[df['label'] == 'spoof']['bonafide_score'].to_numpy()
-        bona_cm = df[df['label'] == str(
-            bonafide_idx)]['bonafide_score'].to_numpy()
-        spoof_cm = df[df['label'] == str(
-            spoof_idx)]['bonafide_score'].to_numpy()
+        bona_cm = df[df['label'] == bonafide_idx]['bonafide_score'].to_numpy()
+        spoof_cm = df[df['label'] == spoof_idx]['bonafide_score'].to_numpy()
     else:
         bona_cm = []
         spoof_cm = []
@@ -77,7 +89,7 @@ def main(score_file,
          score_reso,
          eval_label=None,
          gt_exist=True,
-         label2id_file='data/partialspoof/train/label2id',
+         label2id_file='',
          printout=True) -> None:
     """
     Measuring Point-based eer for frame-level predictions
@@ -92,12 +104,18 @@ def main(score_file,
 
     print("score_file: {}".format(score_file))
     print("score_reso: {}ms".format(score_reso))
-    print("eval label path: {}".format(eval_label))
     # Validity checks
     if not (gt_exist or (eval_label and os.path.isfile(eval_label))):
         raise ValueError(
             "Either score_file must include groundtruth labels or \
                           eval_label must be a valid file.")
+
+    if not label2id_file:  # Check if label2id is empty or falsy
+        label2id_file = os.path.join(os.path.dirname(score_file),
+                                     'label2id.json')  # Construct the path
+        with open(label2id_file, 'r', encoding='utf-8') as f:
+            label2id = json.load(f)  # Load JSON data as a Python dictionary
+    print("eval label path: {}".format(eval_label))
 
     # TODO evaluate using input rttm
     # Load eval label if needed

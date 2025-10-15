@@ -24,6 +24,8 @@ frame-level prediction has format as:
 import argparse
 import kaldiio
 from tqdm import tqdm
+import json
+import os
 
 
 def parse_arguments():
@@ -49,8 +51,30 @@ def parse_arguments():
                         default='data/partialspoof/train/label2id',
                         help="Path to label2id file mapping labels to indices "
                         "(e.g., {'bonafide': 0, 'spoof': 1}).")
+    parser.add_argument(
+        '--label_exist',
+        type=bool,
+        default=True,
+        help="Does the input logit file contain labels (at the last column)?")
 
     return parser.parse_args()
+
+
+def get_label2id(label2id_file, score_file):
+    assert os.path.isfile(label2id_file)
+    if (label2id_file.lower().endswith('.json')):
+        label2id_file = os.path.join(os.path.dirname(score_file),
+                                     'label2id.json')  # Construct the path
+        with open(label2id_file, 'r', encoding='utf-8') as f:
+            label2id_dict = json.load(
+                f)  # Load JSON data as a Python dictionary
+    else:
+        label2id_dict = {}
+        with open(label2id_file, "r") as f:
+            for line in f:
+                k, v = line.strip().split()
+                label2id_dict[k] = int(v)
+    return label2id_dict
 
 
 def logits_to_rttm(logits_scp_path, score_reso, output_rttm, label2id_file):
@@ -59,12 +83,8 @@ def logits_to_rttm(logits_scp_path, score_reso, output_rttm, label2id_file):
     print("output_rttm:", output_rttm)
     print("label2id_file:", label2id_file)
 
-    # Load label2id mapping
-    label2id_dict = {}
-    with open(label2id_file, "r") as f:
-        for line in f:
-            k, v = line.strip().split()
-            label2id_dict[k] = int(v)
+    # Got index of bonafide and spoof.
+    label2id_dict = get_label2id(label2id_file, logits_scp_path)
 
     bonafide_idx = label2id_dict['bonafide']
     spoof_idx = label2id_dict['spoof']

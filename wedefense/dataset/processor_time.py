@@ -198,6 +198,7 @@ def filter_timestamps(data,
             Iterable[{key, wav, label, sample_rate}]
     """
     import copy
+
     for sample in data:
         assert 'key' in sample
         assert 'lab' in sample
@@ -222,6 +223,7 @@ def filter_timestamps(data,
             assert 'sample_rate' in sample
             assert 'wav' in sample
             sample_rate = sample['sample_rate']
+            # sample_rate = sample.get('sample_rate', 16000)
             wav = sample['wav'][0]
 
             min_len = int(frame_shift / 1000 * min_num_frames * sample_rate)

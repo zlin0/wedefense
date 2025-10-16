@@ -51,23 +51,19 @@ def parse_arguments():
                         default='data/partialspoof/train/label2id',
                         help="Path to label2id file mapping labels to indices "
                         "(e.g., {'bonafide': 0, 'spoof': 1}).")
-    parser.add_argument(
-        '--label_exist',
-        type=bool,
-        default=True,
-        help="Does the input logit file contain labels (at the last column)?")
+    # parser.add_argument('--label_exist',
+    #                     type=bool,
+    #                     default=True,
+    #     help="The input logit file contain labels (at the last column)?")
 
     return parser.parse_args()
 
 
-def get_label2id(label2id_file, score_file):
+def get_label2id(label2id_file):
     assert os.path.isfile(label2id_file)
     if (label2id_file.lower().endswith('.json')):
-        label2id_file = os.path.join(os.path.dirname(score_file),
-                                     'label2id.json')  # Construct the path
         with open(label2id_file, 'r', encoding='utf-8') as f:
-            label2id_dict = json.load(
-                f)  # Load JSON data as a Python dictionary
+            label2id_dict = json.load(f)  # Load JSON data
     else:
         label2id_dict = {}
         with open(label2id_file, "r") as f:
@@ -84,7 +80,7 @@ def logits_to_rttm(logits_scp_path, score_reso, output_rttm, label2id_file):
     print("label2id_file:", label2id_file)
 
     # Got index of bonafide and spoof.
-    label2id_dict = get_label2id(label2id_file, logits_scp_path)
+    label2id_dict = get_label2id(label2id_file)
 
     bonafide_idx = label2id_dict['bonafide']
     spoof_idx = label2id_dict['spoof']

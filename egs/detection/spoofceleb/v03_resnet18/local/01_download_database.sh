@@ -19,13 +19,14 @@ huggingface-cli download --repo-type dataset jungjee/spoofceleb --local-dir ${sp
 #
 ## Check whether spoofceleb is downloaded to local_dir or cache.
 ## If it is downloaded to cache, use the below script to move
-find $HOME/.cache/huggingface/hub/datasets--jungjee--spoofceleb -type l \
-    -exec ./move_to_here.sh ${spoofceleb_dir}/backup {} +
+if [[ $(hostname -f) == *clsp.jhu.edu   ]]; then
+    find $HOME/.cache/huggingface/hub/datasets--jungjee--spoofceleb -type l \
+        -exec ./move_to_here.sh ${spoofceleb_dir}/backup {} +
 
-echo "Merging tar parts into a single .tar.gz..."
-cat ${spoofceleb_dir}/backup/spoofceleb.tar.gz* > ${spoofceleb_dir}/backup/spoofceleb.tar.gz
+    echo "Merging tar parts into a single .tar.gz..."
+    cat ${spoofceleb_dir}/backup/spoofceleb.tar.gz* > ${spoofceleb_dir}/backup/spoofceleb.tar.gz
 
-echo "Unpacking SpoofCeleb..."
-tar -zxvf ${spoofceleb_dir}/backup/spoofceleb.tar.gz -C ${spoofceleb_dir}/
-
+    echo "Unpacking SpoofCeleb..."
+    tar -zxvf ${spoofceleb_dir}/backup/spoofceleb.tar.gz -C ${spoofceleb_dir}/
+fi
 

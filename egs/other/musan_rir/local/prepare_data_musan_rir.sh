@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-stage=3
+stage=1
 stop_stage=3
 data=data
 

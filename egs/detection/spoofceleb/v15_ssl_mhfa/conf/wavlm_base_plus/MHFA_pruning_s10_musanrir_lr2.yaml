@@ -6,12 +6,12 @@ num_avg: 2
 enable_amp: False # whether enable automatic mixed precision training
 
 seed: 42
-num_epochs: 5
+num_epochs: 8
 save_epoch_interval: 1 # save model every 5 epochs
 log_batch_interval: 100 # log every 100 batchs
 
 dataloader_args:
-  batch_size: 32
+  batch_size: 128
   num_workers: 6
   pin_memory: False
   prefetch_factor: 8
@@ -35,9 +35,9 @@ dataset_args:
   frontend: "huggingface" # fbank, s3prl
   huggingface_args:
     upstream_args:
-      name: "wavlm_base"
-      path_or_url: "hf_cache_convert/wavlm_base.hf.pth"
-      pruning_units: ""
+      name: "wavlm_base_plus"
+      path_or_url: "convert/wavlm_base_plus.hf.pth"
+      pruning_units: "conv,head,attlayer,interm,ffnlayer"
     frozen: False
     frame_shift: 20
     frame_length: 20
@@ -62,16 +62,20 @@ model_args:
   compression_dim: 128
   feature_grad_mult: 1.00
   nb_layer: 13
-  
+
 projection_args:
   project_type: "softmax" # add_margin, arc_margin, sphere, sphereface2, softmax, arc_margin_intertopk_subcenter
   scale: 32.0
   easy_margin: False
 
-use_pruning_loss: False # whether use pruning loss, if True, the pruning loss will be added to the training loss
+use_pruning_loss: True # whether use pruning loss, if True, the pruning loss will be added to the training loss
 target_sparsity: 0.1
 initial_reg_lr: 5.0e-2
 sparsity_warmup_epochs: 5
+
+# Progressive pruning configuration
+sparsity_schedule: "cosine"  # Options: linear, cosine, exponential, sigmoid
+min_sparsity: 0.0  # Initial sparsity level
 
 margin_scheduler: MarginScheduler
 margin_update:
@@ -93,6 +97,8 @@ optimizer_args:
 scheduler: ExponentialDecrease
 scheduler_args:
   initial_lr: 5.0e-6 # 8.0e-3
-  final_lr: 1.0e-7 #4.4e-3
+  final_lr: 1.0e-7 #4.4e-3 
   warm_up_epoch: 2
   warm_from_zero: True
+  frontend_modules: ["frontend"]
+  frontend_lr_ratio: 0.05

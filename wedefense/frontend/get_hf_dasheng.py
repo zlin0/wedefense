@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Frontend for speech feature extraction using Hugging Face pretrained models."""
 
 import contextlib
@@ -75,11 +74,10 @@ class HuggingfaceFrontend_Dasheng(nn.Module):
         # For private models, authenticate beforehand using the terminal:
         # `huggingface-cli login`
         self.feature_extractor = AutoFeatureExtractor.from_pretrained(
-            self.upstream_name, cache_dir=download_dir, trust_remote_code=True
-        )
-        self.upstream = AutoModel.from_pretrained(
-            self.upstream_name, cache_dir=download_dir, trust_remote_code=True
-        )
+            self.upstream_name, cache_dir=download_dir, trust_remote_code=True)
+        self.upstream = AutoModel.from_pretrained(self.upstream_name,
+                                                  cache_dir=download_dir,
+                                                  trust_remote_code=True)
 
         # Freeze weights if required.
         if self.frozen:
@@ -95,17 +93,15 @@ class HuggingfaceFrontend_Dasheng(nn.Module):
             return 768
         elif "1.2" in self.upstream_name:
             return 1536
-        else: #TODO for other models, 
+        else:  #TODO for other models,
             raise ValueError(f"Unknown model size for: {self.upstream_name}")
-
 
     def get_num_params(self) -> int:
         """Returns the total number of parameters in the upstream model."""
         return sum(p.numel() for p in self.upstream.parameters())
 
-    def forward(
-        self, input_wav: torch.Tensor
-    ) -> Tuple[torch.Tensor, None]:
+    def forward(self, input_wav: torch.Tensor, 
+                input_lengths: torch.LongTensor) -> Tuple[torch.Tensor, None]:
         """
         Args:
             input_wav: A batch of input waveforms, shape (B, T).
@@ -121,12 +117,12 @@ class HuggingfaceFrontend_Dasheng(nn.Module):
             blk.register_forward_hook(hook_fn)
             for blk in self.upstream.encoder.blocks.children()
         ]
-
-        feats = self.feature_extractor(
-            input_wav[:, :self._MAX_INPUT_SAMPLES],
-            sampling_rate=self.sample_rate,
-            return_tensors="pt"
-        )
+        if input_wav.is_cuda:
+            input_wav = input_wav.to("cpu")
+        
+        feats = self.feature_extractor(input_wav[:, :self._MAX_INPUT_SAMPLES],
+                                       sampling_rate=self.sample_rate,
+                                       return_tensors="pt")
         device = next(self.upstream.parameters()).device
         inputs = {k: v.to(device) for k, v in feats.items()}
 
@@ -136,22 +132,24 @@ class HuggingfaceFrontend_Dasheng(nn.Module):
         for handle in handles:
             handle.remove()
 
-        layer_reps = torch.stack(hidden_states).permute(1, 3, 2, 0)  # [B, D, T, L]
+        layer_reps = torch.stack(hidden_states).permute(1, 3, 2,
+                                                        0)  # [B, D, T, L]
         return layer_reps, None
 
 
 def main():
     """Instantiates and tests the HuggingfaceFrontend."""
     upstream_config = {
-        'name': 'mispeech/dasheng-0.6B',
+        # 'name': 'mispeech/dasheng-0.6B', #'mispeech/dasheng-base', 'mispeech/dasheng-1.2B'
+        # 'name': 'mispeech/dasheng-base',
+        'name': 'mispeech/dasheng-1.2B',
         # path_or_url is now just the cache directory for Hugging Face downloads
         'path_or_url': './dasheng_models_cache/',
     }
-    logger.info('Initializing HuggingfaceFrontend_Dasheng with config: %s', upstream_config)
+    logger.info('Initializing HuggingfaceFrontend_Dasheng with config: %s',
+                upstream_config)
 
-    net = HuggingfaceFrontend_Dasheng(
-        upstream_args=upstream_config
-    )
+    net = HuggingfaceFrontend_Dasheng(upstream_args=upstream_config)
 
     print(net)
 
@@ -162,8 +160,8 @@ def main():
     logger.info('Number of parameters: %d', net.get_num_params())
 
     logger.info('Testing forward pass...')
-    
-    output, _ = net(dummy_input)
+
+    output, _ = net(dummy_input, None)
     logger.info('Output shape: %s', output.shape)
     # Expected output shape: [Batch, Dim, Frames, Layers] -> [4, 1280, 100, 32] for this model/input
     logger.info('Expected output size (hidden_size): %s', net.output_size())

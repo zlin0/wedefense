@@ -89,6 +89,6 @@ If you use this work, please cite the original paper:
 Based on the paper, our Hybrid Pruning framework also achieves excellent results on speaker verification tasks:
 
 - **VoxCeleb1-O**: 0.7% EER
-- **VoxCeleb1-E**: 0.8% EER  
+- **VoxCeleb1-E**: 0.8% EER
 - **VoxCeleb1-H**: 1.6% EER
 

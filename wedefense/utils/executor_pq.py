@@ -25,6 +25,7 @@ from wedefense.utils.prune_utils import pruning_loss, get_progressive_sparsity
 
 import torch.nn.utils as nn_utils
 
+
 def train_epoch(dataloader,
                 epoch_iter,
                 model,
@@ -66,11 +67,11 @@ def train_epoch(dataloader,
     acc_meter = tnt.meter.ClassErrorMeter(accuracy=True)
 
     # Initialize loss meters
-    cls_loss_meter = tnt.meter.AverageValueMeter() 
+    cls_loss_meter = tnt.meter.AverageValueMeter()
     pruning_loss_meter = tnt.meter.AverageValueMeter()
-    
+
     # Pruning configuration
-    use_pruning = configs.get('use_pruning_loss', False) 
+    use_pruning = configs.get('use_pruning_loss', False)
     if use_pruning:
         target_sp = configs.get('target_sparsity', 0.5)
         l1, l2 = configs.get('lambda_pair', (1.0, 5.0))
@@ -78,7 +79,6 @@ def train_epoch(dataloader,
         warmup_epochs = configs.get('sparsity_warmup_epochs', 5)
         sparsity_schedule = configs.get('sparsity_schedule', 'cosine')
         min_sparsity = configs.get('min_sparsity', 0.0)
-
 
     frontend_type = configs['dataset_args'].get('frontend', 'fbank')
     for i, batch in enumerate(dataloader):
@@ -96,11 +96,10 @@ def train_epoch(dataloader,
                     total_warmup_iters=warmup_iters,
                     target_sparsity=target_sp,
                     schedule_type=sparsity_schedule,
-                    min_sparsity=min_sparsity
-                )
+                    min_sparsity=min_sparsity)
             else:
                 # Use final target sparsity after warmup
-                target_sp_cur = target_sp 
+                target_sp_cur = target_sp
 
         targets = batch['label']
         targets = targets.long().to(device)  # (B)
@@ -132,14 +131,13 @@ def train_epoch(dataloader,
                 outputs, cls_loss = outputs
             else:
                 cls_loss = criterion(outputs, targets)
-        
+
         # Calculate total loss with optional pruning regularization
         if use_pruning:
             cur_params = model.module.frontend.get_num_params()
-            prune_loss, exp_sp = pruning_loss(
-                cur_params, orig_params, target_sp_cur, l1, l2
-            )            
-            total_loss = cls_loss + prune_loss  
+            prune_loss, exp_sp = pruning_loss(cur_params, orig_params,
+                                              target_sp_cur, l1, l2)
+            total_loss = cls_loss + prune_loss
         else:
             prune_loss, exp_sp = 0.0, None
             total_loss = cls_loss
@@ -157,12 +155,11 @@ def train_epoch(dataloader,
         optimizer.zero_grad()
         if use_pruning:
             optimizer_reg.zero_grad()
-        
+
         # Backward pass with gradient scaling
         scaler.scale(total_loss).backward()
         nn_utils.clip_grad_norm_(model.parameters(), 3.0)
 
-        
         # Update optimizers
         if use_pruning:
             scaler.step(optimizer_reg)
@@ -179,41 +176,43 @@ def train_epoch(dataloader,
             })
         # Log training progress
         if (i + 1) % configs['log_batch_interval'] == 0:
-            row = [epoch, i + 1, scheduler.get_lr(),
-                   margin_scheduler.get_margin(),
-                   round(loss_meter.value()[0], 4),
-                   round(acc_meter.value()[0], 2)]
-            
+            row = [
+                epoch, i + 1,
+                scheduler.get_lr(),
+                margin_scheduler.get_margin(),
+                round(loss_meter.value()[0], 4),
+                round(acc_meter.value()[0], 2)
+            ]
+
             if use_pruning:
                 row += [
                     round(cls_loss_meter.value()[0], 4),
                     round(pruning_loss_meter.value()[0], 4),
-                    f"{target_sp_cur:.4f}",
-                    f"{exp_sp:.4f}"
+                    f"{target_sp_cur:.4f}", f"{exp_sp:.4f}"
                 ]
-            
+
             logger.info(tp.row(tuple(row), width=10, style='grid'))
 
         if (i + 1) == epoch_iter:
             break
 
     # Final log for this epoch
-    summary = [epoch, i + 1,
-               scheduler.get_lr(),
-               margin_scheduler.get_margin(),
-               round(loss_meter.value()[0], 4),
-               round(acc_meter.value()[0], 2)]
-    
+    summary = [
+        epoch, i + 1,
+        scheduler.get_lr(),
+        margin_scheduler.get_margin(),
+        round(loss_meter.value()[0], 4),
+        round(acc_meter.value()[0], 2)
+    ]
+
     if use_pruning:
         summary += [
             round(cls_loss_meter.value()[0], 4),
-            round(pruning_loss_meter.value()[0], 4),
-            f"{target_sp_cur:.4f}",
+            round(pruning_loss_meter.value()[0], 4), f"{target_sp_cur:.4f}",
             f"{exp_sp:.4f}"
-        ]    
-    
+        ]
+
     logger.info(tp.row(tuple(summary), width=10, style='grid'))
-    
 
 
 def val_epoch(val_dataloader,

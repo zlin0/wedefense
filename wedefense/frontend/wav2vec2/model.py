@@ -17,6 +17,7 @@ from . import components
 
 import time
 
+
 class Wav2Vec2Model(Module):
     """Acoustic model used in *wav2vec 2.0* :cite:`baevski2020wav2vec`.
 
@@ -48,7 +49,8 @@ class Wav2Vec2Model(Module):
         feature_extractor: Module,
         encoder: Module,
         aux: Optional[Module] = None,
-        feature_grad_mult: float = 0.1      # default setup for pre-trained wavlm-base-plus
+        feature_grad_mult:
+        float = 0.1  # default setup for pre-trained wavlm-base-plus
     ):
         super().__init__()
         self.normalize_waveform = normalize_waveform
@@ -99,9 +101,11 @@ class Wav2Vec2Model(Module):
         if self.normalize_waveform:
             if lengths is not None:
                 waveforms = [
-                    F.layer_norm(wave[:length], (length,)) for wave, length in zip(waveforms, lengths)
+                    F.layer_norm(wave[:length], (length, ))
+                    for wave, length in zip(waveforms, lengths)
                 ]
-                waveforms = torch.nn.utils.rnn.pad_sequence(waveforms, batch_first=True)
+                waveforms = torch.nn.utils.rnn.pad_sequence(waveforms,
+                                                            batch_first=True)
             else:
                 waveforms = F.layer_norm(waveforms, waveforms.shape[-1:])
 
@@ -112,25 +116,29 @@ class Wav2Vec2Model(Module):
         if self.feature_grad_mult != 1.0:
             x = components.GradMultiply.apply(x, self.feature_grad_mult)
         # trans_start = time.time()
-        x = self.encoder.extract_features(x, lengths, num_layers)   # (num_layers+1,), including the input
+        x = self.encoder.extract_features(
+            x, lengths, num_layers)  # (num_layers+1,), including the input
         # trans_end = time.time()
         # print(f'trans elapsed : {trans_end - trans_start}')
         return x, lengths
-    
+
     def get_num_params(self):
         """Calculate the current size."""
-        feature_extractor_size, encoder_in_features = self.feature_extractor.get_num_params_and_final_out_channels()
+        feature_extractor_size, encoder_in_features = self.feature_extractor.get_num_params_and_final_out_channels(
+        )
         encoder_size = self.encoder.get_num_params(encoder_in_features)
         return feature_extractor_size + encoder_size
-    
+
     def prune(self):
-        self.eval()     # must be in eval mode
-        conv_config, conv_out_index = self.feature_extractor.prune()    # [(output_channel, kernel_size, stride), ...]
-        transformer_config = self.encoder.prune(conv_out_index)     # NOTE: this is a defaultdict(list)
+        self.eval()  # must be in eval mode
+        conv_config, conv_out_index = self.feature_extractor.prune(
+        )  # [(output_channel, kernel_size, stride), ...]
+        transformer_config = self.encoder.prune(
+            conv_out_index)  # NOTE: this is a defaultdict(list)
         use_attention = transformer_config["use_attention"]
         use_feed_forward = transformer_config["use_feed_forward"]
-        num_heads = transformer_config["num_heads"]     # can be []
-        remaining_heads = transformer_config["remaining_heads"]     # can be []
+        num_heads = transformer_config["num_heads"]  # can be []
+        remaining_heads = transformer_config["remaining_heads"]  # can be []
         ff_interm_features = transformer_config["ff_interm_features"]
 
         return conv_config, use_attention, use_feed_forward, num_heads, remaining_heads, ff_interm_features
@@ -167,9 +175,11 @@ class Wav2Vec2Model(Module):
         if self.normalize_waveform:
             if lengths is not None:
                 waveforms = [
-                    F.layer_norm(wave[:length], (length,)) for wave, length in zip(waveforms, lengths)
+                    F.layer_norm(wave[:length], (length, ))
+                    for wave, length in zip(waveforms, lengths)
                 ]
-                waveforms = torch.nn.utils.rnn.pad_sequence(waveforms, batch_first=True)
+                waveforms = torch.nn.utils.rnn.pad_sequence(waveforms,
+                                                            batch_first=True)
             else:
                 waveforms = F.layer_norm(waveforms, waveforms.shape[-1:])
 
@@ -185,38 +195,37 @@ def wav2vec2_model(**configs) -> Wav2Vec2Model:
 
     if "encoder_remaining_heads" in configs:
         return wavlm_model(**configs)
-    
+
     return wav2vec2_model_original(**configs)
 
 
 def wav2vec2_model_original(
-    extractor_mode: str,
-    extractor_conv_layer_config: Optional[List[Tuple[int, int, int]]],
-    extractor_conv_bias: bool,
-    encoder_embed_dim: int,
-    encoder_projection_dropout: float,
-    encoder_pos_conv_kernel: int,
-    encoder_pos_conv_groups: int,
-    encoder_num_layers: int,
-    encoder_use_attention: List[bool],
-    encoder_use_feed_forward: List[bool],
-    encoder_num_heads: List[int],
-    encoder_head_dim: int,
-    encoder_attention_dropout: float,
-    encoder_ff_interm_features: List[int],
-    encoder_ff_interm_dropout: float,
-    encoder_dropout: float,
-    encoder_layer_norm_first: bool,
-    encoder_layer_drop: float,
-    aux_num_out: Optional[int],
-    normalize_waveform: bool,
-    extractor_prune_conv_channels: bool = False,
-    encoder_prune_attention_heads: bool = False,
-    encoder_prune_attention_layer: bool = False,
-    encoder_prune_feed_forward_intermediate: bool = False,
-    encoder_prune_feed_forward_layer: bool = False,
-    use_layerwise_prune: str = False
-) -> Wav2Vec2Model:
+        extractor_mode: str,
+        extractor_conv_layer_config: Optional[List[Tuple[int, int, int]]],
+        extractor_conv_bias: bool,
+        encoder_embed_dim: int,
+        encoder_projection_dropout: float,
+        encoder_pos_conv_kernel: int,
+        encoder_pos_conv_groups: int,
+        encoder_num_layers: int,
+        encoder_use_attention: List[bool],
+        encoder_use_feed_forward: List[bool],
+        encoder_num_heads: List[int],
+        encoder_head_dim: int,
+        encoder_attention_dropout: float,
+        encoder_ff_interm_features: List[int],
+        encoder_ff_interm_dropout: float,
+        encoder_dropout: float,
+        encoder_layer_norm_first: bool,
+        encoder_layer_drop: float,
+        aux_num_out: Optional[int],
+        normalize_waveform: bool,
+        extractor_prune_conv_channels: bool = False,
+        encoder_prune_attention_heads: bool = False,
+        encoder_prune_attention_layer: bool = False,
+        encoder_prune_feed_forward_intermediate: bool = False,
+        encoder_prune_feed_forward_layer: bool = False,
+        use_layerwise_prune: str = False) -> Wav2Vec2Model:
     """Builds custom :class:`~torchaudio.models.Wav2Vec2Model`.
 
     Note:
@@ -339,10 +348,14 @@ def wav2vec2_model_original(
             The resulting model.
     """  # noqa: E501
     if extractor_conv_layer_config is None:
-        extractor_conv_layer_config = [(512, 10, 5)] + [(512, 3, 2)] * 4 + [(512, 2, 2)] * 2
+        extractor_conv_layer_config = [
+            (512, 10, 5)
+        ] + [(512, 3, 2)] * 4 + [(512, 2, 2)] * 2
 
     feature_extractor = components._get_feature_extractor(
-        extractor_mode, extractor_conv_layer_config, extractor_conv_bias, 
+        extractor_mode,
+        extractor_conv_layer_config,
+        extractor_conv_bias,
         prune_conv_channels=extractor_prune_conv_channels,
     )
     encoder = components._get_encoder(
@@ -369,7 +382,8 @@ def wav2vec2_model_original(
     )
     aux = None
     if aux_num_out is not None:
-        aux = torch.nn.Linear(in_features=encoder_embed_dim, out_features=aux_num_out)
+        aux = torch.nn.Linear(in_features=encoder_embed_dim,
+                              out_features=aux_num_out)
     return Wav2Vec2Model(normalize_waveform, feature_extractor, encoder, aux)
 
 
@@ -426,7 +440,8 @@ def wav2vec2_base(
         extractor_prune_conv_channels=extractor_prune_conv_channels,
         encoder_prune_attention_heads=encoder_prune_attention_heads,
         encoder_prune_attention_layer=encoder_prune_attention_layer,
-        encoder_prune_feed_forward_intermediate=encoder_prune_feed_forward_intermediate,
+        encoder_prune_feed_forward_intermediate=
+        encoder_prune_feed_forward_intermediate,
         encoder_prune_feed_forward_layer=encoder_prune_feed_forward_layer,
     )
 
@@ -484,7 +499,8 @@ def wav2vec2_large(
         extractor_prune_conv_channels=extractor_prune_conv_channels,
         encoder_prune_attention_heads=encoder_prune_attention_heads,
         encoder_prune_attention_layer=encoder_prune_attention_layer,
-        encoder_prune_feed_forward_intermediate=encoder_prune_feed_forward_intermediate,
+        encoder_prune_feed_forward_intermediate=
+        encoder_prune_feed_forward_intermediate,
         encoder_prune_feed_forward_layer=encoder_prune_feed_forward_layer,
     )
 
@@ -542,7 +558,8 @@ def wav2vec2_large_lv60k(
         extractor_prune_conv_channels=extractor_prune_conv_channels,
         encoder_prune_attention_heads=encoder_prune_attention_heads,
         encoder_prune_attention_layer=encoder_prune_attention_layer,
-        encoder_prune_feed_forward_intermediate=encoder_prune_feed_forward_intermediate,
+        encoder_prune_feed_forward_intermediate=
+        encoder_prune_feed_forward_intermediate,
         encoder_prune_feed_forward_layer=encoder_prune_feed_forward_layer,
     )
 
@@ -603,7 +620,8 @@ def hubert_base(
         extractor_prune_conv_channels=extractor_prune_conv_channels,
         encoder_prune_attention_heads=encoder_prune_attention_heads,
         encoder_prune_attention_layer=encoder_prune_attention_layer,
-        encoder_prune_feed_forward_intermediate=encoder_prune_feed_forward_intermediate,
+        encoder_prune_feed_forward_intermediate=
+        encoder_prune_feed_forward_intermediate,
         encoder_prune_feed_forward_layer=encoder_prune_feed_forward_layer,
     )
 
@@ -661,7 +679,8 @@ def hubert_large(
         extractor_prune_conv_channels=extractor_prune_conv_channels,
         encoder_prune_attention_heads=encoder_prune_attention_heads,
         encoder_prune_attention_layer=encoder_prune_attention_layer,
-        encoder_prune_feed_forward_intermediate=encoder_prune_feed_forward_intermediate,
+        encoder_prune_feed_forward_intermediate=
+        encoder_prune_feed_forward_intermediate,
         encoder_prune_feed_forward_layer=encoder_prune_feed_forward_layer,
     )
 
@@ -719,7 +738,8 @@ def hubert_xlarge(
         extractor_prune_conv_channels=extractor_prune_conv_channels,
         encoder_prune_attention_heads=encoder_prune_attention_heads,
         encoder_prune_attention_layer=encoder_prune_attention_layer,
-        encoder_prune_feed_forward_intermediate=encoder_prune_feed_forward_intermediate,
+        encoder_prune_feed_forward_intermediate=
+        encoder_prune_feed_forward_intermediate,
         encoder_prune_feed_forward_layer=encoder_prune_feed_forward_layer,
     )
 
@@ -734,9 +754,12 @@ def _init_hubert_pretrain_model(module):
         torch.nn.init.constant_(module.conv.bias, 0.0)
     elif isinstance(module, components.SelfAttention):
         # normalize the query, key, value, and out_proj parameters in self attention module.
-        torch.nn.init.xavier_uniform_(module.k_proj.weight, gain=1 / math.sqrt(2))
-        torch.nn.init.xavier_uniform_(module.v_proj.weight, gain=1 / math.sqrt(2))
-        torch.nn.init.xavier_uniform_(module.q_proj.weight, gain=1 / math.sqrt(2))
+        torch.nn.init.xavier_uniform_(module.k_proj.weight,
+                                      gain=1 / math.sqrt(2))
+        torch.nn.init.xavier_uniform_(module.v_proj.weight,
+                                      gain=1 / math.sqrt(2))
+        torch.nn.init.xavier_uniform_(module.q_proj.weight,
+                                      gain=1 / math.sqrt(2))
         torch.nn.init.xavier_uniform_(module.out_proj.weight)
         torch.nn.init.constant_(module.out_proj.bias, 0.0)
     elif isinstance(module, components.Transformer):
@@ -745,36 +768,35 @@ def _init_hubert_pretrain_model(module):
         pass
 
 
-def wavlm_model(
-    extractor_mode: str,
-    extractor_conv_layer_config: Optional[List[Tuple[int, int, int]]],
-    extractor_conv_bias: bool,
-    encoder_embed_dim: int,
-    encoder_projection_dropout: float,
-    encoder_pos_conv_kernel: int,
-    encoder_pos_conv_groups: int,
-    encoder_num_layers: int,
-    encoder_use_attention: List[bool],
-    encoder_use_feed_forward: List[bool],
-    encoder_total_num_heads: List[int],
-    encoder_remaining_heads: List[List[int]],
-    encoder_num_buckets: int,
-    encoder_max_distance: int,
-    encoder_attention_dropout: float,
-    encoder_ff_interm_features: List[int],
-    encoder_ff_interm_dropout: float,
-    encoder_dropout: float,
-    encoder_layer_norm_first: bool,
-    encoder_layer_drop: float,
-    aux_num_out: Optional[int] = None,
-    normalize_waveform: bool = True,
-    extractor_prune_conv_channels: bool = False,
-    encoder_prune_attention_heads: bool = False,
-    encoder_prune_attention_layer: bool = False,
-    encoder_prune_feed_forward_intermediate: bool = False,
-    encoder_prune_feed_forward_layer: bool = False,
-    use_layerwise_prune: str = False
-) -> Wav2Vec2Model:
+def wavlm_model(extractor_mode: str,
+                extractor_conv_layer_config: Optional[List[Tuple[int, int,
+                                                                 int]]],
+                extractor_conv_bias: bool,
+                encoder_embed_dim: int,
+                encoder_projection_dropout: float,
+                encoder_pos_conv_kernel: int,
+                encoder_pos_conv_groups: int,
+                encoder_num_layers: int,
+                encoder_use_attention: List[bool],
+                encoder_use_feed_forward: List[bool],
+                encoder_total_num_heads: List[int],
+                encoder_remaining_heads: List[List[int]],
+                encoder_num_buckets: int,
+                encoder_max_distance: int,
+                encoder_attention_dropout: float,
+                encoder_ff_interm_features: List[int],
+                encoder_ff_interm_dropout: float,
+                encoder_dropout: float,
+                encoder_layer_norm_first: bool,
+                encoder_layer_drop: float,
+                aux_num_out: Optional[int] = None,
+                normalize_waveform: bool = True,
+                extractor_prune_conv_channels: bool = False,
+                encoder_prune_attention_heads: bool = False,
+                encoder_prune_attention_layer: bool = False,
+                encoder_prune_feed_forward_intermediate: bool = False,
+                encoder_prune_feed_forward_layer: bool = False,
+                use_layerwise_prune: str = False) -> Wav2Vec2Model:
     """Builds custom WaveLM model :cite:`chen2022wavlm`. The architecture is compatible
     with Wav2Vec2 model :cite:`baevski2020wav2vec`, and so the output object is
     :class:`~torchaudio.models.Wav2Vec2Model`. Most of the arguments have the same meaning
@@ -839,10 +861,14 @@ def wavlm_model(
             The resulting model.
     """
     if extractor_conv_layer_config is None:
-        extractor_conv_layer_config = [(512, 10, 5)] + [(512, 3, 2)] * 4 + [(512, 2, 2)] * 2
+        extractor_conv_layer_config = [
+            (512, 10, 5)
+        ] + [(512, 3, 2)] * 4 + [(512, 2, 2)] * 2
 
     feature_extractor = components._get_feature_extractor(
-        extractor_mode, extractor_conv_layer_config, extractor_conv_bias,
+        extractor_mode,
+        extractor_conv_layer_config,
+        extractor_conv_bias,
         prune_conv_channels=extractor_prune_conv_channels,
     )
     encoder = components._get_wavlm_encoder(
@@ -868,11 +894,11 @@ def wavlm_model(
         prune_attention_layer=encoder_prune_attention_layer,
         prune_feed_forward_intermediate=encoder_prune_feed_forward_intermediate,
         prune_feed_forward_layer=encoder_prune_feed_forward_layer,
-        use_layerwise_prune=use_layerwise_prune
-    )
+        use_layerwise_prune=use_layerwise_prune)
     aux = None
     if aux_num_out is not None:
-        aux = torch.nn.Linear(in_features=encoder_embed_dim, out_features=aux_num_out)
+        aux = torch.nn.Linear(in_features=encoder_embed_dim,
+                              out_features=aux_num_out)
     return Wav2Vec2Model(normalize_waveform, feature_extractor, encoder, aux)
 
 

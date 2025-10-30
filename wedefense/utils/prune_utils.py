@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Utility functions for structured model pruning with learnable thresholds."""
 
 from __future__ import annotations
@@ -59,7 +58,12 @@ def make_pruning_param_groups(
     lambda2 = nn.Parameter(torch.tensor(0.0))
 
     param_groups = [
-        {'params': main_params, 'lr': cls_lr, 'weight_decay': 0.0, 'name': 'main'},
+        {
+            'params': main_params,
+            'lr': cls_lr,
+            'weight_decay': 0.0,
+            'name': 'main'
+        },
     ]
 
     if reg_lr is not None:
@@ -94,56 +98,52 @@ def get_progressive_sparsity(
     min_sparsity: float = 0.0,
 ) -> float:
     """Calculate progressive sparsity based on training progress.
-    
+
     This function implements various scheduling strategies for progressive pruning,
     allowing the model to gradually increase sparsity during the warmup period.
-    
+
     Args:
         current_iter: Current training iteration.
         total_warmup_iters: Total number of warmup iterations.
         target_sparsity: Final target sparsity level (0.0 to 1.0).
         schedule_type: Type of schedule ('linear', 'cosine', 'exponential', 'sigmoid').
         min_sparsity: Minimum sparsity at the beginning (0.0 to 1.0).
-    
+
     Returns:
         Current target sparsity value (0.0 to 1.0).
-        
+
     Raises:
         ValueError: If schedule_type is not supported.
     """
     if current_iter >= total_warmup_iters:
         return target_sparsity
-    
+
     progress = current_iter / total_warmup_iters
     sparsity_range = target_sparsity - min_sparsity
-    
+
     if schedule_type == "linear":
         current_sparsity = min_sparsity + sparsity_range * progress
-        
+
     elif schedule_type == "cosine":
         # Cosine annealing schedule - smooth start and end
         # Standard cosine annealing: 0.5 * (1 + cos(π * (1 - progress)))
         current_sparsity = min_sparsity + sparsity_range * (
-            0.5 * (1 + math.cos(math.pi * (1 - progress)))
-        )
-        
+            0.5 * (1 + math.cos(math.pi * (1 - progress))))
+
     elif schedule_type == "exponential":
         # Exponential schedule - slow start, fast end
-        current_sparsity = min_sparsity + sparsity_range * (progress ** 2)
-        
+        current_sparsity = min_sparsity + sparsity_range * (progress**2)
+
     elif schedule_type == "sigmoid":
         # Sigmoid schedule - very gradual start and end
         current_sparsity = min_sparsity + sparsity_range / (
-            1 + math.exp(-10 * (progress - 0.5))
-        )
-        
+            1 + math.exp(-10 * (progress - 0.5)))
+
     else:
         supported_types = ["linear", "cosine", "exponential", "sigmoid"]
-        raise ValueError(
-            f"Unknown schedule type: {schedule_type}. "
-            f"Supported types: {supported_types}"
-        )
-    
+        raise ValueError(f"Unknown schedule type: {schedule_type}. "
+                         f"Supported types: {supported_types}")
+
     return current_sparsity
 
 
@@ -174,11 +174,9 @@ def pruning_loss(
     """
     expected_sparsity = 1.0 - (current_params / original_params)
     sparsity_difference = expected_sparsity - target_sparsity
-    
+
     # Quadratic penalty: linear + quadratic terms
-    regularization_term = (
-        lambda1 * sparsity_difference + 
-        lambda2 * sparsity_difference ** 2
-    )
-    
+    regularization_term = (lambda1 * sparsity_difference +
+                           lambda2 * sparsity_difference**2)
+
     return regularization_term, expected_sparsity

@@ -97,11 +97,11 @@ class MarginScheduler:
 
 class BaseClass:
     """Base class for learning rate scheduler with automatic frontend detection.
-    
+
     This scheduler supports differential learning rates for frontend (e.g., pretrained
     SSL models like WavLM/HuBERT) and backend modules. Frontend modules typically use
     a smaller learning rate to preserve pretrained features.
-    
+
     Features:
         - Automatic frontend detection via parameter names
         - Backward compatible with explicit 'name' field in param_groups
@@ -121,7 +121,7 @@ class BaseClass:
                  frontend_lr_ratio=0.1,
                  model=None):
         """Initialize learning rate scheduler with frontend detection.
-        
+
         Args:
             optimizer: PyTorch optimizer instance.
             num_epochs: Total number of training epochs.
@@ -149,7 +149,7 @@ class BaseClass:
         self.warm_from_zero = warm_from_zero
         self.frontend_lr_ratio = frontend_lr_ratio
         self.model = model
-        
+
         # Set default frontend module names
         if frontend_modules is None:
             self.frontend_modules = ['frontend']
@@ -157,92 +157,98 @@ class BaseClass:
             self.frontend_modules = [frontend_modules]
         else:
             self.frontend_modules = list(frontend_modules)
-        
+
         # Build parameter ID to name mapping (if model is provided)
         self._param_id_to_name = {}
         if self.model is not None:
             for name, param in self.model.named_parameters():
                 self._param_id_to_name[id(param)] = name
-        
+
         # Auto-restructure optimizer if single param group detected
         self._auto_restructure_optimizer()
-        
+
         # Automatically identify and mark frontend parameter groups
         self._identify_frontend_param_groups()
 
     def _auto_restructure_optimizer(self):
         """Automatically restructure optimizer to separate frontend/backend params.
-        
+
         This method detects if the optimizer has only a single parameter group
         and automatically splits it into frontend and backend groups if:
         1. Model reference is provided
         2. Frontend parameters can be identified
         3. Both frontend and backend parameters exist
-        
+
         This allows using standard optimizer initialization (e.g., model.parameters())
         while still achieving differential learning rates.
-        
+
         Note: This modifies optimizer.param_groups in-place.
         """
         # Only restructure if we have exactly one param group and a model
         if len(self.optimizer.param_groups) != 1 or self.model is None:
             return
-        
+
         # Get the single param group
         original_group = self.optimizer.param_groups[0]
         all_params = original_group['params']
-        
+
         # Separate frontend and backend parameters
         frontend_params = []
         backend_params = []
-        
+
         for param in all_params:
             param_name = self._param_id_to_name.get(id(param), '')
-            
+
             # Check if parameter belongs to frontend
             is_frontend_param = False
             for frontend_keyword in self.frontend_modules:
                 if param_name.startswith(frontend_keyword + '.'):
                     is_frontend_param = True
                     break
-            
+
             if is_frontend_param:
                 frontend_params.append(param)
             else:
                 backend_params.append(param)
-        
+
         # Only restructure if we successfully separated params
         if len(frontend_params) > 0 and len(backend_params) > 0:
             # Create new param groups (preserve all original settings)
-            frontend_group = {k: v for k, v in original_group.items() if k != 'params'}
+            frontend_group = {
+                k: v
+                for k, v in original_group.items() if k != 'params'
+            }
             frontend_group['params'] = frontend_params
-            
-            backend_group = {k: v for k, v in original_group.items() if k != 'params'}
+
+            backend_group = {
+                k: v
+                for k, v in original_group.items() if k != 'params'
+            }
             backend_group['params'] = backend_params
-            
+
             # Replace the single group with two groups
             self.optimizer.param_groups = [frontend_group, backend_group]
-            
+
             # Log the restructuring (optional: can be enabled if needed)
             # print(f"✓ Auto-restructured optimizer: {len(frontend_params)} frontend, {len(backend_params)} backend params")
 
     def _identify_frontend_param_groups(self):
         """Automatically identify which parameter groups belong to frontend modules.
-        
+
         Identification strategy (priority order):
         1. If param_group has 'name' field, check if it's in frontend_modules list
         2. If no 'name' field, check parameter names via model.named_parameters()
         3. Mark each param_group with '_is_frontend' flag (internal use only)
-        
+
         This method adds an internal '_is_frontend' flag to each parameter group
         without modifying the original param_group structure.
-        
+
         Time Complexity: O(n_groups * n_params_per_group) worst case, but typically fast
             since we only check the first parameter in each group.
         """
         for idx, param_group in enumerate(self.optimizer.param_groups):
             is_frontend = False
-            
+
             # Strategy 1: Check explicit 'name' field (highest priority)
             if 'name' in param_group:
                 if param_group['name'] in self.frontend_modules:
@@ -253,27 +259,28 @@ class BaseClass:
                 params = param_group.get('params', [])
                 if params:
                     # Get the name of the first parameter (requires reverse lookup)
-                    first_param = params[0] if isinstance(params, list) else next(iter(params))
+                    first_param = params[0] if isinstance(
+                        params, list) else next(iter(params))
                     param_name = self._get_param_name(first_param)
-                    
+
                     if param_name:
                         # Check if parameter name contains frontend keyword
                         for frontend_keyword in self.frontend_modules:
                             if param_name.startswith(frontend_keyword + '.'):
                                 is_frontend = True
                                 break
-            
+
             # Add internal marker (using private key to avoid modifying original structure)
             param_group['_is_frontend'] = is_frontend
-    
+
     def _get_param_name(self, param):
         """Reverse lookup parameter name from parameter object.
-        
+
         Uses the param_id -> name mapping built in __init__.
-        
+
         Args:
             param: torch.nn.Parameter object.
-            
+
         Returns:
             str: Parameter name (e.g., 'frontend.encoder.weight'), or '' if not found.
         """
@@ -301,15 +308,15 @@ class BaseClass:
 
     def set_lr(self):
         """Set learning rates with automatic differentiation for frontend modules.
-        
+
         Learning rate assignment:
         - Frontend modules: lr = current_lr * frontend_lr_ratio (default: 0.1)
         - Other modules: lr = current_lr
-        
+
         Compatibility: Supports two identification methods
         1. Explicit 'name' field (legacy, backward compatible)
         2. Automatic parameter name detection (new, via __init__)
-        
+
         The frontend learning rate ratio is typically set to 0.1 for pretrained
         SSL models (WavLM, HuBERT) to preserve learned representations while
         allowing backend modules to adapt quickly to the new task.
@@ -321,7 +328,8 @@ class BaseClass:
                 param_group['lr'] = current_lr * self.frontend_lr_ratio
             else:
                 # Priority 2: Fallback to explicit 'name' field check (backward compatibility)
-                if 'name' in param_group and param_group['name'] in self.frontend_modules:
+                if 'name' in param_group and param_group[
+                        'name'] in self.frontend_modules:
                     param_group['lr'] = current_lr * self.frontend_lr_ratio
                 else:
                     param_group['lr'] = current_lr
@@ -358,7 +366,7 @@ class ExponentialDecrease(BaseClass):
                  frontend_lr_ratio=0.1,
                  model=None):
         super().__init__(optimizer, num_epochs, epoch_iter, initial_lr,
-                         final_lr, warm_up_epoch, scale_ratio, warm_from_zero, 
+                         final_lr, warm_up_epoch, scale_ratio, warm_from_zero,
                          frontend_modules, frontend_lr_ratio, model)
 
     def get_current_lr(self):

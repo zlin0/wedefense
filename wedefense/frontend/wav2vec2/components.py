@@ -56,7 +56,8 @@ class LayerNorm(nn.LayerNorm):
 
     def forward(self, input: Tensor) -> Tensor:
         x = input.transpose(-2, -1)
-        x = nn.functional.layer_norm(x, self.normalized_shape, self.weight, self.bias, self.eps)
+        x = nn.functional.layer_norm(x, self.normalized_shape, self.weight,
+                                     self.bias, self.eps)
         x = x.transpose(-2, -1)
         return x
 
@@ -87,7 +88,8 @@ class ConvLayerBlock(Module):
         )
 
         if prune_conv_channels:
-            self.hard_concrete = HardConcrete(n_in=out_channels, init_mean=0.01)
+            self.hard_concrete = HardConcrete(n_in=out_channels,
+                                              init_mean=0.01)
         else:
             self.hard_concrete = None
 
@@ -110,27 +112,30 @@ class ConvLayerBlock(Module):
         x = nn.functional.gelu(x)
 
         if self.hard_concrete is not None:
-            channel_mask = self.hard_concrete()  # hard concrete mask, (out_channels,)
+            channel_mask = self.hard_concrete(
+            )  # hard concrete mask, (out_channels,)
             x = x * channel_mask.unsqueeze(-1)
 
         if length is not None:
-            length = torch.div(length - self.kernel_size, self.stride, rounding_mode="floor") + 1
+            length = torch.div(length - self.kernel_size,
+                               self.stride,
+                               rounding_mode="floor") + 1
             # When input length is 0, the resulting length can be negative. So fix it here.
             length = torch.max(torch.zeros_like(length), length)
         return x, length
-    
+
     def get_num_params_and_out_channels(self, in_channels):
         if self.hard_concrete is not None:
             out_channels = self.hard_concrete.l0_norm()
         else:
             out_channels = self.conv.out_channels
-        
+
         num_params = in_channels * out_channels * self.kernel_size
         if self.conv.bias is not None:
             num_params += out_channels
         if self.layer_norm is not None:
             num_params += out_channels * 2
-        
+
         return num_params, out_channels
 
 
@@ -150,10 +155,9 @@ class FeatureExtractor(Module):
         self.conv_layers = conv_layers
 
         # NOTE: a dummy weight used to save the soft mask of the last conv layer
-        self.dummy_weight = nn.Parameter(
-            torch.ones(conv_layers[-1].conv.out_channels, dtype=torch.float32),
-            requires_grad=False
-        )
+        self.dummy_weight = nn.Parameter(torch.ones(
+            conv_layers[-1].conv.out_channels, dtype=torch.float32),
+                                         requires_grad=False)
 
     def forward(
         self,
@@ -175,7 +179,9 @@ class FeatureExtractor(Module):
                 Valid length of each output sample. shape: ``[batch, ]``.
         """
         if x.ndim != 2:
-            raise ValueError("Expected the input Tensor to be 2D (batch, time), " "but received {list(x.shape)}")
+            raise ValueError(
+                "Expected the input Tensor to be 2D (batch, time), "
+                "but received {list(x.shape)}")
 
         x = x.unsqueeze(1)  # (batch, channel==1, frame)
         for layer in self.conv_layers:
@@ -188,27 +194,28 @@ class FeatureExtractor(Module):
         in_channels = 1
         num_params = 0
         for layer in self.conv_layers:
-            layer_params, in_channels = layer.get_num_params_and_out_channels(in_channels)
+            layer_params, in_channels = layer.get_num_params_and_out_channels(
+                in_channels)
             num_params += layer_params
 
-        num_params += in_channels   # dummy weight
-        
+        num_params += in_channels  # dummy weight
+
         return num_params, in_channels
-    
+
     def prune(self):
         """"Prune conv layers and dummy weight based on hardconcrete parameters.
         This is an in-place operation.
         """
-        new_config = []     # [(output_channel, kernel_size, stride), ...]
+        new_config = []  # [(output_channel, kernel_size, stride), ...]
         for idx, layer in enumerate(self.conv_layers):
             if layer.hard_concrete is not None:
                 assert not layer.hard_concrete.training
-                mask = layer.hard_concrete()    # (out_features,)
-                index = mask.nonzero().squeeze(-1)    # 2D -> 1D
-                assert len(index) > 0, f"Conv channels pruned to zero at index {idx}"
+                mask = layer.hard_concrete()  # (out_features,)
+                index = mask.nonzero().squeeze(-1)  # 2D -> 1D
+                assert len(
+                    index) > 0, f"Conv channels pruned to zero at index {idx}"
                 new_config.append(
-                    (len(index), layer.kernel_size, layer.stride)
-                )
+                    (len(index), layer.kernel_size, layer.stride))
 
                 # prune the current layer
                 prune_conv1d_layer(layer.conv, index, "output")
@@ -219,17 +226,20 @@ class FeatureExtractor(Module):
                 if idx == len(self.conv_layers) - 1:
                     self.dummy_weight.data *= mask
                     self.dummy_weight = nn.Parameter(
-                        self.dummy_weight.index_select(0, index).clone().detach(), requires_grad=False
-                    )
+                        self.dummy_weight.index_select(0,
+                                                       index).clone().detach(),
+                        requires_grad=False)
                 else:
-                    self.conv_layers[idx+1].conv.weight.data *= mask.unsqueeze(-1)
-                    prune_conv1d_layer(self.conv_layers[idx+1].conv, index, dim="input")
+                    self.conv_layers[idx +
+                                     1].conv.weight.data *= mask.unsqueeze(-1)
+                    prune_conv1d_layer(self.conv_layers[idx + 1].conv,
+                                       index,
+                                       dim="input")
 
                 layer.hard_concrete = None
             else:
                 new_config.append(
-                    (layer.conv.out_channels, layer.kernel_size, layer.stride)
-                )
+                    (layer.conv.out_channels, layer.kernel_size, layer.stride))
                 index = torch.arange(layer.conv.out_channels, dtype=torch.long)
 
         return new_config, index
@@ -272,9 +282,10 @@ class FeatureProjection(Module):
         x = self.projection(x)
         x = self.dropout(x)
         return x
-    
+
     def get_num_params(self, in_features):
-        return in_features * 2 + (in_features + 1) * self.projection.out_features
+        return in_features * 2 + (in_features +
+                                  1) * self.projection.out_features
 
 
 class ConvolutionalPositionalEmbedding(Module):
@@ -304,7 +315,9 @@ class ConvolutionalPositionalEmbedding(Module):
         )
 
         # self.conv = nn.utils.weight_norm(self.conv, name="weight", dim=2)
-        self.conv = nn.utils.parametrizations.weight_norm(self.conv, name="weight", dim=2)
+        self.conv = nn.utils.parametrizations.weight_norm(self.conv,
+                                                          name="weight",
+                                                          dim=2)
         self.num_remove: int = 1 if kernel_size % 2 == 0 else 0
 
     def __prepare_scriptable__(self):
@@ -328,7 +341,7 @@ class ConvolutionalPositionalEmbedding(Module):
         x = x.transpose(-2, -1)
         x = self.conv(x)
         if self.num_remove > 0:
-            x = x[..., : -self.num_remove]
+            x = x[..., :-self.num_remove]
         x = torch.nn.functional.gelu(x)
         x = x.transpose(-2, -1)
         return x
@@ -345,13 +358,14 @@ class SelfAttention(Module):
     """
 
     def __init__(
-        self,
-        embed_dim: int,
-        num_heads: int,
-        head_dim: int,
-        dropout: float = 0.0,
-        prune_heads: bool = False,  # whether to prune attention heads
-        prune_layer: bool = False,  # whether to prune entire attention layers
+            self,
+            embed_dim: int,
+            num_heads: int,
+            head_dim: int,
+            dropout: float = 0.0,
+            prune_heads: bool = False,  # whether to prune attention heads
+            prune_layer:
+        bool = False,  # whether to prune entire attention layers
     ):
         super().__init__()
 
@@ -368,7 +382,8 @@ class SelfAttention(Module):
         self.out_proj = nn.Linear(num_heads * head_dim, embed_dim, bias=True)
 
         if prune_heads:
-            self.hard_concrete_for_heads = HardConcrete(n_in=num_heads, init_mean=0.01)
+            self.hard_concrete_for_heads = HardConcrete(n_in=num_heads,
+                                                        init_mean=0.01)
         else:
             self.hard_concrete_for_heads = None
 
@@ -399,10 +414,10 @@ class SelfAttention(Module):
         """
         if x.ndim != 3 or x.shape[2] != self.embed_dim:
             raise ValueError(
-                f"The expected input shape is (batch, sequence, embed_dim=={self.embed_dim}). " f"Found {x.shape}."
-            )
+                f"The expected input shape is (batch, sequence, embed_dim=={self.embed_dim}). "
+                f"Found {x.shape}.")
         batch_size, length, embed_dim = x.size()
-        
+
         shape = (batch_size, length, self.num_heads, self.head_dim)
         q = self.q_proj(x).view(*shape).transpose(2, 1)  # B, nH, L, Hd
         k = self.k_proj(x).view(*shape).permute(0, 2, 3, 1)  # B, nH, Hd, L
@@ -426,12 +441,13 @@ class SelfAttention(Module):
             head_mask = self.hard_concrete_for_heads()  # (nH,)
             output = output * head_mask.unsqueeze(-1).unsqueeze(-1)
 
-        output = output.transpose(2, 1).reshape(batch_size, length, self.num_heads * self.head_dim)
+        output = output.transpose(2, 1).reshape(batch_size, length,
+                                                self.num_heads * self.head_dim)
 
         output = self.out_proj(output)
 
         if self.hard_concrete_for_layer is not None:
-            layer_mask = self.hard_concrete_for_layer() # (1,)
+            layer_mask = self.hard_concrete_for_layer()  # (1,)
             output = output * layer_mask
 
         return output, None  # Necessary for compatibility with WavLMSelAttention
@@ -446,7 +462,7 @@ class SelfAttention(Module):
 
         if self.hard_concrete_for_layer is not None:
             num_params *= self.hard_concrete_for_layer.l0_norm()
-        
+
         return num_params
 
     def prune(self):
@@ -456,7 +472,7 @@ class SelfAttention(Module):
         }
         if self.hard_concrete_for_layer is not None:
             assert not self.hard_concrete_for_layer.training
-            layer_mask = self.hard_concrete_for_layer() # (1,)
+            layer_mask = self.hard_concrete_for_layer()  # (1,)
             self.out_proj.weight.data *= layer_mask
             self.out_proj.bias.data *= layer_mask
             if layer_mask == 0:
@@ -518,10 +534,11 @@ class WavLMSelfAttention(SelfAttention):
             self.remaining_heads = list(range(total_num_heads))
         else:
             self.remaining_heads = remaining_heads  # list of indices
-        
+
         self.head_dim = embed_dim // total_num_heads
 
-        super().__init__(embed_dim, len(self.remaining_heads), self.head_dim, dropout, prune_heads, prune_layer)
+        super().__init__(embed_dim, len(self.remaining_heads), self.head_dim,
+                         dropout, prune_heads, prune_layer)
 
         self.has_relative_attention_bias = has_relative_attention_bias
         self.num_buckets = num_buckets
@@ -533,15 +550,24 @@ class WavLMSelfAttention(SelfAttention):
             self.rel_attn_embed = None
 
         # override linear layers to customize bias
-        self.k_proj = nn.Linear(embed_dim, len(self.remaining_heads) * self.head_dim, bias=bias)
-        self.v_proj = nn.Linear(embed_dim, len(self.remaining_heads) * self.head_dim, bias=bias)
-        self.q_proj = nn.Linear(embed_dim, len(self.remaining_heads) * self.head_dim, bias=bias)
-        self.out_proj = nn.Linear(len(self.remaining_heads) * self.head_dim, embed_dim, bias=bias)
+        self.k_proj = nn.Linear(embed_dim,
+                                len(self.remaining_heads) * self.head_dim,
+                                bias=bias)
+        self.v_proj = nn.Linear(embed_dim,
+                                len(self.remaining_heads) * self.head_dim,
+                                bias=bias)
+        self.q_proj = nn.Linear(embed_dim,
+                                len(self.remaining_heads) * self.head_dim,
+                                bias=bias)
+        self.out_proj = nn.Linear(len(self.remaining_heads) * self.head_dim,
+                                  embed_dim,
+                                  bias=bias)
 
         self.gru_rel_pos = gru_rel_pos
         if self.gru_rel_pos:
             self.gru_rel_pos_linear = nn.Linear(self.head_dim, 8)
-            self.gru_rel_pos_const = nn.Parameter(torch.ones(1, total_num_heads, 1, 1))
+            self.gru_rel_pos_const = nn.Parameter(
+                torch.ones(1, total_num_heads, 1, 1))
         self.has_position_bias = True
 
     def compute_bias(self, query_length: int, key_length: int) -> Tensor:
@@ -552,16 +578,23 @@ class WavLMSelfAttention(SelfAttention):
         Returns:
             Tensor of shape `(num_heads, query_length, key_length)`, relative positions embeddings
         """
-        context_position = torch.arange(query_length, dtype=torch.long)[:, None]
+        context_position = torch.arange(query_length, dtype=torch.long)[:,
+                                                                        None]
         memory_position = torch.arange(key_length, dtype=torch.long)[None, :]
         relative_position = memory_position - context_position  # Shape (query_length, key_length)
-        relative_position_bucket = self._relative_positions_bucket(relative_position, bidirectional=True)
-        relative_position_bucket = relative_position_bucket.to(self.rel_attn_embed.weight.device)
-        values = self.rel_attn_embed(relative_position_bucket)  # Shape (query_length, key_length, num_heads)
+        relative_position_bucket = self._relative_positions_bucket(
+            relative_position, bidirectional=True)
+        relative_position_bucket = relative_position_bucket.to(
+            self.rel_attn_embed.weight.device)
+        values = self.rel_attn_embed(
+            relative_position_bucket
+        )  # Shape (query_length, key_length, num_heads)
         values = values.permute([2, 0, 1])
         return values
 
-    def _relative_positions_bucket(self, relative_positions: Tensor, bidirectional: bool = True):
+    def _relative_positions_bucket(self,
+                                   relative_positions: Tensor,
+                                   bidirectional: bool = True):
         """Compute relative position buckets for WavLM model. Computation similar to formula (5) in WavLM
            paper :cite:`chen2022wavlm`.
         Args:
@@ -576,28 +609,31 @@ class WavLMSelfAttention(SelfAttention):
         num_buckets = self.num_buckets
         max_distance = self.max_distance
         # Shape (query_length, key_length)
-        relative_buckets = torch.zeros_like(relative_positions, dtype=torch.long)
+        relative_buckets = torch.zeros_like(relative_positions,
+                                            dtype=torch.long)
 
         if bidirectional:
             num_buckets = num_buckets // 2
-            relative_buckets += (relative_positions > 0).to(torch.long) * num_buckets
+            relative_buckets += (relative_positions > 0).to(
+                torch.long) * num_buckets
             relative_positions = torch.abs(relative_positions)
         else:
-            relative_positions = -torch.min(relative_positions, torch.zeros_like(relative_positions))
+            relative_positions = -torch.min(
+                relative_positions, torch.zeros_like(relative_positions))
 
         max_exact = num_buckets // 2
         is_small = relative_positions < max_exact
 
         relative_postion_if_large = max_exact + (
-            torch.log(relative_positions.float() / max_exact)
-            / math.log(max_distance / max_exact)
-            * (num_buckets - max_exact)
-        ).to(torch.long)
+            torch.log(relative_positions.float() / max_exact) /
+            math.log(max_distance / max_exact) *
+            (num_buckets - max_exact)).to(torch.long)
         relative_postion_if_large = torch.min(
-            relative_postion_if_large, torch.full_like(relative_postion_if_large, num_buckets - 1)
-        )
+            relative_postion_if_large,
+            torch.full_like(relative_postion_if_large, num_buckets - 1))
 
-        relative_buckets += torch.where(is_small, relative_positions, relative_postion_if_large)
+        relative_buckets += torch.where(is_small, relative_positions,
+                                        relative_postion_if_large)
         return relative_buckets
 
     def forward(
@@ -629,32 +665,38 @@ class WavLMSelfAttention(SelfAttention):
         # only for the first layer
         if self.rel_attn_embed is not None and position_bias is None:
             position_bias = self.compute_bias(seq_len, seq_len)
-            position_bias = position_bias.unsqueeze(0).repeat(bsz, 1, 1, 1).view(bsz * self.total_num_heads, seq_len, seq_len)
+            position_bias = position_bias.unsqueeze(0).repeat(
+                bsz, 1, 1, 1).view(bsz * self.total_num_heads, seq_len,
+                                   seq_len)
 
         attn_mask_rel_pos: Optional[Tensor] = None
         if position_bias is not None:
             attn_mask_rel_pos = position_bias
             if self.gru_rel_pos:  # Apply gating on relative position bias
-                query_layer = query.view(bsz, seq_len, self.total_num_heads, -1)
+                query_layer = query.view(bsz, seq_len, self.total_num_heads,
+                                         -1)
                 query_layer = query_layer.permute(0, 2, 1, 3)
 
                 gate_a, gate_b = torch.sigmoid(
-                    self.gru_rel_pos_linear(query_layer).view(bsz, self.total_num_heads, seq_len, 2, 4).sum(-1, keepdim=False)
-                ).chunk(2, dim=-1)
-                gate_a_1 = gate_a * (gate_b * self.gru_rel_pos_const - 1.0) + 2.0
-                attn_mask_rel_pos = gate_a_1.view(bsz * self.total_num_heads, -1, 1) * position_bias
+                    self.gru_rel_pos_linear(query_layer).view(
+                        bsz, self.total_num_heads, seq_len, 2,
+                        4).sum(-1, keepdim=False)).chunk(2, dim=-1)
+                gate_a_1 = gate_a * (gate_b * self.gru_rel_pos_const -
+                                     1.0) + 2.0
+                attn_mask_rel_pos = gate_a_1.view(bsz * self.total_num_heads,
+                                                  -1, 1) * position_bias
 
             attn_mask_rel_pos = attn_mask_rel_pos.view((-1, seq_len, seq_len))
-            attn_mask_rel_pos = attn_mask_rel_pos.reshape(bsz, self.total_num_heads, seq_len, seq_len)[:, self.remaining_heads, :, :]
+            attn_mask_rel_pos = attn_mask_rel_pos.reshape(
+                bsz, self.total_num_heads, seq_len,
+                seq_len)[:, self.remaining_heads, :, :]
 
         attn_mask = attn_mask_rel_pos
         if attention_mask is not None:
             attn_mask = attn_mask + attention_mask
         if key_padding_mask is not None:
             attn_mask = attn_mask.masked_fill(
-                key_padding_mask.reshape(bsz, 1, 1, seq_len),
-                float("-inf")
-            )
+                key_padding_mask.reshape(bsz, 1, 1, seq_len), float("-inf"))
         attn_output, _ = super().forward(query, attention_mask=attn_mask)
 
         return attn_output, position_bias
@@ -666,7 +708,7 @@ class WavLMSelfAttention(SelfAttention):
         }
         if self.hard_concrete_for_layer is not None:
             assert not self.hard_concrete_for_layer.training
-            layer_mask = self.hard_concrete_for_layer() # (1,)
+            layer_mask = self.hard_concrete_for_layer()  # (1,)
             self.out_proj.weight.data *= layer_mask
             self.out_proj.bias.data *= layer_mask
             if layer_mask == 0:
@@ -676,7 +718,8 @@ class WavLMSelfAttention(SelfAttention):
         if self.hard_concrete_for_heads is not None:
             assert not self.hard_concrete_for_heads.training
             head_mask = self.hard_concrete_for_heads()  # (num_heads,)
-            new_config["remaining_heads"] = head_mask.nonzero().squeeze(-1).tolist()
+            new_config["remaining_heads"] = head_mask.nonzero().squeeze(
+                -1).tolist()
             if len(new_config["remaining_heads"]) == 0:
                 new_config["use_attention"] = False
             else:
@@ -714,11 +757,10 @@ class FeedForward(Module):
 
         if prune_intermediate:
             self.hard_concrete_for_intermediate = HardConcrete(
-                n_in=intermediate_features, init_mean=0.5
-            )
+                n_in=intermediate_features, init_mean=0.5)
         else:
             self.hard_concrete_for_intermediate = None
-        
+
         if prune_layer:
             self.hard_concrete_for_layer = HardConcrete(n_in=1, init_mean=0.01)
         else:
@@ -736,31 +778,34 @@ class FeedForward(Module):
         x = self.intermediate_dropout(x)
 
         if self.hard_concrete_for_intermediate is not None:
-            intermediate_mask = self.hard_concrete_for_intermediate()   # (intermediate_features,)
+            intermediate_mask = self.hard_concrete_for_intermediate(
+            )  # (intermediate_features,)
             x = x * intermediate_mask
 
         x = self.output_dense(x)
         x = self.output_dropout(x)
 
         if self.hard_concrete_for_layer is not None:
-            layer_mask = self.hard_concrete_for_layer()     # (1,)
+            layer_mask = self.hard_concrete_for_layer()  # (1,)
             x = x * layer_mask
 
         return x
-    
+
     def get_num_params(self):
         io_features = self.intermediate_dense.in_features
         if self.hard_concrete_for_intermediate is not None:
-            intermediate_features = self.hard_concrete_for_intermediate.l0_norm()
+            intermediate_features = self.hard_concrete_for_intermediate.l0_norm(
+            )
         else:
             intermediate_features = self.intermediate_dense.out_features
-        num_params = (io_features + 1) * intermediate_features + (intermediate_features + 1) * io_features
+        num_params = (io_features + 1) * intermediate_features + (
+            intermediate_features + 1) * io_features
 
         if self.hard_concrete_for_layer is not None:
             num_params *= self.hard_concrete_for_layer.l0_norm()
-        
+
         return num_params
-    
+
     def prune(self):
         new_config = {
             "use_feed_forward": True,
@@ -778,12 +823,14 @@ class FeedForward(Module):
         if self.hard_concrete_for_intermediate is not None:
             assert not self.hard_concrete_for_intermediate.training
             interm_mask = self.hard_concrete_for_intermediate()
-            interm_index = interm_mask.nonzero().squeeze(-1)    # NOTE: must specify dim=-1
+            interm_index = interm_mask.nonzero().squeeze(
+                -1)  # NOTE: must specify dim=-1
             new_config["ff_interm_features"] = len(interm_index)
             if new_config["ff_interm_features"] == 0:
                 new_config["use_feed_forward"] = False
             else:
-                prune_linear_layer(self.intermediate_dense, interm_index, "output")
+                prune_linear_layer(self.intermediate_dense, interm_index,
+                                   "output")
 
                 self.output_dense.weight.data *= interm_mask
                 prune_linear_layer(self.output_dense, interm_index, "input")
@@ -797,10 +844,12 @@ class EncoderLayer(Module):
 
     def __init__(
         self,
-        attention: Optional[Module],    # can be None if the entire layer is pruned
+        attention: Optional[
+            Module],  # can be None if the entire layer is pruned
         dropout: float,
         layer_norm_first: bool,
-        feed_forward: Optional[Module], # can be None if the entire layer is pruned
+        feed_forward: Optional[
+            Module],  # can be None if the entire layer is pruned
         embed_dim: int,
     ):
         super().__init__()
@@ -840,8 +889,10 @@ class EncoderLayer(Module):
                 x = self.layer_norm(x)
 
             x, position_bias = self.attention(
-                x, attention_mask=attention_mask, position_bias=position_bias, key_padding_mask=key_padding_mask
-            )
+                x,
+                attention_mask=attention_mask,
+                position_bias=position_bias,
+                key_padding_mask=key_padding_mask)
 
             x = self.dropout(x)
             x = residual + x
@@ -858,7 +909,7 @@ class EncoderLayer(Module):
         return x, position_bias
 
     def get_num_params(self):
-        num_params = self.embed_dim * 2 * 2     # two layer norms
+        num_params = self.embed_dim * 2 * 2  # two layer norms
         if self.attention is not None:
             num_params += self.attention.get_num_params()
         if self.feed_forward is not None:
@@ -867,6 +918,7 @@ class EncoderLayer(Module):
 
 
 class Transformer(Module):
+
     def __init__(
         self,
         pos_conv_embed: Module,
@@ -901,7 +953,9 @@ class Transformer(Module):
         x = self._preprocess(x)
         for layer in self.layers:
             if not (self.training and torch.rand(1).item() <= self.layer_drop):
-                x, position_bias = layer(x, attention_mask, position_bias=position_bias)
+                x, position_bias = layer(x,
+                                         attention_mask,
+                                         position_bias=position_bias)
 
         if not self.layer_norm_first:
             x = self.layer_norm(x)
@@ -916,50 +970,59 @@ class Transformer(Module):
     ) -> List[Tensor]:
         if num_layers is not None:
             if not 0 < num_layers <= len(self.layers):
-                raise ValueError(f"`num_layers` must be between [1, {len(self.layers)}]")
+                raise ValueError(
+                    f"`num_layers` must be between [1, {len(self.layers)}]")
 
         ret: List[Tensor] = []
         x = self._preprocess(x)
-        
+
         ret.append(x)
-        
+
         for layer in self.layers:
-            x, position_bias = layer(x, attention_mask, position_bias=position_bias)
+            x, position_bias = layer(x,
+                                     attention_mask,
+                                     position_bias=position_bias)
             ret.append(x)
             if num_layers is not None and len(ret) >= num_layers:
                 return ret
         return ret
-    
+
     def get_num_params(self):
         # pos_conv_embed and layer_norm
-        num_params = sum(p.numel() for p in self.pos_conv_embed.parameters()) + self.pos_conv_embed.embed_dim * 2
+        num_params = sum(p.numel() for p in self.pos_conv_embed.parameters()
+                         ) + self.pos_conv_embed.embed_dim * 2
         for layer in self.layers:
             num_params += layer.get_num_params()
         return num_params
-    
+
     def prune(self):
         new_config = defaultdict(list)
         for layer in self.layers:
             attention_config = layer.attention.prune()
-            new_config["use_attention"].append(attention_config["use_attention"])
+            new_config["use_attention"].append(
+                attention_config["use_attention"])
             if "remaining_heads" in attention_config:
-                new_config["remaining_heads"].append(attention_config["remaining_heads"])
+                new_config["remaining_heads"].append(
+                    attention_config["remaining_heads"])
             else:
                 new_config["num_heads"].append(attention_config["num_heads"])
 
             if not attention_config["use_attention"]:
                 layer.attention = None
-            
+
             ff_config = layer.feed_forward.prune()
-            new_config["use_feed_forward"].append(ff_config["use_feed_forward"])
-            new_config["ff_interm_features"].append(ff_config["ff_interm_features"])
+            new_config["use_feed_forward"].append(
+                ff_config["use_feed_forward"])
+            new_config["ff_interm_features"].append(
+                ff_config["ff_interm_features"])
             if not ff_config["use_feed_forward"]:
                 layer.feed_forward = None
-        
+
         return new_config
 
 
 class Encoder(Module):
+
     def __init__(
         self,
         feature_projection: Module,
@@ -980,7 +1043,8 @@ class Encoder(Module):
         if lengths is not None:
             batch_size, max_len, _ = x.shape
             # create mask for padded elements and zero-out them
-            mask = torch.arange(max_len, device=lengths.device).expand(batch_size, max_len) >= lengths[:, None]
+            mask = torch.arange(max_len, device=lengths.device).expand(
+                batch_size, max_len) >= lengths[:, None]
             x[mask] = 0.0
             # extend the mask to attention shape and set weight
             mask = -10000.0 * mask[:, None, None, :].to(dtype=features.dtype)
@@ -1003,20 +1067,23 @@ class Encoder(Module):
         num_layers: Optional[int] = None,
     ) -> List[Tensor]:
         x, masks = self._preprocess(features, lengths)
-        interm = self.transformer.get_intermediate_outputs(x, attention_mask=masks, num_layers=num_layers)
+        interm = self.transformer.get_intermediate_outputs(
+            x, attention_mask=masks, num_layers=num_layers)
         # return [x] + interm
         return interm
-    
+
     def get_num_params(self, in_features):
         """Calculate the current model size."""
-        feature_projection_size = self.feature_projection.get_num_params(in_features)
+        feature_projection_size = self.feature_projection.get_num_params(
+            in_features)
         transformer_size = self.transformer.get_num_params()
         return feature_projection_size + transformer_size
-    
+
     def prune(self, conv_out_index):
         """In-place pruning of submodules."""
         prune_layer_norm(self.feature_projection.layer_norm, conv_out_index)
-        prune_linear_layer(self.feature_projection.projection, conv_out_index, "input")
+        prune_linear_layer(self.feature_projection.projection, conv_out_index,
+                           "input")
         transformer_config = self.transformer.prune()
         return transformer_config
 
@@ -1093,34 +1160,33 @@ def _get_feature_extractor(
                 bias=bias,
                 layer_norm=normalization,
                 prune_conv_channels=prune_conv_channels,
-            )
-        )
+            ))
         in_channels = out_channels
     return FeatureExtractor(nn.ModuleList(blocks))
 
 
 def _get_encoder(
-    in_features: int,
-    embed_dim: int,
-    dropout_input: float,
-    pos_conv_kernel: int,
-    pos_conv_groups: int,
-    num_layers: int,
-    use_attention: List[bool],
-    use_feed_forward: List[bool],
-    num_heads: List[int],
-    head_dim: int,
-    attention_dropout: float,
-    ff_interm_features: List[int],
-    ff_interm_dropout: float,
-    dropout: float,
-    layer_norm_first: bool,
-    layer_drop: float,
-    prune_attention_heads: bool = False,
-    prune_attention_layer: bool = False,
-    prune_feed_forward_intermediate: bool = False,
-    prune_feed_forward_layer: bool = False,
-    use_layerwise_prune: str = False,  # Added for Wav2Vec2 support
+        in_features: int,
+        embed_dim: int,
+        dropout_input: float,
+        pos_conv_kernel: int,
+        pos_conv_groups: int,
+        num_layers: int,
+        use_attention: List[bool],
+        use_feed_forward: List[bool],
+        num_heads: List[int],
+        head_dim: int,
+        attention_dropout: float,
+        ff_interm_features: List[int],
+        ff_interm_dropout: float,
+        dropout: float,
+        layer_norm_first: bool,
+        layer_drop: float,
+        prune_attention_heads: bool = False,
+        prune_attention_layer: bool = False,
+        prune_feed_forward_intermediate: bool = False,
+        prune_feed_forward_layer: bool = False,
+        use_layerwise_prune: str = False,  # Added for Wav2Vec2 support
 ) -> Encoder:
     """
     Args:
@@ -1244,8 +1310,10 @@ def _get_encoder(
           - Large
             https://github.com/pytorch/fairseq/blob/425c36eafff535fe7337f8bdd5ace22ebacc78cb/examples/wav2vec/config/finetuning/vox_960h.yaml#L54
     """
-    feature_projection = FeatureProjection(in_features, embed_dim, dropout_input)
-    pos_conv = ConvolutionalPositionalEmbedding(embed_dim, pos_conv_kernel, pos_conv_groups)
+    feature_projection = FeatureProjection(in_features, embed_dim,
+                                           dropout_input)
+    pos_conv = ConvolutionalPositionalEmbedding(embed_dim, pos_conv_kernel,
+                                                pos_conv_groups)
 
     # Original impl
     # https://github.com/pytorch/fairseq/blob/425c36eafff535fe7337f8bdd5ace22ebacc78cb/fairseq/models/wav2vec/wav2vec2.py#L768-L782
@@ -1280,8 +1348,7 @@ def _get_encoder(
                 layer_norm_first=layer_norm_first,
                 feed_forward=feed_forward,
                 embed_dim=embed_dim,
-            )
-        )
+            ))
     transformer = Transformer(
         pos_conv_embed=pos_conv,
         dropout=dropout,
@@ -1293,29 +1360,29 @@ def _get_encoder(
 
 
 def _get_wavlm_encoder(
-    in_features: int,
-    embed_dim: int,
-    dropout_input: float,
-    pos_conv_kernel: int,
-    pos_conv_groups: int,
-    num_layers: int,
-    use_attention: List[bool],
-    use_feed_forward: List[bool],
-    total_num_heads: List[int],
-    remaining_heads: List[List[int]],
-    num_buckets: int,
-    max_distance: int,
-    attention_dropout: float,
-    ff_interm_features: List[int],
-    ff_interm_dropout: float,
-    dropout: float,
-    layer_norm_first: bool,
-    layer_drop: float,
-    prune_attention_heads: bool = False,
-    prune_attention_layer: bool = False,
-    prune_feed_forward_intermediate: bool = False,
-    prune_feed_forward_layer: bool = False,
-    use_layerwise_prune: str = False,    # e.g. 5-12
+        in_features: int,
+        embed_dim: int,
+        dropout_input: float,
+        pos_conv_kernel: int,
+        pos_conv_groups: int,
+        num_layers: int,
+        use_attention: List[bool],
+        use_feed_forward: List[bool],
+        total_num_heads: List[int],
+        remaining_heads: List[List[int]],
+        num_buckets: int,
+        max_distance: int,
+        attention_dropout: float,
+        ff_interm_features: List[int],
+        ff_interm_dropout: float,
+        dropout: float,
+        layer_norm_first: bool,
+        layer_drop: float,
+        prune_attention_heads: bool = False,
+        prune_attention_layer: bool = False,
+        prune_feed_forward_intermediate: bool = False,
+        prune_feed_forward_layer: bool = False,
+        use_layerwise_prune: str = False,  # e.g. 5-12
 ) -> Encoder:
     """
     Construct encoder for WavLM model :cite:`chen2022wavlm`. The structure of the encoder and most of the argments are
@@ -1340,8 +1407,10 @@ def _get_wavlm_encoder(
         layer_drop (float): See :py:func:`_get_encoder`.
 
     """
-    feature_projection = FeatureProjection(in_features, embed_dim, dropout_input)
-    pos_conv = ConvolutionalPositionalEmbedding(embed_dim, pos_conv_kernel, pos_conv_groups)
+    feature_projection = FeatureProjection(in_features, embed_dim,
+                                           dropout_input)
+    pos_conv = ConvolutionalPositionalEmbedding(embed_dim, pos_conv_kernel,
+                                                pos_conv_groups)
 
     if use_layerwise_prune is not False:
         start_prune_layer_idx = int(use_layerwise_prune.split('-')[0]) - 1
@@ -1357,18 +1426,20 @@ def _get_wavlm_encoder(
         if use_attention[i]:
             if use_layerwise_prune is not False:
                 if i >= start_prune_layer_idx and i <= end_prune_layer_idx:
-                    prune_attention_layer = True 
+                    prune_attention_layer = True
                     prune_feed_forward_layer = True
                 else:
                     prune_attention_layer = origin_prune_attention_layer
                     prune_feed_forward_layer = origin_prune_feed_forward_layer
-                    
+
             attention = WavLMSelfAttention(
                 embed_dim=embed_dim,
                 total_num_heads=total_num_heads[i],
                 remaining_heads=remaining_heads[i],
                 dropout=attention_dropout,
-                has_relative_attention_bias=(i == 0),  # Position embedding is only necessary in the first layer.
+                has_relative_attention_bias=(
+                    i == 0
+                ),  # Position embedding is only necessary in the first layer.
                 num_buckets=num_buckets,
                 max_distance=max_distance,
                 prune_heads=prune_attention_heads,
@@ -1394,8 +1465,7 @@ def _get_wavlm_encoder(
                 layer_norm_first=layer_norm_first,
                 feed_forward=feed_forward,
                 embed_dim=embed_dim,
-            )
-        )
+            ))
     transformer = Transformer(
         pos_conv_embed=pos_conv,
         dropout=dropout,
@@ -1416,11 +1486,13 @@ def _get_padding_mask(input: Tensor, lengths: Tensor) -> Tensor:
         (Tensor): The padding mask.
     """
     batch_size, max_len, _ = input.shape
-    mask = torch.arange(max_len, device=lengths.device).expand(batch_size, max_len) >= lengths[:, None]
+    mask = torch.arange(max_len, device=lengths.device).expand(
+        batch_size, max_len) >= lengths[:, None]
     return mask
 
 
 class GradMultiply(torch.autograd.Function):
+
     @staticmethod
     def forward(ctx, x, scale):
         ctx.scale = scale

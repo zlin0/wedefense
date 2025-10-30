@@ -6,7 +6,7 @@ num_avg: 2
 enable_amp: False # whether enable automatic mixed precision training
 
 seed: 42
-num_epochs: 5
+num_epochs: 3
 save_epoch_interval: 1 # save model every 5 epochs
 log_batch_interval: 100 # log every 100 batchs
 
@@ -32,15 +32,13 @@ dataset_args:
   speed_perturb: False
   num_frms: 150
   aug_prob: 0.8 # prob to add reverb & noise aug per sample
-  frontend: "huggingface" # fbank, s3prl
-  huggingface_args:
+  frontend: "dasheng" # fbank, s3prl
+  dasheng_args:
     upstream_args:
-      name: "wavlm_base"
-      path_or_url: "convert/wavlm_base.hf.pth"
-      pruning_units: "conv,head,attlayer,interm,ffnlayer"
+      name: "mispeech/dasheng-1.2B" 
+      path_or_url: "./dasheng_models_cache/"
+      pruning_units: ""
     frozen: False
-    frame_shift: 20
-    frame_length: 20
   cmvn: True
   cmvn_args:
     norm_mean: True
@@ -53,6 +51,7 @@ dataset_args:
     max_f: 8
     prob: 0.6
 
+
 model: SSL_BACKEND_MHFA # starts from SSL_BACKEND (as defined in models/get_model.py)
 model_init: null
 model_args:
@@ -61,16 +60,16 @@ model_args:
   embed_dim: 256
   compression_dim: 128
   feature_grad_mult: 1.00
-  nb_layer: 13
+  nb_layer: 40
 
 projection_args:
   project_type: "softmax" # add_margin, arc_margin, sphere, sphereface2, softmax, arc_margin_intertopk_subcenter
   scale: 32.0
   easy_margin: False
 
-use_pruning_loss: True # whether use pruning loss, if True, the pruning loss will be added to the training loss
+use_pruning_loss: False # whether use pruning loss, if True, the pruning loss will be added to the training loss
 target_sparsity: 0.1
-initial_reg_lr: 5.0e-4
+initial_reg_lr: 5.0e-2
 sparsity_warmup_epochs: 5
 
 # Progressive pruning configuration
@@ -96,8 +95,8 @@ optimizer_args:
 
 scheduler: ExponentialDecrease
 scheduler_args:
-  initial_lr: 5.0e-6
-  final_lr: 5.0e-7
+  initial_lr: 5.0e-6 # 8.0e-3
+  final_lr: 1.0e-7 #4.4e-3 
   warm_up_epoch: 2
   warm_from_zero: True
   frontend_modules: ["frontend"]

@@ -62,7 +62,7 @@ model_args:
   compression_dim: 128
   feature_grad_mult: 1.00
   nb_layer: 13
-  
+
 projection_args:
   project_type: "softmax" # add_margin, arc_margin, sphere, sphereface2, softmax, arc_margin_intertopk_subcenter
   scale: 32.0

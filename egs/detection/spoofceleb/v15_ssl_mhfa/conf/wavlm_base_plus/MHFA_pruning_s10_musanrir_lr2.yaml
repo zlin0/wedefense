@@ -97,7 +97,7 @@ optimizer_args:
 scheduler: ExponentialDecrease
 scheduler_args:
   initial_lr: 5.0e-6 # 8.0e-3
-  final_lr: 1.0e-7 #4.4e-3 
+  final_lr: 1.0e-7 #4.4e-3
   warm_up_epoch: 2
   warm_from_zero: True
   frontend_modules: ["frontend"]

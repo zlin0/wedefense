@@ -24,6 +24,7 @@ gpus="[0,1]"
 data_type="shard"  # shard/raw/feat
 data=''
 config_path=
+use_lmdb=False
 
 
 . tools/parse_options.sh
@@ -32,7 +33,6 @@ data_name_array=("dev" "eval")
 data_list_path_array=("${data}/dev/${data_type}.list" "${data}/eval/${data_type}.list")
 data_scp_path_array=("${data}/dev/wav.scp" "${data}/eval/wav.scp") # to count the number of wavs
 data_lmdb_path_array=("${data}/dev/lmdb" "${data}/eval/lmdb") # to count the number of wavs
-use_lmdb=False
 
 nj_array=($nj $nj )
 batch_size_array=(1 1) # batch_size of test set must be 1 !!!

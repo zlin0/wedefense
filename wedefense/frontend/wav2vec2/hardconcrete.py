@@ -13,16 +13,16 @@ import torch.nn as nn
 
 class HardConcrete(nn.Module):
     """Hard Concrete distribution for structured pruning with L0 regularization.
-    
-    This module implements the Hard Concrete distribution, which provides a 
+
+    This module implements the Hard Concrete distribution, which provides a
     differentiable approximation to discrete binary masks. It's particularly
     useful for structured pruning where you want to learn which channels,
     heads, or layers to keep or remove.
-    
+
     The module creates a learnable mask of size N that can be used for L0
     regularization. During training, the mask is sampled stochastically,
     while during evaluation, it uses a deterministic approximation.
-    
+
     Example:
         >>> module = HardConcrete(n_in=100)
         >>> mask = module()  # Get binary-like mask
@@ -30,16 +30,15 @@ class HardConcrete(nn.Module):
     """
 
     def __init__(
-        self,
-        n_in: int,
-        init_mean: float = 0.5,
-        init_std: float = 0.01,
-        temperature: float = 2/3,     # from CoFi
-        stretch: float = 0.1,
-        eps: float = 1e-6
-    ) -> None:
+            self,
+            n_in: int,
+            init_mean: float = 0.5,
+            init_std: float = 0.01,
+            temperature: float = 2 / 3,  # from CoFi
+            stretch: float = 0.1,
+            eps: float = 1e-6) -> None:
         """Initialize the HardConcrete module.
-        
+
         Args:
             n_in: The number of hard concrete variables in this mask.
             init_mean: Initial drop rate for hard concrete parameter (0.0 to 1.0).
@@ -67,7 +66,7 @@ class HardConcrete(nn.Module):
 
     def reset_parameters(self):
         """Reset the parameters of this module.
-        
+
         Initializes log_alpha parameters based on init_mean and init_std.
         The initialization follows the logit space transformation to ensure
         proper distribution of initial pruning probabilities.
@@ -81,10 +80,10 @@ class HardConcrete(nn.Module):
 
     def l0_norm(self) -> torch.Tensor:
         """Compute the expected L0 norm of this mask.
-        
+
         The L0 norm represents the expected number of non-zero elements
         in the mask, which is useful for monitoring pruning progress.
-        
+
         Returns:
             The expected L0 norm as a scalar tensor.
         """
@@ -92,21 +91,22 @@ class HardConcrete(nn.Module):
 
     def forward(self) -> torch.Tensor:
         """Sample a hard concrete mask.
-        
+
         During training, samples a stochastic mask using the reparameterization
         trick. During evaluation, uses a deterministic approximation based on
         the expected sparsity.
-        
+
         Returns:
             A binary-like mask tensor of shape (n_in,).
         """
         if self.training:
             # Reset the compiled mask for fresh sampling
             self.compiled_mask = None
-            
+
             # Sample mask using reparameterization trick
             u = self.log_alpha.new(self.n_in).uniform_(self.eps, 1 - self.eps)
-            s = torch.sigmoid((torch.log(u / (1 - u)) + self.log_alpha) / self.beta)
+            s = torch.sigmoid(
+                (torch.log(u / (1 - u)) + self.log_alpha) / self.beta)
             s = s * (self.limit_r - self.limit_l) + self.limit_l
             mask = s.clamp(min=0., max=1.)
 
@@ -116,15 +116,15 @@ class HardConcrete(nn.Module):
                 # Calculate expected sparsity
                 expected_num_zeros = self.n_in - self.l0_norm().item()
                 num_zeros = round(expected_num_zeros)
-                
+
                 # Approximate expected value using empirical scaling factor
                 soft_mask = torch.sigmoid(self.log_alpha / self.beta * 0.8)
-                
+
                 # Set smallest values to zero to achieve target sparsity
                 _, indices = torch.topk(soft_mask, k=num_zeros, largest=False)
                 soft_mask[indices] = 0.
                 self.compiled_mask = soft_mask
-            
+
             mask = self.compiled_mask
 
         return mask

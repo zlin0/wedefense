@@ -47,6 +47,10 @@ from wedefense.utils.prune_utils import make_pruning_param_groups
 import wandb
 import time
 
+import os, torch
+
+os.environ["TORCH_SHOW_CPP_STACKTRACES"] = "1"
+torch.autograd.set_detect_anomaly(True)
 
 def train(config='conf/config.yaml', **kwargs):
     """Trains a model on the given features and lab labels.
@@ -303,8 +307,15 @@ def train(config='conf/config.yaml', **kwargs):
             param.requires_grad = False
 
     # ddp_model
+    model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
+
     model.cuda()
-    ddp_model = torch.nn.parallel.DistributedDataParallel(model)
+    ddp_model = torch.nn.parallel.DistributedDataParallel(
+        model, 
+        find_unused_parameters=True,
+        static_graph=True  # Fix: Tell DDP the graph structure doesn't change
+    )
+    
     device = torch.device("cuda")
 
     criterion = getattr(torch.nn, configs['loss'])(**configs['loss_args'])

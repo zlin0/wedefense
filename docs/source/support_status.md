@@ -6,7 +6,7 @@
 
 
 
-## Databases 
+## Databases
 
 TODO: check type
 

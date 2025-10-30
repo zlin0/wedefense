@@ -7,6 +7,7 @@
 
 set -ex
 . ./path.sh || exit 1
+. ./lumi.sh || exit 1
 
 stage=3
 stop_stage=3
@@ -17,7 +18,7 @@ data_type="raw"  # shard/raw
 
 config=conf/MHFA_wavlmplus_pruning_s0.yaml #wespeaker version
 exp_dir=exp/MHFA_wavlmplus_pruning_s0
-gpus="[0]"
+gpus="[0,1,2,3,4,5,6,7]"
 num_avg=2 # how many models you want to average
 checkpoint=
 score_norm_method="asnorm"  # asnorm/snorm
@@ -101,7 +102,8 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
       break
     fi
   done
-    torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((port)) --nnodes=1 --nproc_per_node=$num_gpus \
+    # torchrun --rdzv_backend=c10d --rdzv_endpoint=$(hostname):$((port)) --nnodes=1 --nproc_per_node=$num_gpus \
+    python -m torch.distributed.launch --standalone --nnodes=1 --nproc_per_node=$num_gpus \
       wedefense/bin/train_pq.py --config $config \
         --exp_dir ${exp_dir} \
         --gpus $gpus \
@@ -111,7 +113,8 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
         --train_label ${data}/train/utt2lab \
         --reverb_data data/rirs/lmdb \
         --noise_data data/musan/lmdb \
-        ${train_lmdb:+--train_lmdb $train_lmdb} ${checkpoint:+--checkpoint $checkpoint}
+        --train_lmdb ${data}/train/lmdb \
+        ${checkpoint:+--checkpoint $checkpoint}
 	#TODO, currently also moved from local/extract_emb.sh, flexible to control musan/rirs.
 fi || exit 1
 
@@ -156,7 +159,7 @@ if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
 
   local/extract_emb.sh \
      --exp_dir $exp_dir --model_path $pru_model_path --config_path $pru_config \
-     --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}
+     --nj $num_gpus --gpus $gpus --data_type $data_type --data ${data}  --use_lmdb True
 fi
 
 #######################################################################################

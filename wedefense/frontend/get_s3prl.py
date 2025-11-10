@@ -135,6 +135,7 @@ class S3prlFrontend(nn.Module):
         with torch.no_grad() if self.frozen else contextlib.nullcontext():
             feats, feats_lens = self.upstream(input, input_lengths)
             # List<[B,T,D]> (len=Nb_layer) , List<[T, T, .., T](len = B) x Nb_layer>  # noqa
+
         if self.layer != -1:
             layer = self.layer
             feats, feats_lens = feats[layer], feats_lens[layer]

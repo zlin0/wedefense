@@ -33,6 +33,8 @@ g_cm_spf = 'spoof'
 g_asv_tar = 'target'
 g_asv_non = 'nontarget'
 g_asv_spf = 'spoof'
+g_cm_real = 'real'
+g_cm_fake = 'fake'
 
 # for filtering out dummy labels
 g_t2_tag = 'track_2_tag'

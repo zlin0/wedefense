@@ -63,7 +63,7 @@ def main(logits_scp_path, training_counts, train_label, pi_spoof):
 
     for k, v in lab2id_dict.items():
         print(k)
-        if "bonafide" in k:
+        if "bonafide" in k or "real" in k:
             bonafide_idx.append(v)
             bonafide_priors.append(lab2training_prior[k])
         else:

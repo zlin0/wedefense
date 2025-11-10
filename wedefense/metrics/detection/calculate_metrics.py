@@ -28,8 +28,16 @@ def calculate_minDCF_EER_CLLR_actDCF(cm_scores,
     assert cm_keys.size == cm_scores.size, "Error, unequal length of cm label and score files"
 
     # Extract bona fide (real human) and spoof scores from the CM scores
+
     bona_cm = cm_scores[cm_keys == util.g_cm_bon]
+    if len(bona_cm) == 0:
+        bona_cm = cm_scores[cm_keys == util.g_cm_real]
+        
     spoof_cm = cm_scores[cm_keys == util.g_cm_spf]
+    if len(spoof_cm) == 0:
+        spoof_cm = cm_scores[cm_keys == util.g_cm_fake]
+        
+
 
     # EERs of the standalone systems
     eer_cm, frr, far, thresholds, eer_threshold = compute_eer(

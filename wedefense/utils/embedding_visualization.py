@@ -28,7 +28,13 @@ def get_utt2embs(emb_scp):
     return utt2embs
 
 
-def draw_emb_fig(ax, emb_scp, utt2lab, label2num, num2label, redudim_name=""):
+def draw_emb_fig(ax,
+                 emb_scp,
+                 utt2lab,
+                 label2num,
+                 num2label,
+                 redudim_name="",
+                 text_layout='circular'):
     """
     ax: The matplotlib Axes object to draw on
     emb_scp:
@@ -79,14 +85,31 @@ def draw_emb_fig(ax, emb_scp, utt2lab, label2num, num2label, redudim_name=""):
                s=0.2,
                alpha=0.3)
 
-    for tag in np.unique(all_labnum):
-        mean_data = redu_embedding[np.array(all_labnum) == tag].mean(axis=0)
-        ax.text(mean_data[0],
-                mean_data[1],
-                num2label[str(tag)],
-                fontsize=10,
-                color=cmap(norm(tag)),
-                bbox=dict(facecolor='white', alpha=0.7))
+    if text_layout == 'circular':
+        # Arrange text in a circle
+        tags = np.unique(all_labnum)
+        num_tags = len(tags)
+        radius = np.max(np.abs(redu_embedding)) * 1.2
+        for i, tag in enumerate(tags):
+            angle = 2 * np.pi * i / num_tags
+            x = radius * np.cos(angle)
+            y = radius * np.sin(angle)
+            ax.text(x,
+                    y,
+                    num2label[str(tag)],
+                    fontsize=12,
+                    color=cmap(norm(tag)),
+                    bbox=dict(facecolor='white', alpha=0.7))
+    else:
+        for tag in np.unique(all_labnum):
+            mean_data = redu_embedding[np.array(all_labnum) == tag].mean(
+                axis=0)
+            ax.text(mean_data[0],
+                    mean_data[1],
+                    num2label[str(tag)],
+                    fontsize=12,
+                    color=cmap(norm(tag)),
+                    bbox=dict(facecolor='white', alpha=0.7))
 
     ax.set_xticks([])
     ax.set_yticks([])

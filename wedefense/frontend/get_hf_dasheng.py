@@ -16,7 +16,7 @@
 
 import contextlib
 import logging
-from typing import Mapping, Any, Tuple
+from typing import Any, List, Mapping, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -104,7 +104,9 @@ class HuggingfaceFrontend_Dasheng(nn.Module):
         return sum(p.numel() for p in self.upstream.parameters())
 
     def forward(
-        self, input_wav: torch.Tensor
+        self, 
+        input_wav: torch.Tensor, 
+        input_lengths: Optional[torch.LongTensor] = None
     ) -> Tuple[torch.Tensor, None]:
         """
         Args:

@@ -304,7 +304,13 @@ def train(config='conf/config.yaml', **kwargs):
 
     # ddp_model
     model.cuda()
-    ddp_model = torch.nn.parallel.DistributedDataParallel(model)
+    
+    model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
+
+    ddp_model = torch.nn.parallel.DistributedDataParallel(model,        
+        find_unused_parameters=True,
+        static_graph=True
+    )
     device = torch.device("cuda")
 
     criterion = getattr(torch.nn, configs['loss'])(**configs['loss_args'])
@@ -358,6 +364,20 @@ def train(config='conf/config.yaml', **kwargs):
     if rank == 0:
         logger.info("<== Scheduler ==>")
         logger.info("scheduler is: " + configs['scheduler'])
+        
+        # Log differential learning rate configuration
+        logger.info("<== Differential Learning Rate Configuration ==>")
+        frontend_lr_ratio = configs['scheduler_args'].get('frontend_lr_ratio', 1.0)
+        logger.info(f"Frontend LR ratio: {frontend_lr_ratio}")
+        
+        # Display parameter group identification results
+        logger.info("<== Parameter Groups ==>")
+        for idx, pg in enumerate(optimizer.param_groups):
+            name = pg.get('name', 'N/A')
+            is_frontend = pg.get('_is_frontend', False)
+            n_params = len(pg['params'])
+            logger.info(f"Group {idx}: name={name}, is_frontend={is_frontend}, n_params={n_params}")
+
 
     # margin scheduler
     configs['margin_update']['epoch_iter'] = epoch_iter

@@ -36,7 +36,7 @@ dataset_args:
   beats_args:
     upstream_args:
       name: "BEATs"
-      path_or_url: "/scratch/project_465002053/junyi/sv_anti_dev/wedefense/egs/detection/esdd2026/v15_ssl_mhfa/beats_models_cache/BEATs_iter3.pt"
+      path_or_url: "./beats_models_cache/BEATs_iter3.pt"
     frozen: False
   cmvn: False
   cmvn_args:

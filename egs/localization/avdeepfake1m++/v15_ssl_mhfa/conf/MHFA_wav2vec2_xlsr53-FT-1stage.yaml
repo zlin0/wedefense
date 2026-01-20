@@ -1,0 +1,94 @@
+### train configuraton
+
+exp_dir: exp/W2V2baseFrozen_MHFA-TSTP-emb256-fbank80-num_frms400-aug0-spFalse-saFalse-ArcMargin-SGD-epoch100
+gpus: "[0,1]"
+num_avg: 2
+enable_amp: False # whether enable automatic mixed precision training
+
+seed: 42
+num_epochs: 20
+save_epoch_interval: 1 # save model every 5 epochs
+log_batch_interval: 1 # log every 100 batchs
+
+dataloader_args:
+  batch_size: 32
+  num_workers: 6
+  pin_memory: False
+  prefetch_factor: 8
+  drop_last: True
+
+dataset_args:
+  # the sample number which will be traversed within one epoch, if the value equals to 0,
+  # the utterance number in the dataset will be used as the sample_num_per_epoch.
+  label_reso: 0.02 #in second. to get corresponding frame-level localization labels.
+  sample_num_per_epoch: 0
+  shuffle: True
+  shuffle_args:
+    shuffle_size: 2500
+  filter: True
+  filter_args:
+    min_num_frames: 50
+    max_num_frames: 400
+  resample_rate: 16000
+  speed_perturb: False
+  num_frms: 150
+  aug_prob: 0 # prob to add reverb & noise aug per sample
+  frontend: "s3prl" # fbank, s3prl
+  s3prl_args:
+    upstream_args:
+      name: "xlsr_53" # wav2vec2_large_ll60k, xlsr_53
+    download_dir: ./s3prl_hub
+    multilayer_feature: True
+    layerwise_feature: True
+    layer: -1
+    frozen: False
+    frame_shift: 20
+    frame_length: 20
+  cmvn: True
+  cmvn_args:
+    norm_mean: True
+    norm_var: False
+  spec_aug: False
+  spec_aug_args:
+    num_t_mask: 1
+    num_f_mask: 1
+    max_t: 10
+    max_f: 8
+    prob: 0.6
+
+model: SSL_BACKEND_MHFA # starts from SSL_BACKEND (as defined in models/get_model.py)
+model_init: null
+model_args:
+  feat_dim: 1024
+  head_nb: 32
+  embed_dim: 256
+  compression_dim: 256 # should be same as embed_dim for frame
+  feature_grad_mult: 0.05
+  nb_layer: 25
+projection_args:
+  project_type: "softmax" # add_margin, arc_margin, sphere, sphereface2, softmax, arc_margin_intertopk_subcenter
+  scale: 32.0
+  easy_margin: False
+
+margin_scheduler: MarginScheduler
+margin_update:
+  initial_margin: 0.0
+  final_margin: 0.0
+  increase_start_epoch: 1
+  fix_start_epoch: 1
+  update_margin: True
+  increase_type: "exp" # exp, linear
+
+loss: CrossEntropyLoss
+loss_args: {}
+
+optimizer: AdamW
+optimizer_args:
+  weight_decay: 1.0e-8
+
+scheduler: ExponentialDecrease
+scheduler_args:
+  initial_lr: 1.0e-4
+  final_lr: 5.0e-6
+  warm_up_epoch: 6
+  warm_from_zero: True

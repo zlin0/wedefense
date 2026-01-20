@@ -33,6 +33,8 @@ import torchaudio
 import torchaudio.compliance.kaldi as kaldi
 import torchaudio.transforms as torchaudio_T
 
+import torchvision
+
 import wedefense.dataset.augmentation.rawboost_util as rawboost_util
 import wedefense.dataset.augmentation.codec_util as codec_util
 
@@ -136,6 +138,20 @@ def parse_raw(data):
             p = Popen(wav[:-1], shell=True, stdout=PIPE)
             data = p.stdout.read()
             waveform, sample_rate = torchaudio.load(io.BytesIO(data))
+        elif wav.endswith('.mp4'):
+            # Extract audio from video and its sampling rate
+            video, audio, info = torchvision.io.read_video(wav, pts_unit="sec")
+            video = video.permute(0, 3, 1, 2) / 255
+            if audio.numel() == 0:
+                raise ValueError(f"No audio stream found in video file: {wav}")
+            sample_rate = info.get('audio_fps', None)
+            if sample_rate is None:
+                raise ValueError(
+                    f"Could not extract audio sample rate from video info for file: {wav}"
+                )
+            audio = audio.permute(1, 0)
+            waveform = audio
+            return waveform, int(sample_rate)
         else:
             waveform, sample_rate = torchaudio.load(wav)
         return waveform, sample_rate
@@ -366,7 +382,7 @@ def filter(data,
 
             if len(wav) < min_len:
                 continue
-            elif len(wav) > max_len:
+            else:
                 wav = get_random_chunk(wav, max_len)
             sample['wav'] = wav.unsqueeze(0)
 

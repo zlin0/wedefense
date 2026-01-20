@@ -23,6 +23,8 @@ Link: https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10022775
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import random
 
 
 class GradMultiply(torch.autograd.Function):
@@ -191,3 +193,127 @@ class SSL_BACKEND_CorrelationPooling(nn.Module):
         outs = self.pooling_fc(corr)
 
         return outs
+
+class SSL_BACKEND_MHFA_DSU(nn.Module):
+    """
+    # Copyright (c) 2025 Jin Li (jin666.li@connect.polyu.hk)
+
+    """
+    def __init__(self,
+                 head_nb=8,
+                 feat_dim=768,
+                 compression_dim=128,
+                 embed_dim=256,
+                 nb_layer=13,
+                 feature_grad_mult=1.0):
+        super(SSL_BACKEND_MHFA_DSU, self).__init__()
+
+        self.feature_grad_mult = feature_grad_mult
+
+        # Define learnable weights for key and value computations across layers
+        self.weights_k = nn.Parameter(data=torch.ones(nb_layer),
+                                      requires_grad=True)
+        self.weights_v = nn.Parameter(data=torch.ones(nb_layer),
+                                      requires_grad=True)
+
+        # Initialize given parameters
+        self.head_nb = head_nb
+        self.ins_dim = feat_dim
+        self.cmp_dim = compression_dim
+        self.ous_dim = embed_dim
+
+        # Define compression linear layers for keys and values
+        self.cmp_linear_k = nn.Linear(self.ins_dim, self.cmp_dim)
+        self.cmp_linear_v = nn.Linear(self.ins_dim, self.cmp_dim)
+
+        # Define linear layer to compute multi-head attention weights
+        self.att_head = nn.Linear(self.cmp_dim, self.head_nb)
+
+        # Define a fully connected layer for final output
+        self.pooling_fc = nn.Linear(self.head_nb * self.cmp_dim, self.ous_dim)
+
+        # DSU hyperparameters
+        self.eps = 1e-6
+        self.p = 0.5
+        self.factor = 1.0
+
+    def sqrtvar(self, x):
+        t = (x.var(dim=0, keepdim=True) + self.eps).sqrt()
+        t = t.repeat(x.shape[0], 1)
+        return t
+
+    def _reparameterize(self, mu, std):
+        epsilon = torch.randn_like(std) * self.factor
+        return mu + epsilon * std
+
+    def get_frame_att_emb(self, x):
+        # Input x has shape: [Batch, Dim, Frame_len, Nb_Layer]
+        x = GradMultiply.apply(x, self.feature_grad_mult)
+
+        # Compute the key by taking a weighted sum of input across layers
+        k = torch.sum(x.mul(nn.functional.softmax(self.weights_k, dim=-1)),
+                      dim=-1).transpose(1, 2)
+
+        # Compute the value in a similar fashion
+        v = torch.sum(x.mul(nn.functional.softmax(self.weights_v, dim=-1)),
+                      dim=-1).transpose(1, 2)
+
+        # DSU
+        if self.training == True and random.random() > self.p:
+            x = v.permute(0, 2, 1) # (B,T,F) -> (B,F,T)
+            B, C = x.size(0), x.size(1)
+
+            mean = x.mean(dim=[2], keepdim=False)
+            std = (x.var(dim=[2], keepdim=False) + self.eps).sqrt()
+            sqrtvar_mu = self.sqrtvar(mean)
+            sqrtvar_std = self.sqrtvar(std)
+            beta = self._reparameterize(mean, sqrtvar_mu)
+            gamma = self._reparameterize(std, sqrtvar_std)
+            x = (x - mean.reshape(B, C, 1)) / std.reshape(B, C, 1)
+            x = x * gamma.reshape(B, C, 1) + beta.reshape(B, C, 1)
+            h_x = x.permute(0, 2, 1)  # (B,F,T) -> (B,T,F)
+            v = self.cmp_linear_v(h_x)
+        else:
+            v = self.cmp_linear_v(v)
+
+        # Pass the keys and values through compression linear layers
+        k = self.cmp_linear_k(k)
+        # v = self.cmp_linear_v(v)
+
+        # Compute attention weights using compressed keys
+        att_k = self.att_head(k)  # B, T, H
+
+        # Adjust dimensions for computing attention output
+        v = v.unsqueeze(-2)  # B, T, 1
+
+        # Compute attention output by taking weighted sum of values using softmaxed attention weights  # noqa
+        att_out = v.mul(nn.functional.softmax(
+            att_k, dim=1).unsqueeze(-1))  # [B, T, H, D]
+
+        return att_out
+
+    def get_frame_emb(self, x):
+
+        att_out = self.get_frame_att_emb(x)
+
+        # Average over heads [B, T, D]
+        att_out_mean = att_out.mean(dim=2)
+
+        return att_out_mean
+
+    def forward(self, x):
+
+        att_out = self.get_frame_att_emb(x)
+
+        # Compute attention output by taking weighted sum of values using softmaxed attention weights  # noqa
+        pooling_outs = torch.sum(att_out, dim=1)
+
+        # Reshape the tensor before passing through the fully connected layer
+        b, h, f = pooling_outs.shape
+        pooling_outs = pooling_outs.reshape(b, -1)
+
+        # Pass through fully connected layer to get the final output
+        outs = self.pooling_fc(pooling_outs)
+
+        return outs
+

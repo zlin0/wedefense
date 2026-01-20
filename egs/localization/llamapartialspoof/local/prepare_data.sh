@@ -1,4 +1,4 @@
-#!/bin/bash
+llamapartialspoof#!/bin/bash
 #
 # Copyright 2025 Hieu-Thi Luong (contact@hieuthi.com)
 #

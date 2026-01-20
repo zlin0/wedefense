@@ -31,7 +31,7 @@ from wedefense.frontend import *
 from wedefense.models.projections import get_projection
 from wedefense.models.get_model import get_model
 from wedefense.utils.checkpoint import load_checkpoint, save_checkpoint
-from wedefense.utils.executor_localization import run_epoch
+from wedefense.utils.executor_localization import train_epoch, val_epoch
 from wedefense.utils.file_utils import read_seglab_npy
 from wedefense.utils.utils import get_logger, parse_config_or_kwargs, set_seed
 from wedefense.utils.diarization.rttm_tool import get_rttm
@@ -42,13 +42,14 @@ import wandb
 import time
 
 
-def train(config='conf/config.yaml', **kwargs):
+def train(config='conf/debug.yaml', **kwargs):
     """Trains a model on the given features and spk labels.
 
     :config: A training configuration. Note that all parameters in the
              config can also be manually adjusted with --ARG VALUE
     :returns: None
     """
+
     configs = parse_config_or_kwargs(config, **kwargs)
 
     # wandb info
@@ -74,6 +75,7 @@ def train(config='conf/config.yaml', **kwargs):
     local_rank = int(os.environ.get('LOCAL_RANK', 0))
     rank = int(os.environ.get('RANK', 0))
     world_size = int(os.environ['WORLD_SIZE'])
+    print(local_rank, rank)
     gpu = int(configs['gpus'][local_rank])
     torch.cuda.set_device(gpu)
     dist.init_process_group(backend='nccl')
@@ -177,6 +179,47 @@ def train(config='conf/config.yaml', **kwargs):
     else:
         sample_num_per_epoch = len(train_reco2timestamps_dict.keys())
     epoch_iter = sample_num_per_epoch // world_size // batch_size
+    # validation data
+    val_dataloader = None
+    if configs.get('val_label'):
+        val_label = configs['val_label']
+
+        # train data
+        val_label = configs['train_label']
+        if (os.path.basename(val_label).startswith('rttm')):
+            val_reco2timestamps_dict, label2id_dict = get_rttm(val_label)
+        elif (val_label.endswith('.npy')):
+            raise NotImplementedError("seglab vec is not checked yet.")
+            val_reco2timestamps_dict = read_seglab_npy(val_label)
+            # label2id_dict
+        else:
+            raise NotImplementedError(
+                "Other label type is not implemented yet.")
+
+        val_lines = len(val_reco2timestamps_dict)
+        val_iter = val_lines // 2 // world_size // batch_size
+
+        if rank == 0:
+            logger.info("validation data num: {}".format(
+                len(val_reco2timestamps_dict.keys())))
+
+        val_dur = os.path.join(os.path.dirname(val_label), 'utt2dur')
+
+        val_dataset = Dataset(
+            configs['data_type'],
+            configs['val_data'],
+            configs['dataset_args'],
+            label2id_dict,
+            whole_utt=configs['dataset_args'].get('whole_utt'),
+            reverb_lmdb_file=configs.get('reverb_data', None),
+            noise_lmdb_file=configs.get('noise_data', None),
+            data_dur_file=train_dur,
+            reco2timestamps_dict=val_reco2timestamps_dict,
+            block_shuffle_size=block_shuffle_size)
+
+        val_dataloader = DataLoader(val_dataset,
+                                    collate_fn=collate_fn,
+                                    **tmp_params_dataloader)
     if rank == 0:
         logger.info("<== Dataloaders ==>")
         logger.info("train dataloaders created")
@@ -229,7 +272,7 @@ def train(config='conf/config.yaml', **kwargs):
     configs['projection_args']['do_lm'] = configs.get('do_lm', False)
     if configs['data_type'] != 'feat' and configs['dataset_args'][
             'speed_perturb']:
-        # diff speed is regarded as diff spk
+        # diff speed is regarded as diff lab
         configs['projection_args']['num_class'] *= 3
         if configs.get('do_lm', False):
             logger.info(
@@ -324,19 +367,51 @@ def train(config='conf/config.yaml', **kwargs):
     for epoch in range(start_epoch, configs['num_epochs'] + 1):
         train_dataset.set_epoch(epoch)
 
-        run_epoch(train_dataloader,
-                  epoch_iter,
-                  ddp_model,
-                  criterion,
-                  optimizer,
-                  scheduler,
-                  margin_scheduler,
-                  epoch,
-                  logger,
-                  scaler,
-                  device=device,
-                  configs=configs,
-                  wandb_log=wandb_run)
+        train_epoch(train_dataloader,
+                    epoch_iter,
+                    ddp_model,
+                    criterion,
+                    optimizer,
+                    scheduler,
+                    margin_scheduler,
+                    epoch,
+                    logger,
+                    scaler,
+                    device=device,
+                    configs=configs,
+                    wandb_log=wandb_run)
+
+        if val_dataloader is not None and (epoch - 1) % val_interval == 0:
+            val_loss, val_acc = val_epoch(val_dataloader,
+                                          val_iter,
+                                          ddp_model,
+                                          criterion,
+                                          device,
+                                          configs,
+                                          wandb_log=wandb_run)
+            if rank == 0:
+                logger.info(
+                    f"Validation - Epoch: {epoch}, Loss: {val_loss:.4f}, Acc: {val_acc:.4f}"
+                )
+
+                if val_acc >= best_val_acc:
+                    best_val_acc = val_acc
+                    val_no_improvement_count = 0
+                    logger.info(
+                        f"New best validation accuracy: {best_val_acc:.6f}")
+                    save_checkpoint(model,
+                                    os.path.join(model_dir, 'best_model.pt'))
+                else:
+                    val_no_improvement_count += 1
+                    logger.info(
+                        f"No improvement for {val_no_improvement_count} validation checks"
+                    )
+                    if val_no_improvement_count >= early_stop_patience:
+                        logger.info(
+                            f"Early stopping triggered after {epoch} epochs")
+                        save_checkpoint(model,
+                                        os.path.join(model_dir, 'final.pt'))
+                        break
 
         if rank == 0:
             if epoch % configs['save_epoch_interval'] == 0 or epoch > configs[

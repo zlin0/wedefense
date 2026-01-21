@@ -192,6 +192,7 @@ def Dataset(data_type,
             configs,
             lab2id_dict,
             whole_utt=False,
+            train_lmdb_file=None,
             reverb_lmdb_file=None,
             noise_lmdb_file=None,
             repeat_dataset=True,
@@ -208,6 +209,7 @@ def Dataset(data_type,
             data_list_file: data list file
             configs: dataset configs
             lab2id_dict: lab2id dict
+            train_lmdb_file (str, optional): Path to LMDB file for raw audio loading.
             reverb_lmdb_file: reverb data source lmdb file
             noise_lmdb_file: noise data source lmdb file
             whole_utt: use whole utt or random chunk
@@ -252,7 +254,7 @@ def Dataset(data_type,
         dataset = Processor(dataset, processor.url_opener)
         dataset = Processor(dataset, processor.tar_file_and_group)
     elif data_type == 'raw':
-        dataset = Processor(dataset, processor.parse_raw)
+        dataset = Processor(dataset, processor.parse_raw, lmdb_file_path=train_lmdb_file)
     else:
         dataset = Processor(dataset, processor.parse_feat)
 

@@ -14,9 +14,17 @@
 
 from .get_s3prl import S3prlFrontend
 from .whisper_encoder import whisper_encoder
+from .get_hf_ssl_pruning import HuggingfaceFrontend
+from .get_hf_dasheng import HuggingfaceFrontend_Dasheng
+from .get_local_beats import LocalFrontend_Beats
+from .get_hf_eat import HuggingfaceFrontend_Eat
 
 frontend_class_dict = {
     'fbank': None,
     's3prl': S3prlFrontend,
-    'whisper_encoder': whisper_encoder
+    'whisper_encoder': whisper_encoder,
+    'huggingface': HuggingfaceFrontend,
+    'dasheng': HuggingfaceFrontend_Dasheng,
+    'beats': LocalFrontend_Beats,
+    'eat': HuggingfaceFrontend_Eat
 }

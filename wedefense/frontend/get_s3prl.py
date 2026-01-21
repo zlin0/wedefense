@@ -156,7 +156,7 @@ class S3prlFrontend(nn.Module):
 def download_pretrained_model():
     frontend = S3prlFrontend(
         upstream_args={
-            "name": "wav2vec2_base_960",  # TODO: change to the model you want
+            "name": "wavlm_base_plus",  # TODO: change to the model you want
             "normalize": False,
         },
         download_dir="s3prl_hub",  # TODO change to your path.

@@ -52,7 +52,7 @@ def load_tsv(filepath, sep='\t'):
 
     Assume tsv file, the first line is header
     """
-    return pd.read_csv(filepath, sep=sep, header=0).rename(
+    return pd.read_csv(filepath, sep=sep, header=0, usecols=[0, 1]).rename(
         columns={
             'tar_spk_anon': g_tar_speaker_tag,
             'trial_anon': g_filename_tag,

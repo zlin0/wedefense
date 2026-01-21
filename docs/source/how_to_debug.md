@@ -11,11 +11,11 @@ dataloader_args:
   batch_size: 10
   num_workers: 0
   pin_memory: False
-  prefetch_factor: 
+  prefetch_factor:
   drop_last: True
 ```
 
-(2) Create a `run_debug.sh` for debugging, you can find a sample in 
+(2) Create a `run_debug.sh` for debugging, you can find a sample in
 
 
 
@@ -99,9 +99,9 @@ In the -m pdb mode, you can use command below
 
 Please refer to references if you want to get more information:
 
-[1] [pdb — The Python Debugger](https://docs.python.org/3/library/pdb.html) 
+[1] [pdb — The Python Debugger](https://docs.python.org/3/library/pdb.html)
 
-[2] [standford physics91si - Pdb Commands](https://web.stanford.edu/class/physics91si/2013/handouts/Pdb_Commands.pdf) 
+[2] [standford physics91si - Pdb Commands](https://web.stanford.edu/class/physics91si/2013/handouts/Pdb_Commands.pdf)
 
 
 
@@ -115,7 +115,7 @@ If you prefer IDE, you can run `Run → Start Debugging` tools for debugging.
 
 ### 2.1 Option 1: Launch debug from a debug icon
 
-![image-20260119235304821](_static/Figures/debug_2-2-1.png)
+![image-20260119235304821](_static/Figures/fig_debug_2-2-1.png)
 
 
 
@@ -149,22 +149,22 @@ If you prefer IDE, you can run `Run → Start Debugging` tools for debugging.
         }
       ]
     }
-    
+
     ```
 
-    
+
 
 * or create a debug() function inside of the script to launch, and modify the starting function
 
   ```python
   def debug():
     # input your testing code here
-    
+
   if __name__ == "__main__":
     debug()
   ```
 
-  
+
 
 
 

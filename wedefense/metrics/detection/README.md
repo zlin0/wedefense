@@ -89,7 +89,7 @@ If you use the provided evaluation metrics, please cite the following papers:
 * a-DCF
 ```bibtex
 @inproceedings{shim2024adcf,
-  title={{a-DCF}: an architecture agnostic metric with application to spoofing-robust speaker verification},
+  title={a-DCF: an architecture agnostic metric with application to spoofing-robust speaker verification},
   author={Hye-jin Shim and Jee-weon Jung and Tomi Kinnunen and others},
   year={2024},
   booktitle={Proc. Speaker Odyssey},
@@ -118,7 +118,7 @@ If you use the provided evaluation metrics, please cite the following papers:
 ```bibtex
 @ARTICLE {Kinnunen2023-tEER,
 author = {T. H. Kinnunen and K. Lee and H. Tak and N. Evans and A. Nautsch},
-journal = {{IEEE} Transactions on Pattern Analysis and Machine Intelligence},
+journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
 title = {t-EER: Parameter-Free Tandem Evaluation of Countermeasures and
 Biometric Comparators (to appear)},
 doi = {10.1109/TPAMI.2023.3313648},

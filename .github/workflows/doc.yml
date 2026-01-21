@@ -1,4 +1,4 @@
-name: "Check and Publish Docs"
+name: "Build and Publish Docs"
 on:
   workflow_dispatch:
   pull_request:
@@ -15,41 +15,37 @@ on:
 jobs:
   docs:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        torch: ["stable"]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
 
-      - name: Setup Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+      - name: Setup Python
+        uses:  actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.10"
 
-      - name: Build doc
-        shell: bash
+      # Install wedefense package (required by Sphinx autodoc)
+      - name:  Install wedefense
+        run:  |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      # Install documentation dependencies
+      - name: Install documentation dependencies
         run: |
           cd docs
-          python3 -m pip install -r ./requirements.txt
-          make api
-          make html
+          pip install -r docs-requirements.txt
 
-      # add .nojekyll to notice Pages use the _* dirs
-      - name: copy the generated site
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      # Build Sphinx documentation
+      - name: Build Sphinx documentation
         run: |
-          mkdir public
-          touch public/.nojekyll
-          cp -r docs/_build/html/* public/
+          cd docs
+          sphinx-build -M html source build
 
-      # push to gh-pages branch
-      - name: github pages deploy
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: peaceiris/actions-gh-pages@v2.3.1
-        env:
-          PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN  }}
-          PUBLISH_BRANCH: gh-pages
-          PUBLISH_DIR: public
+      # Deploy to GitHub Pages (only on push to main)
+      - name: Deploy to GitHub Pages
+        if: ${{ github. event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token:  ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/build/html
+          enable_jekyll: false  # Disable Jekyll to avoid Liquid syntax errors

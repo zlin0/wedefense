@@ -2,7 +2,7 @@
   <img src="./docs/source/_static/wedefense_logo_h.png" alt="WeDefense Logo"/>
 </p>
 
-| 📘 [Tutorials](#) | 📚 [Documentation](#) | 🤝 [Contributing](#) | 🤗 [Demos](https://huggingface.co/spaces/wedefense/fake_audio_detection_demo) |
+| 📘 [Tutorials](#) | 📚 [Documentation](https://zlin0.github.io/wedefense/) | 🤝 [Contributing](#) | 🤗 [Demos](https://huggingface.co/spaces/wedefense/fake_audio_detection_demo) |
 
 
 >  ⚠️ **Warning / Disclaimer**⚠️
@@ -16,7 +16,7 @@
 > Some of the models included here perform well on public datasets, but may not generalize to unseen or adversarial scenarios. Please be aware of these limitations and use this repository responsibly and ethically.
 
 ## 🛡️ What WeDefense Offers
-WeDefense aims to be a relatively light-weight, modular, and extensible toolkit tailored to defend against fake audio. Currently we supported detection and uniform frame-level segmentation. If you are interested to contribute, please feel free to contact us! 
+WeDefense aims to be a relatively light-weight, modular, and extensible toolkit tailored to defend against fake audio. Currently we supported detection and uniform frame-level segmentation. If you are interested to contribute, please feel free to contact us!
 | Category | Supported ✅ | Planned ⏳ |
 | --- | --- | --- |
 | Databases | ASVspoof 5 (2024), PartialSpoof, ESDD1, | ASVspoof2019/2021, ADD22/23, ITW, ODSS, ShiftySpeech, MLAAD, SpoofCeleb, ReplayDF, DeePen, FoR, DFADD, AI4T, Deepfake-Eval-2024, SpeechFake, AV-Deepfake1M/++, HAD, Psynd, LAV-DF, LlamaPartialSpoof, PartialEdit |

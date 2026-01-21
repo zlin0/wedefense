@@ -1,9 +1,14 @@
 
 ## Usage
 
+First, please make sure you installed all required enviorment:
 ```bash
 cd /path/to/wedefense/docs
 pip install -r docs-requirements.txt
+```
+
+
+```bash
 make clean
 sphinx-build -M html source build
 cd build/html
@@ -21,4 +26,5 @@ documentation.
 
 Done!
 
-**Hint**: You can change the port number when starting the server. For example `python3 -m http.server 8888`
+> [!TIP]
+> You can change the port number when starting the server. For example `python3 -m http.server 8888`

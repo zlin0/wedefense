@@ -1,0 +1,774 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WeDefense Support Status &mdash; WeDefense 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=f2a433a1"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+      <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Augmentation Tutorial" href="tutorials/augmentation.html" />
+    <link rel="prev" title="Frequently Asked Questions (FAQs)" href="faq.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/wedefense_logo_h.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#install-via-pip">Install via pip</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#install-locally">Install locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#test-your-gpu-installation">Test your GPU installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quick_start.html#asvspoof2019-la-single-gpu">ASVspoof2019 LA, single GPU</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions (FAQs)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">WeDefense Support Status</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#databases">Databases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#augmentation">Augmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#detection">Detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#localization">Localization</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorial</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/augmentation.html">Augmentation Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/tasks/detection.html">Spoof Detection Tutorial with WeDefense</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#initial-configuration">Initial Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-1-data-preparation">Stage 1: Data Preparation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-2-data-formatting-and-augmentation">Stage 2: Data Formatting and Augmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-3-training">Stage 3: Training</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/tasks/detection.html#todo-add-table-for-variables-used-in-training">TODO add table for variables used in training.</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-4-model-averaging-embedding-extraction">Stage 4: Model Averaging &amp; Embedding Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-5-logit-extraction">Stage 5: Logit Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-6-score-calibration-logits-to-llr">Stage 6: Score Calibration (Logits to LLR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-7-performance-evaluation">Stage 7: Performance Evaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#conclusion">Conclusion</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/tasks/detection.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/tasks/localization.html">Spoof Localization Tutorial with WeDefense</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/deployment/export-with-torch-jit-script.html">Export model with torch.jit.script()</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/deployment/export-with-torch-jit-script.html#example">Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/deployment/export-with-torch-jit-script.html#notes">Notes</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">WeDefense</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">WeDefense Support Status</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/support_status.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="wedefense-support-status">
+<h1>WeDefense Support Status<a class="headerlink" href="#wedefense-support-status" title="Link to this heading"></a></h1>
+<p>✅ Supported</p>
+<p>⏳ Planning</p>
+<section id="databases">
+<h2>Databases<a class="headerlink" href="#databases" title="Link to this heading"></a></h2>
+<p>TODO: check type</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>Release</p></th>
+<th class="head"><p>Links</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Tasks</p></th>
+<th class="head"><p>Support</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><u><strong>ASVspoof</strong></u></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p>det</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>ASVspoof2019</p></td>
+<td><p>2019</p></td>
+<td><p></p></td>
+<td><p>TTS/VC</p></td>
+<td><p>det</p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-even"><td><p>ASVspoof2021</p></td>
+<td><p>2021</p></td>
+<td><p></p></td>
+<td><p>TTS/VC</p></td>
+<td><p>det</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>ASVspoof 5 (2024)</p></td>
+<td><p>2024</p></td>
+<td><p>paper, database</p></td>
+<td><p>TTS/VC</p></td>
+<td><p>det (TD: sasv)</p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-even"><td><p>ADD 2022</p></td>
+<td><p>2022</p></td>
+<td><p></p></td>
+<td><p>TTS/Real</p></td>
+<td><p>det, loc</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>ADD 2023</p></td>
+<td><p>2023</p></td>
+<td><p></p></td>
+<td><p>TTS/Real</p></td>
+<td><p>det, loc</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>In-the-wild (ITW)</p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p>Unk.</p></td>
+<td><p>det</p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-odd"><td><p>ODSS</p></td>
+<td><p>2023</p></td>
+<td><p><a class="reference external" href="https://ieeexplore.ieee.org/document/10374863">paper</a></p></td>
+<td><p>TTS/VC</p></td>
+<td><p>det</p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-even"><td><p>ShiftySpeech</p></td>
+<td><p>2025</p></td>
+<td><p></p></td>
+<td><p>Vocoder</p></td>
+<td><p>det</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>MLAAD</p></td>
+<td><p>2024</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2401.09512">paper</a></p></td>
+<td><p>TTS/VC</p></td>
+<td><p>det</p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-even"><td><p>SpoofCeleb</p></td>
+<td><p>2025</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2409.17285">paper</a></p></td>
+<td><p>TTS/VC</p></td>
+<td><p>det, sasv</p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-odd"><td><p>ReplayDF</p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p>Reply</p></td>
+<td><p>det</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>DeePen</p></td>
+<td><p>2025</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2502.20427">paper</a> | <a class="reference external" href="https://github.com/Fraunhofer-AISEC/DeePen">github</a></p></td>
+<td><p>TTS/VC</p></td>
+<td><p>det</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>FoR</p></td>
+<td><p></p></td>
+<td><p><a class="reference external" href="https://ieeexplore.ieee.org/document/8906599">paper</a></p></td>
+<td><p>TTS/VC</p></td>
+<td><p>det</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>DFADD</p></td>
+<td><p></p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2409.08731">paper</a></p></td>
+<td><p>TTS (diffusion)</p></td>
+<td><p>det</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>AI4T</p></td>
+<td><p></p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2506.09606">paper</a></p></td>
+<td><p>TTS/VC</p></td>
+<td><p>det</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>Deepfake-Eval-2024</p></td>
+<td><p></p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2503.02857">paper</a></p></td>
+<td><p>TTS/VC</p></td>
+<td><p>det</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>SpeechFake</p></td>
+<td><p></p></td>
+<td><p><a class="reference external" href="https://openreview.net/forum?id=GpUO6qYNQG">paper</a></p></td>
+<td><p>TTS/VC</p></td>
+<td><p>det</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>AV-Deepfake1M</p></td>
+<td><p>2024</p></td>
+<td><p><a class="reference external" href="https://huggingface.co/datasets/ControlNet/AV-Deepfake1M">data</a></p></td>
+<td><p>TTS (av)</p></td>
+<td><p>det, loc</p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-odd"><td><p>AV-Deepfake1M++</p></td>
+<td><p>2025</p></td>
+<td><p><a class="reference external" href="https://huggingface.co/datasets/ControlNet/AV-Deepfake1M-PlusPlus">data</a></p></td>
+<td><p>TTS (av)</p></td>
+<td><p>det, loc</p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-even"><td><p>HAD</p></td>
+<td><p>2021</p></td>
+<td><p><a class="reference external" href="https://zenodo.org/records/10377492">data</a></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-odd"><td><p>Psynd</p></td>
+<td><p>2022</p></td>
+<td><p><a class="reference external" href="https://scholarbank.nus.edu.sg/handle/10635/227398">data</a></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>PartialSpoof</p></td>
+<td><p>2021</p></td>
+<td><p><a class="reference external" href="https://zenodo.org/records/5766198">data</a></p></td>
+<td><p>TTS/VC</p></td>
+<td><p>det, loc,</p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-odd"><td><p>LAV-DF</p></td>
+<td><p>2022</p></td>
+<td><p><a class="reference external" href="https://huggingface.co/datasets/ControlNet/LAV-DF">data</a></p></td>
+<td><p>TTS (av)</p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>LlamaPartialSpoof</p></td>
+<td><p>2025</p></td>
+<td><p><a class="reference external" href="https://huggingface.co/datasets/HaoY0001/LlamaPartialSpoof">data</a></p></td>
+<td><p>TTS</p></td>
+<td><p>Det, loc</p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-odd"><td><p>PartialEdit</p></td>
+<td><p>2025</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2506.02958">paper</a></p></td>
+<td><p>TTS</p></td>
+<td><p></p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="augmentation">
+<h2>Augmentation<a class="headerlink" href="#augmentation" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>Date</p></th>
+<th class="head"><p>Links</p></th>
+<th class="head"><p>Comment</p></th>
+<th class="head"><p><strong>Support</strong></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>speed perturb</p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>codec</p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>Raw boost</p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>musan + rirs</p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="detection">
+<h2>Detection<a class="headerlink" href="#detection" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>Date</p></th>
+<th class="head"><p>Links</p></th>
+<th class="head"><p>Comment</p></th>
+<th class="head"><p><strong>Support</strong></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><u><strong>Normal NN</strong></u></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>LCNN-LSTM</p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-even"><td><p>ResNet</p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-odd"><td><p>AASIST</p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-even"><td><p><u><strong>SSL-based models</strong></u></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>SSL-gmlp</p></td>
+<td><p>2022</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2105.08050">paper</a> | <a class="reference external" href="https://ieeexplore.ieee.org/document/10003971">paper2</a> | <a class="reference external" href="https://github.com/nii-yamagishilab/PartialSpoof/tree/main">code</a></p></td>
+<td><p></p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-even"><td><p>SSL-AASIST</p></td>
+<td><p>2022</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2202.12233">paper</a> |<a class="reference external" href="https://github.com/TakHemlata/SSL_Anti-spoofing">code</a></p></td>
+<td><p></p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-odd"><td><p>SSL_MHFA</p></td>
+<td><p>2022</p></td>
+<td><p><a class="reference external" href="https://ieeexplore.ieee.org/document/10022775">Paper</a></p></td>
+<td><p></p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-even"><td><p>SSL-res1d</p></td>
+<td><p>2024</p></td>
+<td><p><a class="reference external" href="https://www.isca-archive.org/interspeech_2024/liu24m_interspeech.pdf">paper</a></p></td>
+<td><p></p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-odd"><td><p>SSL-SLS</p></td>
+<td><p>2024</p></td>
+<td><p><a class="reference external" href="https://openreview.net/pdf?id=acJMIXJg2u">paper</a> | <a class="reference external" href="https://github.com/QiShanZhang/SLSforASVspoof-2021-DF">code</a></p></td>
+<td><p></p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><u><strong>LLM-based models</strong></u></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>ALLM4ADD</p></td>
+<td><p>2025</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2505.11079">paper</a></p></td>
+<td><p></p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="localization">
+<h2>Localization<a class="headerlink" href="#localization" title="Link to this heading"></a></h2>
+<p>TODO: check type</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>Date</p></th>
+<th class="head"><p>Links</p></th>
+<th class="head"><p>Comment</p></th>
+<th class="head"><p>Support</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong><u>Uniform segmentation</u></strong></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>SSL-MHFA</p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-even"><td><p>SSL-SLS</p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><strong><u>Boundary-aware</u></strong></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>SSL-BAM</p></td>
+<td><p>2025</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2407.21611">paper</a> | <a class="reference external" href="https://github.com/media-sec-lab/BAM">code</a></p></td>
+<td><p></p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-even"><td><p>CFPRF</p></td>
+<td><p>2024</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2407.16554">paper</a> | <a class="reference external" href="https://github.com/ItzJuny/CFPRF">code</a></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>PET</p></td>
+<td><p>2024</p></td>
+<td><p><a class="reference external" href="https://ieeexplore.ieee.org/document/10889913/">paper</a></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>AGO</p></td>
+<td><p>2025</p></td>
+<td><p><a class="reference external" href="https://ieeexplore.ieee.org/document/10890470">paper</a></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>GNCL</p></td>
+<td><p>2025</p></td>
+<td><p><a class="reference external" href="https://ieeexplore.ieee.org/document/10888281">paper</a></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>UMMAformer</p></td>
+<td><p>2023</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2308.14395">paper</a> | <a class="reference external" href="https://github.com/ymhzyj/UMMAFormer">code</a></p></td>
+<td><p></p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-even"><td><p>W-TDL</p></td>
+<td><p>2024</p></td>
+<td><p><a class="reference external" href="https://dl.acm.org/doi/10.1145/3689092.3689410">paper</a></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>BA-TFD</p></td>
+<td><p>2022</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2204.06228">paper</a> |<a class="reference external" href="https://github.com/ControlNet/LAV-DF">code</a></p></td>
+<td><p>baseline for AV-Deepfake-1M</p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-even"><td><p>BA-TFD+</p></td>
+<td><p>2023</p></td>
+<td><p><a class="reference external" href="https://arxiv.org/abs/2305.01979">paper</a> |<a class="reference external" href="https://github.com/ControlNet/LAV-DF">code</a></p></td>
+<td><p>baseline for AV-Deepfake-1M</p></td>
+<td><p>⏳</p></td>
+</tr>
+<tr class="row-odd"><td><p>VIGO</p></td>
+<td><p>2024</p></td>
+<td><p><a class="reference external" href="https://dl.acm.org/doi/10.1145/3664647.3688983">paper</a></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="faq.html" class="btn btn-neutral float-left" title="Frequently Asked Questions (FAQs)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tutorials/augmentation.html" class="btn btn-neutral float-right" title="Augmentation Tutorial" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, WeDefense.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

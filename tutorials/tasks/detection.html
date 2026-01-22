@@ -1,0 +1,475 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spoof Detection Tutorial with WeDefense &mdash; WeDefense 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+      <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Spoof Localization Tutorial with WeDefense" href="localization.html" />
+    <link rel="prev" title="Augmentation Tutorial" href="../augmentation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html">
+            
+              <img src="../../_static/wedefense_logo_h.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#install-via-pip">Install via pip</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#install-locally">Install locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#test-your-gpu-installation">Test your GPU installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../quick_start.html">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../quick_start.html#asvspoof2019-la-single-gpu">ASVspoof2019 LA, single GPU</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">Frequently Asked Questions (FAQs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../support_status.html">WeDefense Support Status</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../support_status.html#databases">Databases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../support_status.html#augmentation">Augmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../support_status.html#detection">Detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../support_status.html#localization">Localization</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorial</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../augmentation.html">Augmentation Tutorial</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Spoof Detection Tutorial with WeDefense</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#initial-configuration">Initial Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stage-1-data-preparation">Stage 1: Data Preparation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stage-2-data-formatting-and-augmentation">Stage 2: Data Formatting and Augmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stage-3-training">Stage 3: Training</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#todo-add-table-for-variables-used-in-training">TODO add table for variables used in training.</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#stage-4-model-averaging-embedding-extraction">Stage 4: Model Averaging &amp; Embedding Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stage-5-logit-extraction">Stage 5: Logit Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stage-6-score-calibration-logits-to-llr">Stage 6: Score Calibration (Logits to LLR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stage-7-performance-evaluation">Stage 7: Performance Evaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#conclusion">Conclusion</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#next-steps">Next Steps</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="localization.html">Spoof Localization Tutorial with WeDefense</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../deployment/export-with-torch-jit-script.html">Export model with torch.jit.script()</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../deployment/export-with-torch-jit-script.html#example">Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../deployment/export-with-torch-jit-script.html#notes">Notes</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">WeDefense</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Spoof Detection Tutorial with WeDefense</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/tutorials/tasks/detection.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="spoof-detection-tutorial-with-wedefense">
+<h1>Spoof Detection Tutorial with WeDefense<a class="headerlink" href="#spoof-detection-tutorial-with-wedefense" title="Link to this heading"></a></h1>
+<p>This notebook provides a step-by-step guide to running a anti-spoofing detection experiment using the WeDefense toolkit. We will follow the structure of the <code class="docutils literal notranslate"><span class="pre">run.sh</span></code> script for the <code class="docutils literal notranslate"><span class="pre">detection/asvspoof5/v03_resnet18</span></code> recipe on the PartialSpoof dataset.</p>
+<p><strong>Goal:</strong> Train a model to distinguish between genuine (bonafide) and spoofed speech utterances.</p>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>WeDefense Installation:</strong> Ensure you have successfully installed the WeDefense toolkit and all its dependencies.</p></li>
+<li><p><strong>Dataset:</strong> This tutorial assumes you have access to the PartialSpoof dataset. The script will attempt to download it automatically if it’s not found.</p></li>
+<li><p><strong>Environment:</strong> Make sure you are running this notebook from the <code class="docutils literal notranslate"><span class="pre">egs/detection/partialspoof/v03_resnet18/</span></code> directory. And installed conda enviorment success.</p></li>
+<li><p><strong>Hardware:</strong> A GPU is highly recommended for the training stage (Stage 3).</p></li>
+</ol>
+</section>
+<section id="initial-configuration">
+<h2>Initial Configuration<a class="headerlink" href="#initial-configuration" title="Link to this heading"></a></h2>
+<p>First, we set up all the necessary paths and parameters for our experiment. These are the same variables you would find at the top of the <code class="docutils literal notranslate"><span class="pre">run.sh</span></code> script.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="c1"># --- Path and Data Configuration ---</span>
+
+<span class="c1"># TODO: IMPORTANT! Please modify this path to your PartialSpoof database directory.</span>
+<span class="n">PS_dir</span> <span class="o">=</span> <span class="s1">&#39;/path/to/your/PartialSpoof/database&#39;</span>
+<span class="c1"># Directory to store prepared data files (wav.scp, utt2lab, etc.)</span>
+<span class="n">data_dir</span> <span class="o">=</span> <span class="s1">&#39;data/partialspoof_tutorial&#39;</span>
+<span class="c1"># The format for the dataloader. &#39;shard&#39; is recommended for large datasets</span>
+<span class="c1"># as it groups audio files into .tar files, improving I/O efficiency.</span>
+<span class="c1"># &#39;raw&#39; loads individual files.</span>
+<span class="n">data_type</span> <span class="o">=</span> <span class="s1">&#39;shard&#39;</span>
+
+<span class="c1"># --- Model and Experiment Configuration ---</span>
+<span class="c1"># The configuration file for the model architecture and training parameters.</span>
+<span class="n">config</span> <span class="o">=</span> <span class="s1">&#39;conf/resnet.yaml&#39;</span>
+<span class="c1"># Directory to save model checkpoints, logs, and results.</span>
+<span class="n">exp_dir</span> <span class="o">=</span> <span class="s1">&#39;exp/resnet_tutorial&#39;</span>
+
+<span class="c1"># --- Execution Configuration ---</span>
+<span class="c1"># Specify which GPUs to use, e.g., &quot;[0]&quot; or &quot;[0,1]&quot;.</span>
+<span class="n">gpus</span> <span class="o">=</span> <span class="s2">&quot;[0]&quot;</span>
+<span class="c1"># Number of models to average for inference. &gt;0 to use averaging, &lt;=0 to use the single best model.</span>
+<span class="n">num_avg</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+<span class="c1"># Save a model checkpoint every N epochs.</span>
+<span class="n">save_epoch_interval</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="c1"># Patience for early stopping. &lt;0 disables it.</span>
+<span class="n">early_stop_patience</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+<span class="c1"># How often to run validation (in epochs).</span>
+<span class="n">validate_interval</span> <span class="o">=</span> <span class="mi">1</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="stage-1-data-preparation">
+<h2>Stage 1: Data Preparation<a class="headerlink" href="#stage-1-data-preparation" title="Link to this heading"></a></h2>
+<p>In this stage, we process the raw PartialSpoof dataset into a standard format required by the toolkit. The <code class="docutils literal notranslate"><span class="pre">local/prepare_data.sh</span></code> script will:</p>
+<ol class="arabic simple">
+<li><p>Download the dataset if it’s not found.</p></li>
+<li><p>Create <code class="docutils literal notranslate"><span class="pre">wav.scp</span></code>: Maps a unique utterance ID to its audio file path. (&lt;wav_id&gt; &lt;path&gt; )</p></li>
+<li><p>Create <code class="docutils literal notranslate"><span class="pre">utt2lab</span></code>: Maps each utterance ID to its label (<code class="docutils literal notranslate"><span class="pre">bonafide</span></code> or <code class="docutils literal notranslate"><span class="pre">spoof</span></code>). (&lt;wav_id&gt; <label>)</p></li>
+<li><p>Create <code class="docutils literal notranslate"><span class="pre">lab2utt</span></code>: An inverted index of <code class="docutils literal notranslate"><span class="pre">utt2lab</span></code>. <Label> &lt;wav_id&gt;</p></li>
+<li><p>Create <code class="docutils literal notranslate"><span class="pre">utt2dur</span></code>: Maps each utterance ID to its duration in seconds. &lt;wav_id&gt; <duration></p></li>
+</ol>
+<p>This process is run in parallel for the <code class="docutils literal notranslate"><span class="pre">train</span></code>, <code class="docutils literal notranslate"><span class="pre">dev</span></code>, and <code class="docutils literal notranslate"><span class="pre">eval</span></code> sets.</p>
+<p>Let’s inspect the generated files for the train set to understand their format.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="err">$</span> <span class="n">head</span> <span class="o">-</span><span class="n">n</span> <span class="mi">3</span> <span class="o">.</span><span class="n">data</span><span class="o">/</span><span class="n">partialspoof</span><span class="o">/</span><span class="n">train</span><span class="o">/*</span>
+<span class="c1"># ==&gt; ./lab2utt &lt;==</span>
+<span class="c1"># spoof CON_T_0000029 CON_T_0000069 ...</span>
+<span class="c1"># bonafide LA_T_1138215 LA_T_1271820 ...</span>
+
+<span class="c1"># ==&gt; ./utt2dur &lt;==</span>
+<span class="c1"># CON_T_0000000 2.74725</span>
+<span class="c1"># CON_T_0000001 4.2501875</span>
+<span class="c1"># CON_T_0000002 3.1415</span>
+
+<span class="c1"># ==&gt; ./utt2lab &lt;==</span>
+<span class="c1"># CON_T_0000029 spoof</span>
+<span class="c1"># CON_T_0000069 spoof</span>
+<span class="c1"># CON_T_0000072 spoof</span>
+
+<span class="c1"># ==&gt; ./wav.scp &lt;==</span>
+<span class="c1"># CON_T_0000000 /export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database/train/con_wav/CON_T_0000000.wav</span>
+<span class="c1"># CON_T_0000001 /export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database/train/con_wav/CON_T_0000001.wav</span>
+<span class="c1"># CON_T_0000002 /export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database/train/con_wav/CON_T_0000002.wav</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="stage-2-data-formatting-and-augmentation">
+<h2>Stage 2: Data Formatting and Augmentation<a class="headerlink" href="#stage-2-data-formatting-and-augmentation" title="Link to this heading"></a></h2>
+<p>For efficient data loading, especially in distributed training, we convert our data lists into a <code class="docutils literal notranslate"><span class="pre">shard</span></code> format. This involves bundling multiple audio files and their labels into larger <code class="docutils literal notranslate"><span class="pre">.tar</span></code> files.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">tools/make_shard_list.py</span></code>: Creates the sharded dataset.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tools/make_raw_list.py</span></code>: Creates a simple file list (used if <code class="docutils literal notranslate"><span class="pre">data_type=&quot;raw&quot;</span></code>).</p></li>
+</ul>
+<p>We will also prepare the MUSAN (noise) and RIRS (reverberation) datasets for data augmentation during training. This step creates <code class="docutils literal notranslate"><span class="pre">wav.scp</span></code> files for them.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="err">$</span> <span class="n">head</span> <span class="o">-</span><span class="n">n</span> <span class="mi">3</span> <span class="o">.</span><span class="n">data</span><span class="o">/</span><span class="n">partialspoof</span><span class="o">/</span><span class="n">train</span><span class="o">/</span><span class="n">shard</span><span class="o">.</span><span class="n">list</span>
+<span class="c1"># ==&gt; ./shard.list &lt;==</span>
+<span class="c1"># data/partialspoof/train/shards/shards_000000000.tar</span>
+<span class="c1"># data/partialspoof/train/shards/shards_000000001.tar</span>
+<span class="c1"># data/partialspoof/train/shards/shards_000000002.tar</span>
+
+<span class="c1"># ==&gt; ./shards &lt;==</span>
+<span class="c1"># head: error reading &#39;./shards&#39;: Is a directory</span>
+
+<span class="err">$</span> <span class="n">ls</span> <span class="o">.</span><span class="n">data</span><span class="o">/</span><span class="n">partialspoof</span><span class="o">/</span><span class="n">train</span><span class="o">/</span><span class="n">shards</span>
+<span class="c1"># shards_000000000.tar shards_000000001.tar shards_000000002.tar ...</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="stage-3-training">
+<h2>Stage 3: Training<a class="headerlink" href="#stage-3-training" title="Link to this heading"></a></h2>
+<p>Now we are ready to train the model. We use <code class="docutils literal notranslate"><span class="pre">torchrun</span></code> for distributed training, which is efficient even on a single machine with multiple GPUs.</p>
+<p>The training process will:</p>
+<ul class="simple">
+<li><p>Load the model architecture and training parameters from the YAML config file (<code class="docutils literal notranslate"><span class="pre">conf/resnet.yaml</span></code>).</p></li>
+<li><p>Use the prepared data lists (<code class="docutils literal notranslate"><span class="pre">shard.list</span></code> or <code class="docutils literal notranslate"><span class="pre">raw.list</span></code>).</p></li>
+<li><p>Save model checkpoints and logs to the experiment directory (<code class="docutils literal notranslate"><span class="pre">exp/resnet_tutorial</span></code>).</p></li>
+<li><p>Periodically evaluate performance on the development set.</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">torchrun</span> <span class="o">--</span><span class="n">rdzv_backend</span><span class="o">=</span><span class="n">c10d</span> <span class="o">--</span><span class="n">rdzv_endpoint</span><span class="o">=</span><span class="err">$</span><span class="p">(</span><span class="n">hostname</span><span class="p">):</span><span class="err">$</span><span class="p">{</span><span class="n">port</span><span class="p">}</span> <span class="o">--</span><span class="n">nnodes</span><span class="o">=</span><span class="mi">1</span> <span class="o">--</span><span class="n">nproc_per_node</span><span class="o">=</span><span class="err">$</span><span class="n">num_gpus</span> \
+    <span class="n">wedefense</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">train</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">config</span> <span class="err">$</span><span class="n">config</span> \
+      <span class="o">--</span><span class="n">exp_dir</span> <span class="s2">&quot;$</span><span class="si">{exp_dir}</span><span class="s2">&quot;</span> \
+      <span class="o">--</span><span class="n">gpus</span> <span class="s2">&quot;$gpus&quot;</span> \
+      <span class="o">--</span><span class="n">num_avg</span> <span class="s2">&quot;$</span><span class="si">{num_avg}</span><span class="s2">&quot;</span> \
+      <span class="o">--</span><span class="n">data_type</span> <span class="s2">&quot;$</span><span class="si">{data_type}</span><span class="s2">&quot;</span> \
+      <span class="o">--</span><span class="n">train_data</span> <span class="s2">&quot;$</span><span class="si">{data}</span><span class="s2">/train/$</span><span class="si">{data_type}</span><span class="s2">.list&quot;</span> \
+      <span class="o">--</span><span class="n">train_label</span> <span class="s2">&quot;$</span><span class="si">{data}</span><span class="s2">/train/utt2lab&quot;</span> \
+      <span class="o">--</span><span class="n">val_data</span> <span class="s2">&quot;$</span><span class="si">{data}</span><span class="s2">/dev/$</span><span class="si">{data_type}</span><span class="s2">.list&quot;</span> \
+      <span class="o">--</span><span class="n">val_label</span> <span class="s2">&quot;$</span><span class="si">{data}</span><span class="s2">/dev/utt2lab&quot;</span> \
+      <span class="o">--</span><span class="n">save_epoch_interval</span> <span class="s2">&quot;$</span><span class="si">{save_epoch_interval}</span><span class="s2">&quot;</span> \
+      <span class="o">--</span><span class="n">early_stop_patience</span> <span class="s2">&quot;$</span><span class="si">{early_stop_patience}</span><span class="s2">&quot;</span> \
+      <span class="o">--</span><span class="n">validate_interval</span> <span class="s2">&quot;$</span><span class="si">{validate_interval}</span><span class="s2">&quot;</span>
+      <span class="c1"># Add the following lines if you have prepared augmentation data</span>
+      <span class="c1"># --reverb_data data/rirs/lmdb \</span>
+      <span class="c1"># --noise_data data/musan/lmdb</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="todo-add-table-for-variables-used-in-training">
+<h1>TODO add table for variables used in training.<a class="headerlink" href="#todo-add-table-for-variables-used-in-training" title="Link to this heading"></a></h1>
+<section id="stage-4-model-averaging-embedding-extraction">
+<h2>Stage 4: Model Averaging &amp; Embedding Extraction<a class="headerlink" href="#stage-4-model-averaging-embedding-extraction" title="Link to this heading"></a></h2>
+<p>After training, we can proceed with inference. We have two options for the model to use:</p>
+<ol class="arabic simple">
+<li><p><strong>Best Model:</strong> The single checkpoint that performed best on the development set (<code class="docutils literal notranslate"><span class="pre">best_model.pt</span></code>).</p></li>
+<li><p><strong>Averaged Model:</strong> An average of the last <code class="docutils literal notranslate"><span class="pre">num_avg</span></code> checkpoints. This often yields more robust performance.</p></li>
+</ol>
+<p>First, we average the model if <code class="docutils literal notranslate"><span class="pre">num_avg</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>. Then, we use the chosen model to extract embeddings (fixed-size vector representations) for each utterance in the <code class="docutils literal notranslate"><span class="pre">dev</span></code> and <code class="docutils literal notranslate"><span class="pre">eval</span></code> sets. These embeddings are the input to the final classification layer.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Determine which model path to use based on num_avg</span>
+<span class="k">if</span> <span class="n">num_avg</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="n">model_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exp_dir</span><span class="p">,</span> <span class="s1">&#39;models/avg_model.pt&#39;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">model_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exp_dir</span><span class="p">,</span> <span class="s1">&#39;models/best_model.pt&#39;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using model: </span><span class="si">{</span><span class="n">model_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">echo</span> <span class="s2">&quot;Starting Stage 4: Model Averaging and Embedding Extraction...&quot;</span>
+
+<span class="k">if</span> <span class="p">[</span> <span class="err">$</span><span class="p">{</span><span class="n">num_avg</span><span class="p">}</span> <span class="o">-</span><span class="n">gt</span> <span class="mi">0</span> <span class="p">];</span> <span class="n">then</span>
+  <span class="n">echo</span> <span class="s2">&quot;Averaging the last $</span><span class="si">{num_avg}</span><span class="s2"> models...&quot;</span>
+  <span class="n">python</span> <span class="n">wedefense</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">average_model</span><span class="o">.</span><span class="n">py</span> \
+    <span class="o">--</span><span class="n">dst_model</span> <span class="s2">&quot;$</span><span class="si">{exp_dir}</span><span class="s2">/models/avg_model.pt&quot;</span> \
+    <span class="o">--</span><span class="n">src_path</span> <span class="s2">&quot;$</span><span class="si">{exp_dir}</span><span class="s2">/models&quot;</span> \
+    <span class="o">--</span><span class="n">num</span> <span class="s2">&quot;$</span><span class="si">{num_avg}</span><span class="s2">&quot;</span>
+<span class="n">fi</span>
+
+<span class="n">echo</span> <span class="s2">&quot;Extracting embeddings...&quot;</span>
+<span class="c1"># We use a helper script for parallel embedding extraction</span>
+<span class="n">local</span><span class="o">/</span><span class="n">extract_emb</span><span class="o">.</span><span class="n">sh</span> \
+   <span class="o">--</span><span class="n">exp_dir</span> <span class="s2">&quot;$exp_dir&quot;</span> <span class="o">--</span><span class="n">model_path</span> <span class="s2">&quot;$model_path&quot;</span> \
+   <span class="o">--</span><span class="n">nj</span> <span class="s2">&quot;$nj&quot;</span> <span class="o">--</span><span class="n">gpus</span> <span class="s2">&quot;$gpus&quot;</span> <span class="o">--</span><span class="n">data_type</span> <span class="s2">&quot;$data_type&quot;</span> <span class="o">--</span><span class="n">data</span> <span class="s2">&quot;$</span><span class="si">{data}</span><span class="s2">&quot;</span>
+
+<span class="n">echo</span> <span class="s2">&quot;Stage 4 finished.&quot;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="stage-5-logit-extraction">
+<h2>Stage 5: Logit Extraction<a class="headerlink" href="#stage-5-logit-extraction" title="Link to this heading"></a></h2>
+<p>With the embeddings extracted, we now pass them through the final classification layer of the model to get the raw output scores, known as <strong>logits</strong>. These logits represent the model’s confidence for each class (<code class="docutils literal notranslate"><span class="pre">bonafide</span></code> vs. <code class="docutils literal notranslate"><span class="pre">spoof</span></code>) before any normalization.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">echo</span> <span class="s2">&quot;Starting Stage 5: Extracting logits...&quot;</span>
+
+<span class="k">for</span> <span class="n">dset</span> <span class="ow">in</span> <span class="n">dev</span> <span class="nb">eval</span><span class="p">;</span> <span class="n">do</span>
+  <span class="n">echo</span> <span class="s2">&quot;Processing $</span><span class="si">{dset}</span><span class="s2"> set...&quot;</span>
+  <span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="s2">&quot;$</span><span class="si">{exp_dir}</span><span class="s2">/posteriors/$</span><span class="si">{dset}</span><span class="s2">&quot;</span>
+  <span class="n">python</span> <span class="n">wedefense</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">infer</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">model_path</span> <span class="s2">&quot;$model_path&quot;</span> \
+    <span class="o">--</span><span class="n">config</span> <span class="s2">&quot;$</span><span class="si">{exp_dir}</span><span class="s2">/config.yaml&quot;</span> \
+    <span class="o">--</span><span class="n">num_classes</span> <span class="mi">2</span> \
+    <span class="o">--</span><span class="n">embedding_scp_path</span> <span class="s2">&quot;$</span><span class="si">{exp_dir}</span><span class="s2">/embeddings/$</span><span class="si">{dset}</span><span class="s2">/embedding.scp&quot;</span> \
+    <span class="o">--</span><span class="n">out_path</span> <span class="s2">&quot;$</span><span class="si">{exp_dir}</span><span class="s2">/posteriors/$</span><span class="si">{dset}</span><span class="s2">&quot;</span>
+<span class="n">done</span>
+
+<span class="n">echo</span> <span class="s2">&quot;Stage 5 finished.&quot;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="stage-6-score-calibration-logits-to-llr">
+<h2>Stage 6: Score Calibration (Logits to LLR)<a class="headerlink" href="#stage-6-score-calibration-logits-to-llr" title="Link to this heading"></a></h2>
+<p>The raw logits from the model are not always well-calibrated. To make them more interpretable and robust for decision-making, we convert them into Log-Likelihood Ratios (LLR). This process calibrates the scores based on the prior probabilities of the classes observed in the training data.</p>
+<p>A positive LLR score will indicate a prediction of ‘spoof’, while a negative score will indicate ‘bonafide’.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">echo</span> <span class="s2">&quot;Starting Stage 6: Converting logits to Log-Likelihood Ratios (LLR)...&quot;</span>
+
+<span class="c1"># First, calculate the number of bonafide vs. spoof utterances in the training set.</span>
+<span class="c1"># This is used for calibration.</span>
+<span class="n">cut</span> <span class="o">-</span><span class="n">f2</span> <span class="o">-</span><span class="n">d</span><span class="s2">&quot; &quot;</span> <span class="s2">&quot;$</span><span class="si">{data}</span><span class="s2">/train/utt2lab&quot;</span> <span class="o">|</span> <span class="n">sort</span> <span class="o">|</span> <span class="n">uniq</span> <span class="o">-</span><span class="n">c</span> <span class="o">|</span> <span class="n">awk</span> <span class="s1">&#39;{print $2 &quot; &quot; $1}&#39;</span> <span class="o">&gt;</span> <span class="s2">&quot;$</span><span class="si">{data}</span><span class="s2">/train/lab2num_utts&quot;</span>
+<span class="n">echo</span> <span class="s2">&quot;Training label counts:&quot;</span>
+<span class="n">cat</span> <span class="s2">&quot;$</span><span class="si">{data}</span><span class="s2">/train/lab2num_utts&quot;</span>
+
+<span class="k">for</span> <span class="n">dset</span> <span class="ow">in</span> <span class="n">dev</span> <span class="nb">eval</span><span class="p">;</span> <span class="n">do</span>
+    <span class="n">echo</span> <span class="s2">&quot;Calibrating scores for $</span><span class="si">{dset}</span><span class="s2"> set...&quot;</span>
+    <span class="n">python</span> <span class="n">wedefense</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">logits_to_llr</span><span class="o">.</span><span class="n">py</span> \
+        <span class="o">--</span><span class="n">logits_scp_path</span> <span class="s2">&quot;$</span><span class="si">{exp_dir}</span><span class="s2">/posteriors/$</span><span class="si">{dset}</span><span class="s2">/logits.scp&quot;</span> \
+        <span class="o">--</span><span class="n">training_counts</span> <span class="s2">&quot;$</span><span class="si">{data}</span><span class="s2">/train/lab2num_utts&quot;</span> \
+        <span class="o">--</span><span class="n">train_label</span> <span class="s2">&quot;$</span><span class="si">{data}</span><span class="s2">/train/utt2lab&quot;</span> \
+        <span class="o">--</span><span class="n">pi_spoof</span> <span class="mf">0.05</span> <span class="c1"># Assumed prior probability of a spoof trial</span>
+
+<span class="n">done</span>
+
+<span class="n">echo</span> <span class="s2">&quot;Stage 6 finished.&quot;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># TODO: aff formula for logits to llr.</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="stage-7-performance-evaluation">
+<h2>Stage 7: Performance Evaluation<a class="headerlink" href="#stage-7-performance-evaluation" title="Link to this heading"></a></h2>
+<p>Finally, we measure the performance of our system using the calibrated LLR scores. The primary metric for anti-spoofing is the <strong>Equal Error Rate (EER)</strong>.</p>
+<ul class="simple">
+<li><p><strong>EER:</strong> The error rate at which the False Acceptance Rate (FAR) equals the False Rejection Rate (FRR). A lower EER indicates better performance.</p></li>
+</ul>
+<p>We will calculate the EER for both the development and evaluation sets.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">echo</span> <span class="s2">&quot;Starting Stage 7: Measuring Performance...&quot;</span>
+
+<span class="k">for</span> <span class="n">dset</span> <span class="ow">in</span> <span class="n">dev</span> <span class="nb">eval</span><span class="p">;</span> <span class="n">do</span>
+  <span class="n">echo</span> <span class="s2">&quot;Evaluating on $</span><span class="si">{dset}</span><span class="s2"> set...&quot;</span>
+  
+  <span class="c1"># Prepare the ground truth key file in the required format: &lt;utt_id&gt;\t&lt;label&gt;</span>
+  <span class="n">key_file</span><span class="o">=</span><span class="s2">&quot;$</span><span class="si">{data}</span><span class="s2">/$</span><span class="si">{dset}</span><span class="s2">/cm_key_file.txt&quot;</span>
+  <span class="n">echo</span> <span class="o">-</span><span class="n">e</span> <span class="s2">&quot;filename</span><span class="se">\t</span><span class="s2">cm-label&quot;</span> <span class="o">&gt;</span> <span class="s2">&quot;$</span><span class="si">{key_file}</span><span class="s2">&quot;</span>
+  <span class="c1"># The sed command replaces the first space with a tab</span>
+  <span class="n">sed</span> <span class="s1">&#39;s/ /</span><span class="se">\t</span><span class="s1">/&#39;</span> <span class="s2">&quot;$</span><span class="si">{data}</span><span class="s2">/$</span><span class="si">{dset}</span><span class="s2">/utt2lab&quot;</span> <span class="o">&gt;&gt;</span> <span class="s2">&quot;$</span><span class="si">{key_file}</span><span class="s2">&quot;</span>
+
+  <span class="c1"># Run the evaluation script</span>
+  <span class="c1"># The output will be displayed here and also saved to a file in the experiment directory.</span>
+  <span class="n">python</span> <span class="n">wedefense</span><span class="o">/</span><span class="n">metrics</span><span class="o">/</span><span class="n">detection</span><span class="o">/</span><span class="n">evaluation</span><span class="o">.</span><span class="n">py</span> \
+      <span class="o">--</span><span class="n">m</span> <span class="n">t1</span> \
+      <span class="o">--</span><span class="n">cm</span> <span class="s2">&quot;$</span><span class="si">{exp_dir}</span><span class="s2">/posteriors/$</span><span class="si">{dset}</span><span class="s2">/llr.txt&quot;</span> \
+      <span class="o">--</span><span class="n">cm_key</span> <span class="s2">&quot;$</span><span class="si">{key_file}</span><span class="s2">&quot;</span> <span class="mi">2</span><span class="o">&gt;&amp;</span><span class="mi">1</span> <span class="o">|</span> <span class="n">tee</span> <span class="s2">&quot;$</span><span class="si">{exp_dir}</span><span class="s2">/results_$</span><span class="si">{dset}</span><span class="s2">.txt&quot;</span>
+<span class="n">done</span>
+
+<span class="n">echo</span> <span class="s2">&quot;Stage 7 finished. Results are saved in $</span><span class="si">{exp_dir}</span><span class="s2">/&quot;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading"></a></h2>
+<p>Congratulations! You have successfully completed all the stages of training and evaluating an anti-spoofing model on the PartialSpoof dataset.</p>
+<p>You have learned how to:</p>
+<ul class="simple">
+<li><p><strong>Prepare</strong> a dataset in the standard Kaldi-style format.</p></li>
+<li><p><strong>Format</strong> the data for efficient training using shards.</p></li>
+<li><p><strong>Train</strong> a ResNet-based model.</p></li>
+<li><p><strong>Extract</strong> embeddings and logits for inference.</p></li>
+<li><p><strong>Calibrate</strong> scores and <strong>evaluate</strong> the system’s performance using the EER metric.</p></li>
+</ul>
+<section id="next-steps">
+<h3>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Analyze the results:</strong> Check the <code class="docutils literal notranslate"><span class="pre">results_eval.txt</span></code> file in your experiment directory for the final performance.</p></li>
+<li><p><strong>Experiment with hyperparameters:</strong> Try changing the model architecture, learning rate, or other parameters in the <code class="docutils literal notranslate"><span class="pre">conf/resnet.yaml</span></code> file.</p></li>
+<li><p><strong>Use model averaging:</strong> Set <code class="docutils literal notranslate"><span class="pre">num_avg</span></code> to a positive value (e.g., 5) to see if averaging checkpoints improves performance.</p></li>
+<li><p><strong>Apply data augmentation:</strong> If you have the MUSAN and RIRS datasets, uncomment the relevant lines in the training stage to see its effect.</p></li>
+<li><p><strong>Embedding visualization:</strong> You may also try to visualize the embedding extracted from the stage 4.</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../augmentation.html" class="btn btn-neutral float-left" title="Augmentation Tutorial" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="localization.html" class="btn btn-neutral float-right" title="Spoof Localization Tutorial with WeDefense" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, WeDefense.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

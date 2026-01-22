@@ -1,0 +1,246 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to WeDefense’s documentation! &mdash; WeDefense 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=f2a433a1"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+      <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#">
+            
+              <img src="_static/wedefense_logo_h.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#install-via-pip">Install via pip</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#install-locally">Install locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#test-your-gpu-installation">Test your GPU installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quick_start.html#asvspoof2019-la-single-gpu">ASVspoof2019 LA, single GPU</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions (FAQs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support_status.html">WeDefense Support Status</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="support_status.html#databases">Databases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="support_status.html#augmentation">Augmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="support_status.html#detection">Detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="support_status.html#localization">Localization</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorial</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/augmentation.html">Augmentation Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/tasks/detection.html">Spoof Detection Tutorial with WeDefense</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#initial-configuration">Initial Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-1-data-preparation">Stage 1: Data Preparation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-2-data-formatting-and-augmentation">Stage 2: Data Formatting and Augmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-3-training">Stage 3: Training</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/tasks/detection.html#todo-add-table-for-variables-used-in-training">TODO add table for variables used in training.</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-4-model-averaging-embedding-extraction">Stage 4: Model Averaging &amp; Embedding Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-5-logit-extraction">Stage 5: Logit Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-6-score-calibration-logits-to-llr">Stage 6: Score Calibration (Logits to LLR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-7-performance-evaluation">Stage 7: Performance Evaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#conclusion">Conclusion</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/tasks/detection.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/tasks/localization.html">Spoof Localization Tutorial with WeDefense</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/deployment/export-with-torch-jit-script.html">Export model with torch.jit.script()</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/deployment/export-with-torch-jit-script.html#example">Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/deployment/export-with-torch-jit-script.html#notes">Notes</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">WeDefense</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Welcome to WeDefense’s documentation!</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="welcome-to-wedefense-s-documentation">
+<h1>Welcome to WeDefense’s documentation!<a class="headerlink" href="#welcome-to-wedefense-s-documentation" title="Link to this heading"></a></h1>
+<p>WeDefense is a toolkit tailored to defend against fake audio.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">License considerations (Apache 2.0)</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-right" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">WeDefense is released under the <a class="reference external" href="https://github.com/zlin0/wedefense/blob/main/LICENSE">Apache License, version 2.0</a>. The Apache license is a popular BSD-like license.
+Licensed under the Apache License, Version 2.0 (the “License”);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<blockquote>
+<div><p class="sd-card-text"><a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></p>
+</div></blockquote>
+<p class="sd-card-text">Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an “AS IS” BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+</div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Warning / Disclaimer</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-right" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">Although the goal of this toolkit is to promote progress in fake detection, we acknowledge that any open-source software may be misused by malicious actors. We strongly discourage any use of the models or code for harmful purposes, such as:</p>
+<ul class="simple">
+<li><p class="sd-card-text">Bypassing biometric authentication</p></li>
+<li><p class="sd-card-text">Creating or enhancing systems that generate fake or deceptive audio</p></li>
+</ul>
+<p class="sd-card-text">Some of the models included here perform well on public datasets, but may not generalize to unseen or adversarial scenarios. Please be aware of these limitations and use this repository responsibly and ethically.</p>
+</div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Referencing WeDefense (BibTeX)</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-right" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">If you use WeDefense in your research or business, please cite it using the following BibTeX entry:</p>
+<div class="highlight-bibtex notranslate"><div class="highlight"><pre><span></span><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">wedefense</span><span class="p">,</span>
+<span class="w">   </span><span class="na">title</span><span class="p">=</span><span class="s">{WeDefense: A Toolkit to Defend Against Fake Audio}</span><span class="p">,</span>
+<span class="w">   </span><span class="na">author</span><span class="p">=</span><span class="s">{Lin Zhang and Johan Rohdin and Xin Wang and Junyi Peng and Tianchi Liu and You Zhang and Hieu-Thi Luong and Shuai Wang and Anna Silnova and Chengdong Liang and Nicholas Evans}</span><span class="p">,</span>
+<span class="w">   </span><span class="na">year</span><span class="p">=</span><span class="s">{2025}</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</details><div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions (FAQs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support_status.html">WeDefense Support Status</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Tutorial</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/augmentation.html">Augmentation Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/tasks/detection.html">Spoof Detection Tutorial with WeDefense</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#initial-configuration">Initial Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-1-data-preparation">Stage 1: Data Preparation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-2-data-formatting-and-augmentation">Stage 2: Data Formatting and Augmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-3-training">Stage 3: Training</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/tasks/detection.html#todo-add-table-for-variables-used-in-training">TODO add table for variables used in training.</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-4-model-averaging-embedding-extraction">Stage 4: Model Averaging &amp; Embedding Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-5-logit-extraction">Stage 5: Logit Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-6-score-calibration-logits-to-llr">Stage 6: Score Calibration (Logits to LLR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#stage-7-performance-evaluation">Stage 7: Performance Evaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/tasks/detection.html#conclusion">Conclusion</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/tasks/localization.html">Spoof Localization Tutorial with WeDefense</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/deployment/export-with-torch-jit-script.html">Export model with torch.jit.script()</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/deployment/export-with-torch-jit-script.html#example">Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/deployment/export-with-torch-jit-script.html#notes">Notes</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, WeDefense.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

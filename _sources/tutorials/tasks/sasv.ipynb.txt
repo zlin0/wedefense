@@ -1,0 +1,31 @@
+{
+  "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "14f0436d",
+   "metadata": {},
+   "source": [
+    "# SASV Tutorial with WeDefense\n",
+    "\n",
+    "**Author:** [Your Name]  \n",
+    "**Date:** [Date]  \n",
+    "**Status:** Draft/Published"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "84192a0b",
+   "metadata": {},
+   "source": [
+    "This is the tutorial for spoofing-aware speaker verficiation in WeDefense"
+   ]
+  }
+ ],
+ "metadata": {
+  "language_info": {
+   "name": "python"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

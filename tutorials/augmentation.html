@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Augmentation Tutorial &mdash; WeDefense 1.0 documentation</title>
+  <title>Augmentation Tutorial in WeDefense &mdash; WeDefense 1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -26,7 +26,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Spoof Detection Tutorial with WeDefense" href="tasks/detection.html" />
-    <link rel="prev" title="WeDefense Support Status" href="../support_status.html" /> 
+    <link rel="prev" title="Frequently Asked Questions (FAQs)" href="../faq.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -61,8 +61,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../quick_start.html#asvspoof2019-la-single-gpu">ASVspoof2019 LA, single GPU</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions (FAQs)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../support_status.html">WeDefense Support Status</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../support_status.html#databases">Databases</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../support_status.html#augmentation">Augmentation</a></li>
@@ -70,10 +68,21 @@
 <li class="toctree-l2"><a class="reference internal" href="../support_status.html#localization">Localization</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../how_to_debug.html">WeDefense - How to debug?</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../how_to_debug.html#commond-line">1. commond line</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how_to_debug.html#vscode-cursor">2. vscode/cursor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../how_to_debug.html#option-1-launch-debug-from-a-debug-icon">2.1 Option 1: Launch debug from a debug icon</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../how_to_debug.html#option-2-prepare-a-debugging-startup-script">2.2 Option 2: Prepare a debugging startup script.</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions (FAQs)</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tutorial</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Augmentation Tutorial</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Augmentation Tutorial in WeDefense</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tasks/detection.html">Spoof Detection Tutorial with WeDefense</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tasks/detection.html#prerequisites">Prerequisites</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tasks/detection.html#initial-configuration">Initial Configuration</a></li>
@@ -94,11 +103,14 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tasks/localization.html">Spoof Localization Tutorial with WeDefense</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tasks/sasv.html">SASV Tutorial with WeDefense</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deployment/export-with-torch-jit-script.html">Export model with torch.jit.script()</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#example">Example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#notes">Notes</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="calibration.html">Calibration Tutorial in WeDefense</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pruning.html">Pruning Tutorial in WeDefense</a></li>
 </ul>
 
         </div>
@@ -115,7 +127,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Augmentation Tutorial</li>
+      <li class="breadcrumb-item active">Augmentation Tutorial in WeDefense</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/tutorials/augmentation.ipynb.txt" rel="nofollow"> View page source</a>
       </li>
@@ -125,8 +137,11 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section class="tex2jax_ignore mathjax_ignore" id="augmentation-tutorial">
-<h1>Augmentation Tutorial<a class="headerlink" href="#augmentation-tutorial" title="Link to this heading"></a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="augmentation-tutorial-in-wedefense">
+<h1>Augmentation Tutorial in WeDefense<a class="headerlink" href="#augmentation-tutorial-in-wedefense" title="Link to this heading"></a></h1>
+<p><strong>Author:</strong> [Your Name]<br />
+<strong>Date:</strong> [Date]<br />
+<strong>Status:</strong> Draft/Published</p>
 <p>This is a tutorial for augmentation included in WeDefense</p>
 </section>
 
@@ -134,7 +149,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../support_status.html" class="btn btn-neutral float-left" title="WeDefense Support Status" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../faq.html" class="btn btn-neutral float-left" title="Frequently Asked Questions (FAQs)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="tasks/detection.html" class="btn btn-neutral float-right" title="Spoof Detection Tutorial with WeDefense" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

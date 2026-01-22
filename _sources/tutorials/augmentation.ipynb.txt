@@ -5,7 +5,11 @@
    "id": "title-cell",
    "metadata": {},
    "source": [
-    "# Augmentation Tutorial"
+    "# Augmentation Tutorial in WeDefense\n",
+    "\n",
+    "**Author:** [Your Name]  \n",
+    "**Date:** [Date]  \n",
+    "**Status:** Draft/Published"
    ]
   },
   {

@@ -46,7 +46,7 @@ conda activate wedefense
 ## 🚀 Vision and Contribution
 WeDefense aims to support tasks beyond detecting fake audio but also support other relevant tasks to protect the audio.
 <p align="center">
-  <img src="./docs/source/_static/Figures/WeDefense_v3.png" alt="WeDefense Vision"/>
+  <img src="./docs/source/_static/figures/wedefense_v3.png" alt="WeDefense Vision"/>
 </p>
 
 

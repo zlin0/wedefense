@@ -1,4 +1,4 @@
-#!/bin/bash
+egs/localization/avdeepfake1m++/#!/bin/bash
 
 # 1. 
 

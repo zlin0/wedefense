@@ -22,6 +22,8 @@
       <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
       <script src="../../_static/copybutton.js?v=f281be69"></script>
       <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -83,15 +85,18 @@
 <p class="caption" role="heading"><span class="caption-text">Tutorial</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../augmentation.html">Augmentation Tutorial in WeDefense</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Spoof Detection Tutorial with WeDefense</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Spoof Detection Tutorial with WeDefense</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#what-is-spoof-detection">What is Spoof Detection?</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#task-definition">Task Definition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-use-llr-instead-of-raw-posterior-from-network">Why use LLR instead of raw posterior from network?</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#step-by-step-implementation-in-wedefense">Step-by-Step Implementation in WeDefense</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#initial-configuration">Initial Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#stage-1-data-preparation">Stage 1: Data Preparation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#stage-2-data-formatting-and-augmentation">Stage 2: Data Formatting and Augmentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#stage-3-training">Stage 3: Training</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="#todo-add-table-for-variables-used-in-training">TODO add table for variables used in training.</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#stage-4-model-averaging-embedding-extraction">Stage 4: Model Averaging &amp; Embedding Extraction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#stage-5-logit-extraction">Stage 5: Logit Extraction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#stage-6-score-calibration-logits-to-llr">Stage 6: Score Calibration (Logits to LLR)</a></li>
@@ -140,10 +145,62 @@
   <section class="tex2jax_ignore mathjax_ignore" id="spoof-detection-tutorial-with-wedefense">
 <h1>Spoof Detection Tutorial with WeDefense<a class="headerlink" href="#spoof-detection-tutorial-with-wedefense" title="Link to this heading"></a></h1>
 <p><strong>Author:</strong> Lin Zhang
-<strong>Date:</strong> 2025-10-06
+<strong>Date:</strong> 2026-02-05
 <strong>Status:</strong> Draft</p>
-<p>This notebook provides a step-by-step guide to running a anti-spoofing detection experiment using the WeDefense toolkit. We will follow the structure of the <code class="docutils literal notranslate"><span class="pre">run.sh</span></code> script for the <code class="docutils literal notranslate"><span class="pre">detection/asvspoof5/v03_resnet18</span></code> recipe on the PartialSpoof dataset.</p>
-<p><strong>Goal:</strong> Train a model to distinguish between genuine (bonafide) and spoofed speech utterances.</p>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="what-is-spoof-detection">
+<h1>What is Spoof Detection?<a class="headerlink" href="#what-is-spoof-detection" title="Link to this heading"></a></h1>
+<p>Spoof detection (also known as anti-spoofing or fake audio detection) aims to detect whether an input audio sample is genuine (bonafide) or artificially generated/modified (spoofed). This is crucial for protecting automatic speaker verification systems and ensuring the authenticity of audio content.</p>
+<section id="task-definition">
+<h2>Task Definition<a class="headerlink" href="#task-definition" title="Link to this heading"></a></h2>
+<p>Given an audio input <span class="math notranslate nohighlight">\(x\)</span>, the goal is to produce a score <span class="math notranslate nohighlight">\(s\)</span> that indicates how likely the input is genuine.</p>
+<a class="reference internal image-reference" href="../../_images/detection.png"><img alt="../../_images/detection.png" src="../../_images/detection.png" style="width: 300px;" />
+</a>
+<p>In WeDefense, we model <span class="math notranslate nohighlight">\(s\)</span> to LLR for final decision as:</p>
+<div class="math notranslate nohighlight">
+\[
+x \xrightarrow{\text{Model}} \text{embedding} \xrightarrow{\text{Projection}} \text{logits} \xrightarrow{\text{Calibration}} \text{LLR score}
+\]</div>
+<p>The final LLR (Log-Likelihood Ratio) score = <span class="math notranslate nohighlight">\(\log \frac{p(x|H_a)}{p(x|H_r)}\)</span> determines the decision:</p>
+<ul class="simple">
+<li><p><strong>Positive LLR</strong> → classified as bonafide (real)</p></li>
+<li><p><strong>Negative LLR</strong> → classified as spoof (fake)</p></li>
+</ul>
+<p>Where <span class="math notranslate nohighlight">\(H_a\)</span> and <span class="math notranslate nohighlight">\(H_r\)</span> represents the accept hypothesis (the input audio is real) and reject hypothesis (the input audio is fake), respectively.</p>
+</section>
+<section id="why-use-llr-instead-of-raw-posterior-from-network">
+<h2>Why use LLR instead of raw posterior from network?<a class="headerlink" href="#why-use-llr-instead-of-raw-posterior-from-network" title="Link to this heading"></a></h2>
+<p>While spoof detection can be framed as binary classification, we recommend using calibrated LLR scores instead of raw logits or posteriors for several reasons:</p>
+<ol class="arabic simple">
+<li><p><strong>Prior-aware calibration</strong>: LLR incorporates the prior probability of spoofing attacks, making it more suitable for real-world deployment where attack frequencies vary.</p></li>
+<li><p><strong>Interpretability</strong>: LLR provides a principled decision threshold (0) with clear probabilistic meaning that <span class="math notranslate nohighlight">\(p(x|H_a) = p(x|H_r)\)</span>.</p></li>
+<li><p><strong>Robustness</strong>: Calibrated scores are less sensitive to training data imbalance and generalize better across datasets.</p></li>
+</ol>
+<p>Note,</p>
+<ul class="simple">
+<li><p>Genuine/Bona fide/Real: Speech spoken by human or authentic audio naturally captured from real sources.</p></li>
+<li><p>Spoof/Fake: Generated or modified audio (e.g., TTS, voice conversion, etc.)</p></li>
+</ul>
+</section>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="step-by-step-implementation-in-wedefense">
+<h1>Step-by-Step Implementation in WeDefense<a class="headerlink" href="#step-by-step-implementation-in-wedefense" title="Link to this heading"></a></h1>
+<hr class="docutils" />
+<p>The implementation stages in WeDefense are:</p>
+<ul class="simple">
+<li><p><strong>Stage 1–2:</strong> Data preparation and list generation.</p></li>
+<li><p><strong>Stage 3:</strong> Model training.</p></li>
+<li><p><strong>Stage 4:</strong> Model averaging and embedding extraction.</p></li>
+<li><p><strong>Stage 5:</strong> Logit extraction (and optional posterior output via softmax).</p></li>
+<li><p><strong>Stage 6:</strong> Score calibration (logits to LLR).</p></li>
+<li><p><strong>Stage 7:</strong> Performance evaluation.</p></li>
+</ul>
+<p><strong>Note:</strong></p>
+<ol class="arabic simple">
+<li><p>WeDefense separates embedding extraction (Stage 4) from logit/posterior prediction (Stage 5) to keep the pipeline modular. This makes it easier to analyze or visualize embeddings, reuse the same embeddings with different back-end scoring methods, and debug each stage independently.</p></li>
+<li><p>For evaluation, we convert logits to LLR (Stage 6) to apply prior-aware calibration and obtain well-calibrated decision scores rather than using raw logits or posteriors directly.</p></li>
+</ol>
+<p>In the following of this notebook, we provide a step-by-step guide to running a anti-spoofing detection experiment using the WeDefense toolkit. We will follow the structure of the <code class="docutils literal notranslate"><span class="pre">run.sh</span></code> script for the <code class="docutils literal notranslate"><span class="pre">detection/asvspoof5/v03_resnet18</span></code> recipe on the PartialSpoof dataset.</p>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
 <ol class="arabic simple">
@@ -229,6 +286,14 @@
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span>  <span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">1</span>
+    <span class="err">$</span> <span class="n">head</span> <span class="o">-</span><span class="n">n</span> <span class="mi">3</span> <span class="o">.</span><span class="n">data</span><span class="o">/</span><span class="n">partialspoof</span><span class="o">/</span><span class="n">train</span><span class="o">/*</span>
+    <span class="o">^</span>
+<span class="ne">SyntaxError</span>: invalid syntax
+</pre></div>
+</div>
+</div>
 </div>
 </section>
 <section id="stage-2-data-formatting-and-augmentation">
@@ -289,10 +354,8 @@
 </div>
 </div>
 </div>
+<p>More about variables used in training please refer to</p>
 </section>
-</section>
-<section class="tex2jax_ignore mathjax_ignore" id="todo-add-table-for-variables-used-in-training">
-<h1>TODO add table for variables used in training.<a class="headerlink" href="#todo-add-table-for-variables-used-in-training" title="Link to this heading"></a></h1>
 <section id="stage-4-model-averaging-embedding-extraction">
 <h2>Stage 4: Model Averaging &amp; Embedding Extraction<a class="headerlink" href="#stage-4-model-averaging-embedding-extraction" title="Link to this heading"></a></h2>
 <p>After training, we can proceed with inference. We have two options for the model to use:</p>
@@ -390,13 +453,19 @@
 </div>
 </div>
 </div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># TODO: aff formula for logits to llr.</span>
-</pre></div>
-</div>
-</div>
-</div>
+<p><strong>Logits → LLR (binary case)</strong></p>
+<p>Let the model output logits <span class="math notranslate nohighlight">\(s_{\text{spoof}}\)</span> and <span class="math notranslate nohighlight">\(s_{\text{bonafide}}\)</span>. The posterior is</p>
+<div class="math notranslate nohighlight">
+\[
+P(\text{spoof}\mid x)=\frac{e^{s_{\text{spoof}}}}{e^{s_{\text{spoof}}}+e^{s_{\text{bonafide}}}},\quad
+P(\text{bonafide}\mid x)=\frac{e^{s_{\text{bonafide}}}}{e^{s_{\text{spoof}}}+e^{s_{\text{bonafide}}}}
+\]</div>
+<p>The log-likelihood ratio is</p>
+<div class="math notranslate nohighlight">
+\[
+\text{LLR}(x)=\log\frac{P(\text{spoof}\mid x)}{P(\text{bonafide}\mid x)}-\log\frac{\pi_{\text{spoof}}}{1-\pi_{\text{spoof}}}
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(\pi_{\text{spoof}}\)</span> is the prior spoof probability used for calibration.</p>
 </section>
 <section id="stage-7-performance-evaluation">
 <h2>Stage 7: Performance Evaluation<a class="headerlink" href="#stage-7-performance-evaluation" title="Link to this heading"></a></h2>
@@ -448,9 +517,7 @@
 <ul class="simple">
 <li><p><strong>Analyze the results:</strong> Check the <code class="docutils literal notranslate"><span class="pre">results_eval.txt</span></code> file in your experiment directory for the final performance.</p></li>
 <li><p><strong>Experiment with hyperparameters:</strong> Try changing the model architecture, learning rate, or other parameters in the <code class="docutils literal notranslate"><span class="pre">conf/resnet.yaml</span></code> file.</p></li>
-<li><p><strong>Use model averaging:</strong> Set <code class="docutils literal notranslate"><span class="pre">num_avg</span></code> to a positive value (e.g., 5) to see if averaging checkpoints improves performance.</p></li>
-<li><p><strong>Apply data augmentation:</strong> If you have the MUSAN and RIRS datasets, uncomment the relevant lines in the training stage to see its effect.</p></li>
-<li><p><strong>Embedding visualization:</strong> You may also try to visualize the embedding extracted from the stage 4.</p></li>
+<li><p><strong>Embedding visualization:</strong> You may also try to visualize the embedding extracted from the stage 4 following <code class="docutils literal notranslate"><span class="pre">wedefense/egs/embedding_visualization/embedding_visulization_umap.ipynb</span></code>.</p></li>
 </ul>
 </section>
 </section>

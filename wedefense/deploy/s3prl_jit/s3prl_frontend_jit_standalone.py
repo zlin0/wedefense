@@ -372,8 +372,22 @@ class JITCompatibleS3prlFrontendStandalone(nn.Module):
             conv_blocks.append(conv_block)
 
         self.feature_extractor = JITConvFeatureExtractor(conv_blocks)
-        self.post_extract_proj = full_model.post_extract_proj
-        self.dropout_input = full_model.dropout_input
+
+        # Create independent copies of post_extract_proj and dropout_input
+        if full_model.post_extract_proj is not None:
+            self.post_extract_proj = nn.Linear(
+                full_model.post_extract_proj.in_features,
+                full_model.post_extract_proj.out_features,
+                bias=full_model.post_extract_proj.bias is not None)
+            self.post_extract_proj.weight.data.copy_(
+                full_model.post_extract_proj.weight.data)
+            if self.post_extract_proj.bias is not None:
+                self.post_extract_proj.bias.data.copy_(
+                    full_model.post_extract_proj.bias.data)
+        else:
+            self.post_extract_proj = None
+
+        self.dropout_input = nn.Dropout(full_model.dropout_input.p)
 
         pos_conv = None
         if hasattr(encoder, "pos_conv") and encoder.pos_conv is not None:
@@ -388,9 +402,7 @@ class JITCompatibleS3prlFrontendStandalone(nn.Module):
                     groups=conv.groups,
                     bias=conv.bias is not None,
                 ))
-            pos_conv.conv.weight.data.copy_(conv.weight.data)
-            if conv.bias is not None:
-                pos_conv.conv.bias.data.copy_(conv.bias.data)
+            # Don't copy weights here - will be copied in load_fine_tuned_weights
 
         self.encoder_pos_conv = pos_conv
         self.encoder_layer_norm = encoder.layer_norm if hasattr(
@@ -456,8 +468,20 @@ class JITCompatibleS3prlFrontendStandalone(nn.Module):
         self.layer_norm_first = layer_norm_first
         self.dropout = encoder_dropout
         self.required_seq_len_multiple = required_seq_len_multiple
-        self.layer_norm = full_model.layer_norm if hasattr(
-            full_model, 'layer_norm') else None
+        # Create layer_norm instead of referencing the original one
+        if hasattr(full_model,
+                   'layer_norm') and full_model.layer_norm is not None:
+            # Extract feature dimension from the original layer_norm
+            orig_layer_norm = full_model.layer_norm
+            self.layer_norm = nn.LayerNorm(
+                orig_layer_norm.normalized_shape[0],
+                eps=orig_layer_norm.eps,
+                elementwise_affine=orig_layer_norm.elementwise_affine)
+            # Copy weights
+            self.layer_norm.weight.data.copy_(orig_layer_norm.weight.data)
+            self.layer_norm.bias.data.copy_(orig_layer_norm.bias.data)
+        else:
+            self.layer_norm = None
         self.crop_seq_to_multiple = getattr(full_model, 'crop_seq_to_multiple',
                                             1)
         self.num_layers = len(self.encoder_layers) + 1
@@ -537,19 +561,14 @@ class JITCompatibleS3prlFrontendStandalone(nn.Module):
 
         # Load positional conv (JITPosConv module)
         if self.encoder_pos_conv is not None and orig_model.encoder.pos_conv is not None:
-            # encoder_pos_conv is a JITPosConv module, pos_conv is a Sequential
-            for i, (jit_layer, orig_layer) in enumerate(
-                    zip(self.encoder_pos_conv.children(),
-                        orig_model.encoder.pos_conv)):
-                if isinstance(jit_layer, nn.Conv1d) and isinstance(
-                        orig_layer, nn.Conv1d):
-                    jit_layer.weight.data.copy_(orig_layer.weight.data)
-                    if jit_layer.bias is not None and orig_layer.bias is not None:
-                        jit_layer.bias.data.copy_(orig_layer.bias.data)
-                elif isinstance(jit_layer, nn.GroupNorm) and isinstance(
-                        orig_layer, nn.GroupNorm):
-                    jit_layer.weight.data.copy_(orig_layer.weight.data)
-                    jit_layer.bias.data.copy_(orig_layer.bias.data)
+            # encoder_pos_conv is a JITPosConv module, pos_conv is a Sequential[Conv1d, SamePad, GELU]
+            # Directly access the conv layer (pos_conv[0] should be Conv1d)
+            orig_conv = orig_model.encoder.pos_conv[0]
+            jit_conv = self.encoder_pos_conv.conv
+
+            jit_conv.weight.data.copy_(orig_conv.weight.data)
+            if jit_conv.bias is not None and orig_conv.bias is not None:
+                jit_conv.bias.data.copy_(orig_conv.bias.data)
 
         # Load encoder layer norm
         if self.encoder_layer_norm is not None and orig_model.encoder.layer_norm is not None:
@@ -595,7 +614,11 @@ class JITCompatibleS3prlFrontendStandalone(nn.Module):
             jit_layer.fc2.weight.data.copy_(orig_layer.fc2.weight.data)
             jit_layer.fc2.bias.data.copy_(orig_layer.fc2.bias.data)
 
-        print("Loaded fine-tuned weights into JIT frontend")
+        # Load layer_norm weights (for feature extractor output)
+        if self.layer_norm is not None and orig_model.layer_norm is not None:
+            self.layer_norm.weight.data.copy_(
+                orig_model.layer_norm.weight.data)
+            self.layer_norm.bias.data.copy_(orig_model.layer_norm.bias.data)
 
     def _get_feat_extract_output_lengths(
             self, input_lengths: torch.Tensor) -> torch.Tensor:
@@ -757,16 +780,30 @@ class JITCompatibleS3prlFrontendStandalone(nn.Module):
         x = features.transpose(0, 1)  # [T, B, C]
         hidden_states = x.new_zeros(
             (self.num_layers, x.size(1), x.size(0), x.size(2)))
+
+        # S3PRL hooks behavior:
+        # - Layer 0: input to first encoder layer (features before encoder)
+        # - Layer 1-23: input to each subsequent layer (output of previous layer)
+        # - Layer 24: final encoder output (after all layers, possibly after layer norm)
+
+        # Store layer 0: input to first encoder layer
+        hidden_states[0].copy_(x.transpose(0, 1))
+
+        # Process encoder layers
         for i, layer in enumerate(self.encoder_layers):
-            hidden_states[i].copy_(x.transpose(0, 1))
             x = layer(x,
                       self_attn_padding_mask=padding_mask,
                       need_weights=False)
+            # Store output of this layer (which becomes input to next layer)
+            # This goes to hidden_states[i+1]
+            hidden_states[i + 1].copy_(x.transpose(0, 1))
 
+        # Apply final layer norm if needed
         if self.layer_norm_first and self.encoder_layer_norm is not None:
             x = self.encoder_layer_norm(x)
+            # Update last layer's hidden state after layer norm
+            hidden_states[self.num_layers - 1].copy_(x.transpose(0, 1))
 
-        hidden_states[self.num_layers - 1].copy_(x.transpose(0, 1))
         final_output = x.transpose(0, 1)
 
         # Apply postprocess: first unpad to minimum length (hook_postprocess), then match length

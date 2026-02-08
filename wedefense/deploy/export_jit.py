@@ -136,93 +136,46 @@ def main():
 
     # Load backend weights
     if backend_state:
-        missing, unexpected = model.load_state_dict(backend_state,
-                                                    strict=False)
-        print(
-            f"Loaded {len(backend_state)} backend parameters from checkpoint")
-        if missing:
-            print(f"Missing backend keys: {len(missing)}")
-        if unexpected:
-            print(f"Unexpected backend keys: {len(unexpected)}")
+        model.load_state_dict(backend_state, strict=False)
+        print(f"Loaded {len(backend_state)} backend parameters")
     else:
         print("Warning: No backend weights found in checkpoint!")
 
     # Load projection weights
     if projection_state:
-        missing, unexpected = projection.load_state_dict(projection_state,
-                                                         strict=False)
-        print(
-            f"Loaded {len(projection_state)} projection parameters from checkpoint"
-        )
-        if missing:
-            print(f"Missing projection keys: {len(missing)}")
-        if unexpected:
-            print(f"Unexpected projection keys: {len(unexpected)}")
+        projection.load_state_dict(projection_state, strict=False)
+        print(f"Loaded {len(projection_state)} projection parameters")
     else:
         print("Warning: No projection weights found in checkpoint!")
 
-    # Load frontend weights from checkpoint and create JIT frontend
+    # Load frontend weights and create JIT frontend
     if 'orig_frontend_for_jit' in locals(
     ) and orig_frontend_for_jit is not None:
-        # Load weights into original frontend first
-        # Reuse checkpoint_data loaded above
         frontend_state = {}
         for key, value in checkpoint_data.items():
             if key.startswith('frontend.'):
-                new_key = key[9:]  # Remove 'frontend.' prefix
-                frontend_state[new_key] = value
+                frontend_state[key[9:]] = value
 
         if frontend_state:
-            missing, unexpected = orig_frontend_for_jit.load_state_dict(
-                frontend_state, strict=False)
-            print(
-                f"Loaded {len(frontend_state)} original frontend parameters from checkpoint"
-            )
-            if missing:
-                print(f"Missing keys: {len(missing)}")
-            if unexpected:
-                print(f"Unexpected keys: {len(unexpected)}")
-        else:
-            print("Warning: No frontend weights found in checkpoint!")
+            orig_frontend_for_jit.load_state_dict(frontend_state, strict=False)
+            print(f"Loaded {len(frontend_state)} frontend parameters")
 
-        # Now create JIT frontend and load fine-tuned weights from original frontend
-        upstream_name = configs['dataset_args'][frontend_args].get(
-            'upstream_args', {}).get('name', '')
-        print("Creating JIT frontend...")
         frontend = JITCompatibleS3prlFrontendStandalone(
             **configs['dataset_args'][frontend_args],
             sample_rate=configs['dataset_args']['resample_rate'])
-        print("Loading fine-tuned weights into JIT frontend...")
         frontend.load_fine_tuned_weights(orig_frontend_for_jit)
-        print("JIT frontend created with fine-tuned weights")
+        print("JIT frontend created successfully")
     elif frontend is not None:
-        # Load weights for non-JIT frontends
-        # Reuse checkpoint_data loaded above
         frontend_state = {}
         for key, value in checkpoint_data.items():
             if key.startswith('frontend.'):
-                new_key = key[9:]  # Remove 'frontend.' prefix
-                frontend_state[new_key] = value
+                frontend_state[key[9:]] = value
 
         if frontend_state:
-            missing, unexpected = frontend.load_state_dict(frontend_state,
-                                                           strict=False)
-            print(
-                f"Loaded {len(frontend_state)} frontend parameters from checkpoint"
-            )
-            if missing:
-                print(f"Missing keys: {len(missing)}")
-            if unexpected:
-                print(f"Unexpected keys: {len(unexpected)}")
-        else:
-            print("Warning: No frontend weights found in checkpoint!")
-
-    print(frontend)
+            frontend.load_state_dict(frontend_state, strict=False)
+            print(f"Loaded {len(frontend_state)} frontend parameters")
 
     model.eval()
-    print(model)
-
-    # Replace GradMultiply for JIT export compatibility
     model = replace_gradmultiply_for_jit(model)
 
     if args.output_file:

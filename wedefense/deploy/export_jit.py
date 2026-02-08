@@ -11,8 +11,8 @@ from wedefense.models.get_model import get_model
 from wedefense.models.projections import get_projection
 from wedefense.deploy.MHFA import replace_gradmultiply_for_jit
 from wedefense.frontend import frontend_class_dict
-from wedefense.deploy.s3prl_jit.s3prl_frontend_jit_standalone import (
-    JITCompatibleS3prlFrontendStandalone, )
+from wedefense.deploy.s3prl_jit.s3prl_frontend_jit import (
+    JITCompatibleS3prlFrontend, )
 
 
 def get_args():
@@ -160,7 +160,7 @@ def main():
             orig_frontend_for_jit.load_state_dict(frontend_state, strict=False)
             print(f"Loaded {len(frontend_state)} frontend parameters")
 
-        frontend = JITCompatibleS3prlFrontendStandalone(
+        frontend = JITCompatibleS3prlFrontend(
             **configs['dataset_args'][frontend_args],
             sample_rate=configs['dataset_args']['resample_rate'])
         frontend.load_fine_tuned_weights(orig_frontend_for_jit)

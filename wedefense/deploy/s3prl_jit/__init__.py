@@ -1,8 +1,8 @@
 # S3PRL JIT-compatible modules
-from .s3prl_frontend_jit_standalone import JITCompatibleS3prlFrontendStandalone
+from .s3prl_frontend_jit import JITCompatibleS3prlFrontend
 from .jit_compatible_attention import JITCompatibleMultiheadAttention
 
 __all__ = [
-    'JITCompatibleS3prlFrontendStandalone',
+    'JITCompatibleS3prlFrontend',
     'JITCompatibleMultiheadAttention',
 ]

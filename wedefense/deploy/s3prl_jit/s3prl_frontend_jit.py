@@ -205,7 +205,7 @@ class JITTransformerLayer(nn.Module):
         return x
 
 
-class JITCompatibleS3prlFrontendStandalone(nn.Module):
+class JITCompatibleS3prlFrontend(nn.Module):
     """Standalone JIT-compatible S3PRL Frontend for wav2vec2 models.
 
     This implementation uses a standalone encoder that reimplements the logic

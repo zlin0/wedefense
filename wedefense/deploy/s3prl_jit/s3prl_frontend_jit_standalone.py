@@ -342,6 +342,7 @@ class JITCompatibleS3prlFrontendStandalone(nn.Module):
                         norm = nn.LayerNorm(layer_norm.normalized_shape,
                                             eps=layer_norm.eps,
                                             elementwise_affine=True)
+                        # Copy pretrained weights first, will be overwritten in load_fine_tuned_weights
                         norm.weight.data.copy_(layer_norm.weight.data)
                         norm.bias.data.copy_(layer_norm.bias.data)
                         is_layer_norm = True
@@ -351,6 +352,7 @@ class JITCompatibleS3prlFrontendStandalone(nn.Module):
                                         norm_module.num_channels,
                                         eps=norm_module.eps,
                                         affine=True)
+                    # Copy pretrained weights first, will be overwritten in load_fine_tuned_weights
                     norm.weight.data.copy_(norm_module.weight.data)
                     norm.bias.data.copy_(norm_module.bias.data)
                     is_layer_norm = False
@@ -366,6 +368,7 @@ class JITCompatibleS3prlFrontendStandalone(nn.Module):
                 norm=norm,
                 is_layer_norm=is_layer_norm,
             )
+            # Copy pretrained weights first, will be overwritten in load_fine_tuned_weights
             conv_block.conv.weight.data.copy_(conv.weight.data)
             if conv.bias is not None:
                 conv_block.conv.bias.data.copy_(conv.bias.data)
@@ -379,6 +382,7 @@ class JITCompatibleS3prlFrontendStandalone(nn.Module):
                 full_model.post_extract_proj.in_features,
                 full_model.post_extract_proj.out_features,
                 bias=full_model.post_extract_proj.bias is not None)
+            # Copy pretrained weights first, will be overwritten in load_fine_tuned_weights
             self.post_extract_proj.weight.data.copy_(
                 full_model.post_extract_proj.weight.data)
             if self.post_extract_proj.bias is not None:
@@ -752,16 +756,8 @@ class JITCompatibleS3prlFrontendStandalone(nn.Module):
             features = self.post_extract_proj(features)
 
         features = self.dropout_input(features)
-        features = features.masked_fill(padding_mask.unsqueeze(-1), 0.0)
 
-        if self.encoder_pos_conv is not None:
-            features_t = features.transpose(1, 2)
-            x_conv = self.encoder_pos_conv(features_t)
-            features = features + x_conv.transpose(1, 2)
-
-        if not self.layer_norm_first and self.encoder_layer_norm is not None:
-            features = self.encoder_layer_norm(features)
-
+        # Pad BEFORE positional convolution and masking (matching S3PRL order)
         pad_length = 0
         if self.required_seq_len_multiple > 1:
             seq_len = features.size(1)
@@ -771,6 +767,16 @@ class JITCompatibleS3prlFrontendStandalone(nn.Module):
             if pad_length > 0:
                 features = F.pad(features, (0, 0, 0, pad_length))
                 padding_mask = F.pad(padding_mask, (0, pad_length), value=True)
+
+        features = features.masked_fill(padding_mask.unsqueeze(-1), 0.0)
+
+        if self.encoder_pos_conv is not None:
+            features_t = features.transpose(1, 2)
+            x_conv = self.encoder_pos_conv(features_t)
+            features = features + x_conv.transpose(1, 2)
+
+        if not self.layer_norm_first and self.encoder_layer_norm is not None:
+            features = self.encoder_layer_norm(features)
 
         if self.dropout > 0:
             features = F.dropout(features,

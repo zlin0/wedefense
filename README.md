@@ -61,7 +61,7 @@ If you find WeDefense useful, please cite it as:
 @article{zhang2025wedefense,
   title={WeDefense: A Toolkit to Defend Against Fake Audio},
   author={Lin Zhang, Johan Rohdin, Xin Wang, Junyi Peng, Tianchi Liu, You Zhang, Hieu-Thi Luong, Shuai Wang, Chengdong Liang, Anna Silnova, Nicholas Evans},
-  journal={arXiv preprint arXiv:},
+  journal={arXiv preprint arXiv:2601.15240},
   year={2025}
 }
 ```

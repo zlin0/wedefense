@@ -1,0 +1,1119 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Explainable AI (XAI) for Partially Spoofed Audio Detection with Grad-CAM &mdash; WeDefense 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=f2a433a1"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+      <script src="../_static/design-tabs.js?v=f930bc37"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Export model with torch.jit.script()" href="deployment/export-with-torch-jit-script.html" />
+    <link rel="prev" title="SASV Tutorial with WeDefense" href="tasks/sasv.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/wedefense_logo_h.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#install-via-pip">Install via pip</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#install-locally">Install locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#test-your-gpu-installation">Test your GPU installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../quick_start.html">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../quick_start.html#asvspoof2019-la-single-gpu">ASVspoof2019 LA, single GPU</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../support_status.html">WeDefense Support Status</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../support_status.html#databases">Databases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../support_status.html#augmentation">Augmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../support_status.html#detection">Detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../support_status.html#localization">Localization</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how_to_debug.html">WeDefense - How to debug?</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../how_to_debug.html#commond-line">1. commond line</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how_to_debug.html#vscode-cursor">2. vscode/cursor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../how_to_debug.html#option-1-launch-debug-from-a-debug-icon">2.1 Option 1: Launch debug from a debug icon</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../how_to_debug.html#option-2-prepare-a-debugging-startup-script">2.2 Option 2: Prepare a debugging startup script.</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#how-to-add-new-database">How to add new database?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#how-to-add-new-models">How to add new models?</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently Asked Questions (FAQs)</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorial</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="augmentation.html">Speech Waveform Augmentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="augmentation.html#prepare-the-environment">Prepare the environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="augmentation.html#speed-perturbation">Speed perturbation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="augmentation.html#applying-codecs">Applying codecs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="augmentation.html#rawboost">RawBoost</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="augmentation.html#recipes-in-wedefense">Recipes in WeDefense</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="augmentation.html#how-to-turn-on-augmentation">How to turn on augmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="augmentation.html#default-behaviors-in-wedefense">Default behaviors in WeDefense</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tasks/detection.html">Spoof Detection Tutorial with WeDefense</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tasks/detection.html#what-is-spoof-detection">What is Spoof Detection?</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tasks/detection.html#task-definition">Task Definition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasks/detection.html#why-use-llr-instead-of-raw-posterior-from-network">Why use LLR instead of raw posterior from network?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasks/detection.html#evaluation-metrics">Evaluation Metrics</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tasks/detection.html#step-by-step-implementation-in-wedefense">Step-by-Step Implementation in WeDefense</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tasks/detection.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasks/detection.html#initial-configuration">Initial Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasks/detection.html#stage-1-data-preparation">Stage 1: Data Preparation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasks/detection.html#stage-2-data-formatting-and-augmentation">Stage 2: Data Formatting and Augmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasks/detection.html#stage-3-training">Stage 3: Training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasks/detection.html#stage-4-model-averaging-embedding-extraction">Stage 4: Model Averaging &amp; Embedding Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasks/detection.html#stage-5-logit-extraction">Stage 5: Logit Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasks/detection.html#stage-6-score-calibration-logits-to-llr">Stage 6: Score Calibration (Logits to LLR)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasks/detection.html#stage-7-performance-evaluation">Stage 7: Performance Evaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasks/detection.html#conclusion">Conclusion</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tasks/detection.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tasks/localization.html">Spoof Localization Tutorial with WeDefense</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tasks/sasv.html">SASV Tutorial with WeDefense</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Explainable AI (XAI) for Partially Spoofed Audio Detection with Grad-CAM</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#reference-implementation-path">📂 Reference Implementation Path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#key-components">Key Components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-this-tutorial-covers">What This Tutorial Covers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#complete-pipeline-overview">Complete Pipeline Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#grad-cam-theory-for-audio">Grad-CAM Theory for Audio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-is-grad-cam">What is Grad-CAM?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mathematical-formulation">Mathematical Formulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#why-grad-cam-for-partial-spoofing">Why Grad-CAM for Partial Spoofing?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#model-architecture-ssl-res1d">Model Architecture: SSL-Res1D</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pipeline-components">Pipeline Components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#key-configuration">Key Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#why-this-architecture">Why This Architecture?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#stage-1-data-preparation">Stage 1: Data Preparation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#script-local-prepare-data-sh">Script: <code class="docutils literal notranslate"><span class="pre">local/prepare_data.sh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#purpose">Purpose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#input">Input</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#process">Process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output-files">Output Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#stage-3-model-training-overview">Stage 3: Model Training (Overview)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#command">Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#training-process">Training Process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#key-training-parameters">Key Training Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output">Output</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#stage-4-model-averaging">Stage 4: Model Averaging</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Purpose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Output</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#stage-9-xai-extraction-with-grad-cam">Stage 9: XAI Extraction with Grad-CAM</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#script-wedefense-bin-xai-gradcam-infer-py">Script: <code class="docutils literal notranslate"><span class="pre">wedefense/bin/XAI_GradCam_infer.py</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#step-by-step-process">Step-by-Step Process</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#model-preparation">1. Model Preparation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#target-layer-selection">2. Target Layer Selection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grad-cam-initialization">3. Grad-CAM Initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#per-utterance-extraction">4. Per-Utterance Extraction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#save-results">5. Save Results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#output-format">Output Format</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#stage-10-xai-score-analysis">Stage 10: XAI Score Analysis</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#script-wedefense-bin-xai-score-analysis-py">Script: <code class="docutils literal notranslate"><span class="pre">wedefense/bin/XAI_Score_analysis.py</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#analysis-components">Analysis Components</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#load-xai-scores-and-vad-information">1. Load XAI Scores and VAD Information</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#compute-statistics">2. Compute Statistics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#segment-detection">3. Segment Detection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#visualization">4. Visualization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#aggregate-analysis">5. Aggregate Analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Output</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#interpreting-xai-results">Interpreting XAI Results</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#activation-patterns-and-their-meanings">Activation Patterns and Their Meanings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#decision-guidelines">Decision Guidelines</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#for-bonafide-audio">For Bonafide Audio:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#for-partially-spoofed-audio">For Partially Spoofed Audio:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#common-pitfalls">Common Pitfalls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#validation-checklist">Validation Checklist</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#practical-usage-guide">Practical Usage Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-complete-pipeline">Running the Complete Pipeline</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#setup-environment">1. Setup Environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#configure-paths">2. Configure Paths</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#run-data-preparation-stage-1-2">3. Run Data Preparation (Stage 1-2)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#train-model-stage-3-4">4. Train Model (Stage 3-4)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#evaluate-model-stage-5-7">5. Evaluate Model (Stage 5-7)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extract-xai-stage-9">6. Extract XAI (Stage 9)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#analyze-xai-stage-10">7. Analyze XAI (Stage 10)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#customization-options">Customization Options</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#change-target-layer">Change Target Layer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#adjust-detection-threshold">Adjust Detection Threshold</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#target-different-class">Target Different Class</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#summary">Summary</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#key-takeaways">Key Takeaways</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#limitations-and-future-directions">Limitations and Future Directions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#resources">Resources</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="deployment/export-with-torch-jit-script.html">Export model with torch.jit.script()</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#usage">Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#basic-command">Basic Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#arguments">Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#output-files">Output Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#examples">Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#example-1-export-detection-model-wav2vec2-large-960">Example 1: Export Detection Model (wav2vec2_large_960)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#example-2-export-localization-model-xlsr">Example 2: Export Localization Model (XLSR)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#loading-and-using-the-exported-model">Loading and Using the Exported Model</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#python-example-backend-only">Python Example (Backend Only)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#c-example-libtorch-backend-only">C++ Example (LibTorch, Backend Only)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="deployment/export-with-torch-jit-script.html#python-example-frontend-backend-full-pipeline">Python Example (Frontend + Backend - Full Pipeline)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="calibration.html">Calibration Tutorial in WeDefense</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pruning.html">Pruning Tutorial in WeDefense</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">WeDefense</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Explainable AI (XAI) for Partially Spoofed Audio Detection with Grad-CAM</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorials/Explainable-AI-XAI.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="explainable-ai-xai-for-partially-spoofed-audio-detection-with-grad-cam">
+<h1>Explainable AI (XAI) for Partially Spoofed Audio Detection with Grad-CAM<a class="headerlink" href="#explainable-ai-xai-for-partially-spoofed-audio-detection-with-grad-cam" title="Link to this heading"></a></h1>
+<p><strong>Author:</strong> Tianchi Liu<br />
+<strong>Status:</strong> In Progress</p>
+<p><strong>Reference:</strong> <a class="reference external" href="https://arxiv.org/abs/2406.02483">How Do Neural Spoofing Countermeasures Detect Partially Spoofed Audio?</a></p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>This tutorial explains the <strong>step-by-step workflow</strong> for applying <strong>Explainable AI (XAI)</strong> techniques to <strong>partially spoofed audio detection</strong> using the <strong>Gradient-weighted Class Activation Mapping (Grad-CAM)</strong> method.</p>
+<p><strong>Partially spoofed audio</strong> refers to utterances where only certain segments are synthetic while others remain genuine.</p>
+<section id="reference-implementation-path">
+<h3>📂 Reference Implementation Path<a class="headerlink" href="#reference-implementation-path" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>egs/detection/partialspoof/x12_ssl_res1d/
+</pre></div>
+</div>
+</section>
+<section id="key-components">
+<h3>Key Components<a class="headerlink" href="#key-components" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">run.sh</span></code></p></td>
+<td><p>Main pipeline orchestrating Stages 1-10</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">conf/singlereso_utt_xlsr_53_ft_backend_Res1D.yaml</span></code></p></td>
+<td><p>Model configuration</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">local/prepare_data.sh</span></code></p></td>
+<td><p>Data preparation script</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">wedefense/bin/train.py</span></code></p></td>
+<td><p>Model training</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">wedefense/bin/XAI_GradCam_infer.py</span></code></p></td>
+<td><p>XAI heatmap extraction</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">wedefense/bin/XAI_Score_analysis.py</span></code></p></td>
+<td><p>XAI score analysis and visualization</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="what-this-tutorial-covers">
+<h3>What This Tutorial Covers<a class="headerlink" href="#what-this-tutorial-covers" title="Link to this heading"></a></h3>
+<p>✅ <strong>Complete Pipeline</strong> - From data preparation to XAI analysis<br />
+✅ <strong>Model Architecture</strong> - SSL-Res1D for partial spoofing detection<br />
+✅ <strong>Grad-CAM Theory</strong> - How temporal activation maps are computed<br />
+✅ <strong>XAI Extraction</strong> - Step-by-step extraction process<br />
+✅ <strong>Result Interpretation</strong> - Understanding and analyzing XAI scores</p>
+</section>
+</section>
+<section id="complete-pipeline-overview">
+<h2>Complete Pipeline Overview<a class="headerlink" href="#complete-pipeline-overview" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">run.sh</span></code> script implements a 10-stage pipeline:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Stage 1: Data Preparation          → wav.scp, utt2lab, lab2utt
+Stage 2: Data Format Conversion    → Shard/Raw format
+Stage 3: Model Training            → SSL-Res1D training
+Stage 4: Model Averaging           → Average best checkpoints
+Stage 5: Extract Logits            → Model inference
+Stage 6: Compute LLR Scores        → Log-likelihood ratios
+Stage 7: Performance Evaluation    → EER, min t-DCF metrics
+Stage 8: Analysis                  → Statistical tests
+Stage 9: XAI Extraction            → Grad-CAM heatmaps
+Stage 10: XAI Analysis             → Visualization and interpretation
+</pre></div>
+</div>
+<p><strong>This tutorial focuses on Stages 9-10</strong> (XAI extraction and analysis), assuming Stages 1-8 are complete.</p>
+</section>
+<section id="grad-cam-theory-for-audio">
+<h2>Grad-CAM Theory for Audio<a class="headerlink" href="#grad-cam-theory-for-audio" title="Link to this heading"></a></h2>
+<section id="what-is-grad-cam">
+<h3>What is Grad-CAM?<a class="headerlink" href="#what-is-grad-cam" title="Link to this heading"></a></h3>
+<p>Grad-CAM (Gradient-weighted Class Activation Mapping) identifies which regions of the input the model focuses on when making predictions.</p>
+</section>
+<section id="mathematical-formulation">
+<h3>Mathematical Formulation<a class="headerlink" href="#mathematical-formulation" title="Link to this heading"></a></h3>
+<p>For a target class <span class="math notranslate nohighlight">\(c\)</span> (e.g., spoof class):</p>
+<ol class="arabic">
+<li><p><strong>Forward Pass</strong>:</p>
+<ul class="simple">
+<li><p>Input audio → SSL Frontend → Classifier (Res1D) → Classification score <span class="math notranslate nohighlight">\(y^c\)</span></p></li>
+<li><p>Extract feature maps <span class="math notranslate nohighlight">\(A^k\)</span> from target layer</p></li>
+</ul>
+</li>
+<li><p><strong>Backward Pass</strong>:</p>
+<ul class="simple">
+<li><p>Compute gradients: <span class="math notranslate nohighlight">\(\frac{\partial y^c}{\partial A^k}\)</span></p></li>
+</ul>
+</li>
+<li><p><strong>Weight Calculation</strong> (Global Average Pooling):
+<div class="math notranslate nohighlight">
+\[\alpha_k^c = \frac{1}{T}\sum_{t=1}^{T}\frac{\partial y^c}{\partial A^k_t}\]</div>
+</p>
+<p>where <span class="math notranslate nohighlight">\(T\)</span> is the temporal dimension.</p>
+</li>
+<li><p><strong>Weighted Combination</strong>:
+<div class="math notranslate nohighlight">
+\[L^c_{\text{Grad-CAM}} = \text{ReLU}\left(\sum_k \alpha_k^c A^k\right)\]</div>
+</p></li>
+<li><p><strong>Temporal Heatmap</strong>:</p>
+<ul class="simple">
+<li><p>Normalize to [0, 1]</p></li>
+<li><p>High values indicate regions important for classification</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="why-grad-cam-for-partial-spoofing">
+<h3>Why Grad-CAM for Partial Spoofing?<a class="headerlink" href="#why-grad-cam-for-partial-spoofing" title="Link to this heading"></a></h3>
+<p>Unlike fully synthetic audio (uniform fake), partially spoofed audio requires:</p>
+<ul class="simple">
+<li><p><strong>Temporal localization</strong>: Identify <em>when</em> spoofing occurs</p></li>
+<li><p><strong>Boundary detection</strong>: Find transitions between real/fake</p></li>
+<li><p><strong>Segment-level understanding</strong>: Distinguish mixed content</p></li>
+</ul>
+<p>Grad-CAM provides this temporal resolution by showing activation strength over time.</p>
+</section>
+</section>
+<section id="model-architecture-ssl-res1d">
+<h2>Model Architecture: SSL-Res1D<a class="headerlink" href="#model-architecture-ssl-res1d" title="Link to this heading"></a></h2>
+<section id="pipeline-components">
+<h3>Pipeline Components<a class="headerlink" href="#pipeline-components" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Audio Input (16kHz)
+    ↓
+[SSL Frontend] XLSR-53
+    ↓
+[Classifier] Res1D Backend
+    ↓
+Classification Score (Bonafide/Spoof)
+</pre></div>
+</div>
+</section>
+<section id="key-configuration">
+<h3>Key Configuration<a class="headerlink" href="#key-configuration" title="Link to this heading"></a></h3>
+<p>From <code class="docutils literal notranslate"><span class="pre">conf/singlereso_utt_xlsr_53_ft_backend_Res1D.yaml</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ssl_multireso_gmlp</span>
+<span class="nt">model_args</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">feat_dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">768</span><span class="w">          </span><span class="c1"># XLSR-53 feature dimension</span>
+<span class="w">  </span><span class="nt">embed_dim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-2</span><span class="w">          </span><span class="c1"># Output embedding dimension</span>
+<span class="w">  </span><span class="nt">num_scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span><span class="w">           </span><span class="c1"># Multi-resolution scales</span>
+<span class="w">  </span><span class="nt">gmlp_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">batch_first</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">flag_pool</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ap</span><span class="w">          </span><span class="c1"># Attentive pooling</span>
+
+<span class="nt">frontend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">xlsr_53</span>
+<span class="nt">xlsr_53_args</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">layer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12</span><span class="w">              </span><span class="c1"># Use 12th layer of XLSR-53</span>
+<span class="w">  </span>
+<span class="nt">projection_args</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">project_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">arc_margin</span>
+<span class="w">  </span><span class="nt">scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30.0</span>
+<span class="w">  </span><span class="nt">margin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span>
+</pre></div>
+</div>
+</section>
+<section id="why-this-architecture">
+<h3>Why This Architecture?<a class="headerlink" href="#why-this-architecture" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>XLSR-53</strong>: Self-supervised speech representations capture fine-grained acoustic patterns</p></li>
+<li><p><strong>Res1D</strong>: 1D residual blocks effective for temporal modeling</p></li>
+<li><p><strong>Multi-Resolution</strong>: Captures artifacts at different temporal scales</p></li>
+<li><p><strong>Arc Margin</strong>: Enhances inter-class separation</p></li>
+</ol>
+</section>
+</section>
+<section id="stage-1-data-preparation">
+<h2>Stage 1: Data Preparation<a class="headerlink" href="#stage-1-data-preparation" title="Link to this heading"></a></h2>
+<section id="script-local-prepare-data-sh">
+<h3>Script: <code class="docutils literal notranslate"><span class="pre">local/prepare_data.sh</span></code><a class="headerlink" href="#script-local-prepare-data-sh" title="Link to this heading"></a></h3>
+</section>
+<section id="purpose">
+<h3>Purpose<a class="headerlink" href="#purpose" title="Link to this heading"></a></h3>
+<p>Prepare the PartialSpoof dataset in WeDefense format.</p>
+</section>
+<section id="input">
+<h3>Input<a class="headerlink" href="#input" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>PartialSpoof database directory</p></li>
+<li><p>Protocol files: <code class="docutils literal notranslate"><span class="pre">PartialSpoof.LA.cm.{train,dev,eval}.trl.txt</span></code></p></li>
+</ul>
+</section>
+<section id="process">
+<h3>Process<a class="headerlink" href="#process" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p><strong>Create wav.scp</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>find<span class="w"> </span><span class="si">${</span><span class="nv">PS_dir</span><span class="si">}</span>/<span class="si">${</span><span class="nv">dset</span><span class="si">}</span>/con_wav<span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;*.wav&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span>-F<span class="s2">&quot;/&quot;</span><span class="w"> </span><span class="s1">&#39;{print $NF,$0}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sort
+</pre></div>
+</div>
+<p>Format: <code class="docutils literal notranslate"><span class="pre">utterance_id</span> <span class="pre">/path/to/audio.wav</span></code></p>
+</li>
+<li><p><strong>Extract labels (utt2lab)</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cut<span class="w"> </span>-d<span class="s1">&#39; &#39;</span><span class="w"> </span>-f2,5<span class="w"> </span><span class="si">${</span><span class="nv">PS_dir</span><span class="si">}</span>/protocols/PartialSpoof_LA_cm_protocols/PartialSpoof.LA.cm.<span class="si">${</span><span class="nv">dset</span><span class="si">}</span>.trl.txt
+</pre></div>
+</div>
+<p>Format: <code class="docutils literal notranslate"><span class="pre">utterance_id</span> <span class="pre">bonafide/spoof</span></code></p>
+</li>
+<li><p><strong>Create lab2utt mapping</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./tools/utt2lab_to_lab2utt.pl<span class="w"> </span><span class="si">${</span><span class="nv">data</span><span class="si">}</span>/<span class="si">${</span><span class="nv">dset</span><span class="si">}</span>/utt2lab
+</pre></div>
+</div>
+<p>Groups utterances by label</p>
+</li>
+<li><p><strong>Compute durations</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>tools/wav2dur.py<span class="w"> </span><span class="si">${</span><span class="nv">data</span><span class="si">}</span>/<span class="si">${</span><span class="nv">dset</span><span class="si">}</span>/wav.scp<span class="w"> </span><span class="si">${</span><span class="nv">data</span><span class="si">}</span>/<span class="si">${</span><span class="nv">dset</span><span class="si">}</span>/utt2dur
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="output-files">
+<h3>Output Files<a class="headerlink" href="#output-files" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>data/{train,dev,eval}/
+  ├── wav.scp      # Audio paths
+  ├── utt2lab      # Utterance labels
+  ├── lab2utt      # Label-to-utterance mapping
+  └── utt2dur      # Audio durations
+</pre></div>
+</div>
+</section>
+</section>
+<section id="stage-3-model-training-overview">
+<h2>Stage 3: Model Training (Overview)<a class="headerlink" href="#stage-3-model-training-overview" title="Link to this heading"></a></h2>
+<section id="command">
+<h3>Command<a class="headerlink" href="#command" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>torchrun<span class="w"> </span>--rdzv_backend<span class="o">=</span>c10d<span class="w"> </span>--rdzv_endpoint<span class="o">=</span>localhost:<span class="nv">$PORT</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nnodes<span class="o">=</span><span class="m">1</span><span class="w"> </span>--nproc_per_node<span class="o">=</span><span class="nv">$num_gpus</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>wedefense/bin/train.py<span class="w"> </span>--config<span class="w"> </span><span class="nv">$config</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--exp_dir<span class="w"> </span><span class="si">${</span><span class="nv">exp_dir</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gpus<span class="w"> </span><span class="nv">$gpus</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--num_avg<span class="w"> </span><span class="si">${</span><span class="nv">num_avg</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--data_type<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">data_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--train_data<span class="w"> </span><span class="si">${</span><span class="nv">data</span><span class="si">}</span>/train/<span class="si">${</span><span class="nv">data_type</span><span class="si">}</span>.list<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--train_label<span class="w"> </span><span class="si">${</span><span class="nv">data</span><span class="si">}</span>/train/utt2lab
+</pre></div>
+</div>
+</section>
+<section id="training-process">
+<h3>Training Process<a class="headerlink" href="#training-process" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Data Loading</strong>: Batch sampling from shard/raw format</p></li>
+<li><p><strong>Frontend</strong>: Extract XLSR-53 features (Layer 12)</p></li>
+<li><p><strong>Augmentation</strong>: Optional spec augmentation, speed perturbation</p></li>
+<li><p><strong>Forward</strong>: Encoder → Pooling → Projection</p></li>
+<li><p><strong>Loss</strong>: Arc Margin Softmax loss</p></li>
+<li><p><strong>Optimization</strong>: AdamW with learning rate scheduling</p></li>
+</ol>
+</section>
+<section id="key-training-parameters">
+<h3>Key Training Parameters<a class="headerlink" href="#key-training-parameters" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Batch size</strong>: Typically 64-128</p></li>
+<li><p><strong>Learning rate</strong>: 1e-4 with warmup</p></li>
+<li><p><strong>Epochs</strong>: 50-100 with early stopping</p></li>
+<li><p><strong>Checkpointing</strong>: Save every epoch</p></li>
+</ul>
+</section>
+<section id="output">
+<h3>Output<a class="headerlink" href="#output" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>exp/singlereso_utt_xlsr_53_ft_backend_Res1D/
+  ├── config.yaml
+  ├── models/
+  │   ├── model_1.pt
+  │   ├── model_2.pt
+  │   └── ...
+  └── tensorboard/
+</pre></div>
+</div>
+</section>
+</section>
+<section id="stage-4-model-averaging">
+<h2>Stage 4: Model Averaging<a class="headerlink" href="#stage-4-model-averaging" title="Link to this heading"></a></h2>
+<section id="id1">
+<h3>Purpose<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>Average the top-N best model checkpoints to improve robustness.</p>
+</section>
+<section id="id2">
+<h3>Command<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>wedefense/bin/average_model.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dst_model<span class="w"> </span><span class="nv">$exp_dir</span>/models/avg_model.pt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--src_path<span class="w"> </span><span class="nv">$exp_dir</span>/models<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--num<span class="w"> </span><span class="m">10</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h3>Process<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p>Identify top-10 checkpoints by validation performance</p></li>
+<li><p>Load state dictionaries</p></li>
+<li><p>Average parameters: <span class="math notranslate nohighlight">\(\theta_{\text{avg}} = \frac{1}{N}\sum_{i=1}^{N}\theta_i\)</span></p></li>
+<li><p>Save averaged model</p></li>
+</ol>
+</section>
+<section id="id4">
+<h3>Output<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">exp</span><span class="o">/</span><span class="n">singlereso_utt_xlsr_53_ft_backend_Res1D</span><span class="o">/</span><span class="n">models</span><span class="o">/</span><span class="n">avg_model</span><span class="o">.</span><span class="n">pt</span>
+</pre></div>
+</div>
+<p>This averaged model is used for all subsequent stages.</p>
+</section>
+</section>
+<section id="stage-9-xai-extraction-with-grad-cam">
+<h2>Stage 9: XAI Extraction with Grad-CAM<a class="headerlink" href="#stage-9-xai-extraction-with-grad-cam" title="Link to this heading"></a></h2>
+<section id="script-wedefense-bin-xai-gradcam-infer-py">
+<h3>Script: <code class="docutils literal notranslate"><span class="pre">wedefense/bin/XAI_GradCam_infer.py</span></code><a class="headerlink" href="#script-wedefense-bin-xai-gradcam-infer-py" title="Link to this heading"></a></h3>
+</section>
+<section id="id5">
+<h3>Command<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>python<span class="w"> </span>wedefense/bin/XAI_GradCam_infer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--config<span class="w"> </span><span class="si">${</span><span class="nv">exp_dir</span><span class="si">}</span>/config.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_path<span class="w"> </span><span class="nv">$exp_dir</span>/models/avg_model.pt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data_type<span class="w"> </span><span class="s2">&quot;shard&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data_list<span class="w"> </span><span class="si">${</span><span class="nv">data</span><span class="si">}</span>/dev/shard.list<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--batch_size<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--num_workers<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--num_classes<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--xai_scores_path<span class="w"> </span><span class="si">${</span><span class="nv">exp_dir</span><span class="si">}</span>/xai_scores/dev.pkl
+</pre></div>
+</div>
+</section>
+<section id="step-by-step-process">
+<h3>Step-by-Step Process<a class="headerlink" href="#step-by-step-process" title="Link to this heading"></a></h3>
+<section id="model-preparation">
+<h4>1. Model Preparation<a class="headerlink" href="#model-preparation" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load pretrained model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">get_model</span><span class="p">(</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">])(</span><span class="o">**</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;model_args&#39;</span><span class="p">])</span>
+<span class="n">load_checkpoint</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">model_path</span><span class="p">)</span>
+
+<span class="c1"># Wrap with projection head</span>
+<span class="n">projection</span> <span class="o">=</span> <span class="n">get_projection</span><span class="p">(</span><span class="n">configs</span><span class="p">[</span><span class="s1">&#39;projection_args&#39;</span><span class="p">])</span>
+<span class="n">full_model</span> <span class="o">=</span> <span class="n">FullModel</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">projection</span><span class="p">,</span> <span class="n">test_conf</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="target-layer-selection">
+<h4>2. Target Layer Selection<a class="headerlink" href="#target-layer-selection" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># For SSL-Res1D, target the final pooling layer</span>
+<span class="n">target_layer</span> <span class="o">=</span> <span class="p">[</span><span class="n">full_model</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">stat_pooling</span><span class="p">]</span>
+</pre></div>
+</div>
+<p><strong>Why this layer?</strong></p>
+<ul class="simple">
+<li><p>Final representation before classification</p></li>
+<li><p>Captures high-level temporal features</p></li>
+<li><p>Maintains temporal resolution</p></li>
+</ul>
+</section>
+<section id="grad-cam-initialization">
+<h4>3. Grad-CAM Initialization<a class="headerlink" href="#grad-cam-initialization" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pytorch_grad_cam</span><span class="w"> </span><span class="kn">import</span> <span class="n">GradCAM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pytorch_grad_cam.utils.model_targets</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClassifierOutputTarget</span>
+
+<span class="n">cam</span> <span class="o">=</span> <span class="n">GradCAM</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">full_model</span><span class="p">,</span> <span class="n">target_layers</span><span class="o">=</span><span class="n">target_layer</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="per-utterance-extraction">
+<h4>4. Per-Utterance Extraction<a class="headerlink" href="#per-utterance-extraction" title="Link to this heading"></a></h4>
+<p>For each audio utterance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load audio</span>
+<span class="n">wavs</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s1">&#39;wav&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># Shape: (1, wav_length)</span>
+
+<span class="c1"># Target spoof class (class 1)</span>
+<span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">ClassifierOutputTarget</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+
+<span class="c1"># Extract Grad-CAM heatmap</span>
+<span class="n">cam_output</span> <span class="o">=</span> <span class="n">cam</span><span class="p">(</span><span class="n">input_tensor</span><span class="o">=</span><span class="n">wavs</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">targets</span><span class="p">)</span>
+<span class="c1"># cam_output shape: (temporal_frames,) ranging [0, 1]</span>
+</pre></div>
+</div>
+</section>
+<section id="save-results">
+<h4>5. Save Results<a class="headerlink" href="#save-results" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">utt</span><span class="p">,</span> <span class="n">heatmap</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">utterance_ids</span><span class="p">,</span> <span class="n">cam_outputs</span><span class="p">):</span>
+    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">([[</span><span class="n">utt</span><span class="p">],</span> <span class="n">heatmap</span><span class="o">.</span><span class="n">tolist</span><span class="p">()])</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">xai_scores_path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="output-format">
+<h3>Output Format<a class="headerlink" href="#output-format" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># xai_scores/dev.pkl structure:</span>
+<span class="p">[</span>
+  <span class="p">[[</span><span class="s2">&quot;utt_id_1&quot;</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.12</span><span class="p">,</span> <span class="mf">0.23</span><span class="p">,</span> <span class="mf">0.89</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="mf">0.34</span><span class="p">]],</span>  <span class="c1"># Heatmap for utterance 1</span>
+  <span class="p">[[</span><span class="s2">&quot;utt_id_2&quot;</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.08</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.76</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="mf">0.21</span><span class="p">]],</span>  <span class="c1"># Heatmap for utterance 2</span>
+  <span class="o">...</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>Each heatmap is a 1D array where:</p>
+<ul class="simple">
+<li><p><strong>Length</strong>: Number of temporal frames</p></li>
+<li><p><strong>Values</strong>: [0, 1] indicating activation strength</p></li>
+<li><p><strong>High values</strong>: Model focuses on these regions for spoof detection</p></li>
+</ul>
+</section>
+</section>
+<section id="stage-10-xai-score-analysis">
+<h2>Stage 10: XAI Score Analysis<a class="headerlink" href="#stage-10-xai-score-analysis" title="Link to this heading"></a></h2>
+<section id="script-wedefense-bin-xai-score-analysis-py">
+<h3>Script: <code class="docutils literal notranslate"><span class="pre">wedefense/bin/XAI_Score_analysis.py</span></code><a class="headerlink" href="#script-wedefense-bin-xai-score-analysis-py" title="Link to this heading"></a></h3>
+</section>
+<section id="id6">
+<h3>Command<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>wedefense/bin/XAI_Score_analysis.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set<span class="w"> </span>dev<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--pkl_path<span class="w"> </span><span class="si">${</span><span class="nv">exp_dir</span><span class="si">}</span>/xai_scores/dev.pkl<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--vad_path<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$VAD_PATH</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="analysis-components">
+<h3>Analysis Components<a class="headerlink" href="#analysis-components" title="Link to this heading"></a></h3>
+<section id="load-xai-scores-and-vad-information">
+<h4>1. Load XAI Scores and VAD Information<a class="headerlink" href="#load-xai-scores-and-vad-information" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load XAI heatmaps</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pkl_path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">xai_results</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+<span class="c1"># Load voice activity detection (optional)</span>
+<span class="c1"># VAD helps focus on speech regions only</span>
+<span class="n">vad_info</span> <span class="o">=</span> <span class="n">load_vad</span><span class="p">(</span><span class="n">vad_path</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="compute-statistics">
+<h4>2. Compute Statistics<a class="headerlink" href="#compute-statistics" title="Link to this heading"></a></h4>
+<p>For each utterance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">heatmap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">xai_result</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="c1"># Basic statistics</span>
+<span class="n">mean_activation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">heatmap</span><span class="p">)</span>
+<span class="n">max_activation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">heatmap</span><span class="p">)</span>
+<span class="n">std_activation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">heatmap</span><span class="p">)</span>
+
+<span class="c1"># Temporal analysis</span>
+<span class="n">peak_indices</span> <span class="o">=</span> <span class="n">find_peaks</span><span class="p">(</span><span class="n">heatmap</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">peak_regions</span> <span class="o">=</span> <span class="n">group_consecutive_peaks</span><span class="p">(</span><span class="n">peak_indices</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="segment-detection">
+<h4>3. Segment Detection<a class="headerlink" href="#segment-detection" title="Link to this heading"></a></h4>
+<p><strong>Threshold-based segmentation:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># Tunable parameter</span>
+<span class="n">spoofed_mask</span> <span class="o">=</span> <span class="n">heatmap</span> <span class="o">&gt;</span> <span class="n">threshold</span>
+
+<span class="c1"># Find continuous regions</span>
+<span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">in_segment</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">is_spoof</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">spoofed_mask</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">is_spoof</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">in_segment</span><span class="p">:</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">t</span>
+        <span class="n">in_segment</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">is_spoof</span> <span class="ow">and</span> <span class="n">in_segment</span><span class="p">:</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">t</span>
+        <span class="n">segments</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">))</span>
+        <span class="n">in_segment</span> <span class="o">=</span> <span class="kc">False</span>
+</pre></div>
+</div>
+</section>
+<section id="visualization">
+<h4>4. Visualization<a class="headerlink" href="#visualization" title="Link to this heading"></a></h4>
+<p>Generate plots for each utterance:</p>
+<p><strong>A. Temporal Activation Profile</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_axis</span><span class="p">,</span> <span class="n">heatmap</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">time_axis</span><span class="p">,</span> <span class="n">heatmap</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Threshold&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Time (s)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Activation&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;XAI Temporal Activation - </span><span class="si">{</span><span class="n">utterance_id</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>B. Spectrogram with Heatmap Overlay</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load audio and compute spectrogram</span>
+<span class="n">audio</span><span class="p">,</span> <span class="n">sr</span> <span class="o">=</span> <span class="n">librosa</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">audio_path</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">)</span>
+<span class="n">D</span> <span class="o">=</span> <span class="n">librosa</span><span class="o">.</span><span class="n">amplitude_to_db</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">librosa</span><span class="o">.</span><span class="n">stft</span><span class="p">(</span><span class="n">audio</span><span class="p">)))</span>
+
+<span class="c1"># Overlay heatmap</span>
+<span class="n">heatmap_2d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">heatmap</span><span class="p">,</span> <span class="p">(</span><span class="n">D</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span>  <span class="c1"># Repeat along frequency</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">heatmap_2d</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;hot&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>C. Detected Segment Boundaries</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Mark detected spoofed regions</span>
+<span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Detected Spoof&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="aggregate-analysis">
+<h4>5. Aggregate Analysis<a class="headerlink" href="#aggregate-analysis" title="Link to this heading"></a></h4>
+<p><strong>Compare Bonafide vs Spoof distributions:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Separate by ground truth label</span>
+<span class="n">bonafide_activations</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">spoof_activations</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">result</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">xai_results</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
+    <span class="n">mean_act</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">label</span> <span class="o">==</span> <span class="s1">&#39;bonafide&#39;</span><span class="p">:</span>
+        <span class="n">bonafide_activations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mean_act</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">spoof_activations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mean_act</span><span class="p">)</span>
+
+<span class="c1"># Plot distributions</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">bonafide_activations</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Bonafide&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">spoof_activations</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Spoof&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Mean Activation&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Count&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id7">
+<h3>Output<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>exp/xai_scores/
+  ├── dev.pkl                    # Raw heatmaps
+  ├── analysis/
+  │   ├── temporal_profiles/     # Per-utterance plots
+  │   ├── segment_detection/     # Detected boundaries
+  │   ├── statistics.csv         # Aggregate stats
+  │   └── distribution.png       # Bonafide vs Spoof comparison
+</pre></div>
+</div>
+</section>
+</section>
+<section id="interpreting-xai-results">
+<h2>Interpreting XAI Results<a class="headerlink" href="#interpreting-xai-results" title="Link to this heading"></a></h2>
+<section id="activation-patterns-and-their-meanings">
+<h3>Activation Patterns and Their Meanings<a class="headerlink" href="#activation-patterns-and-their-meanings" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Pattern</p></th>
+<th class="head"><p>Visual Appearance</p></th>
+<th class="head"><p>Interpretation</p></th>
+<th class="head"><p>Example Scenario</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Sharp Peaks</strong></p></td>
+<td><p>📈 Sudden spikes at specific time points</p></td>
+<td><p>Splice boundaries detected</p></td>
+<td><p>Partially spoofed audio with clear transitions</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Sustained High Activation</strong></p></td>
+<td><p>🌊 Long regions with elevated values</p></td>
+<td><p>Continuous spoofed segment</p></td>
+<td><p>TTS-generated insertion</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Low Flat Profile</strong></p></td>
+<td><p>📉 Consistently low values</p></td>
+<td><p>Genuine speech</p></td>
+<td><p>Bonafide utterance</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Multiple Peaks</strong></p></td>
+<td><p>🎯 Several distinct high regions</p></td>
+<td><p>Multiple spoofed insertions</p></td>
+<td><p>Complex partial spoofing</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Gradual Rise/Fall</strong></p></td>
+<td><p>📊 Smooth transitions</p></td>
+<td><p>Soft boundaries or gradual blending</p></td>
+<td><p>Advanced synthesis with smoothing</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="decision-guidelines">
+<h3>Decision Guidelines<a class="headerlink" href="#decision-guidelines" title="Link to this heading"></a></h3>
+<section id="for-bonafide-audio">
+<h4>For Bonafide Audio:<a class="headerlink" href="#for-bonafide-audio" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>✅ Expected: Low mean activation (&lt;0.3)</p></li>
+<li><p>✅ Expected: Small standard deviation (&lt;0.15)</p></li>
+<li><p>✅ Expected: No sustained high-activation regions</p></li>
+</ul>
+</section>
+<section id="for-partially-spoofed-audio">
+<h4>For Partially Spoofed Audio:<a class="headerlink" href="#for-partially-spoofed-audio" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>✅ Expected: Moderate to high mean activation (&gt;0.4)</p></li>
+<li><p>✅ Expected: High variance in temporal profile</p></li>
+<li><p>✅ Expected: Clear peaks corresponding to fake segments</p></li>
+<li><p>⚠️ Watch for: Peaks aligning with VAD boundaries (may indicate model bias)</p></li>
+</ul>
+</section>
+</section>
+<section id="common-pitfalls">
+<h3>Common Pitfalls<a class="headerlink" href="#common-pitfalls" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Edge Effects</strong>: High activation at utterance boundaries may be artifacts</p>
+<ul class="simple">
+<li><p><strong>Solution</strong>: Ignore first/last 100ms</p></li>
+</ul>
+</li>
+<li><p><strong>VAD Correlation</strong>: Model may focus on silence/non-speech regions</p>
+<ul class="simple">
+<li><p><strong>Solution</strong>: Compare XAI with VAD labels</p></li>
+</ul>
+</li>
+<li><p><strong>Threshold Sensitivity</strong>: Different thresholds yield different segmentations</p>
+<ul class="simple">
+<li><p><strong>Solution</strong>: Use multiple thresholds (0.3, 0.5, 0.7) for robustness</p></li>
+</ul>
+</li>
+<li><p><strong>Model Overfitting</strong>: Consistent patterns across all spoof types</p>
+<ul class="simple">
+<li><p><strong>Solution</strong>: Analyze per-algorithm breakdown</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="validation-checklist">
+<h3>Validation Checklist<a class="headerlink" href="#validation-checklist" title="Link to this heading"></a></h3>
+<p>✅ Do activation peaks align with known spoofed segments (if ground truth available)?<br />
+✅ Are bonafide utterances consistently low-activation?<br />
+✅ Do different spoofing algorithms show distinct patterns?<br />
+✅ Are high activations focused on speech regions (not silence)?<br />
+✅ Can you aurally perceive artifacts in high-activation regions?</p>
+</section>
+</section>
+<section id="practical-usage-guide">
+<h2>Practical Usage Guide<a class="headerlink" href="#practical-usage-guide" title="Link to this heading"></a></h2>
+<section id="running-the-complete-pipeline">
+<h3>Running the Complete Pipeline<a class="headerlink" href="#running-the-complete-pipeline" title="Link to this heading"></a></h3>
+<section id="setup-environment">
+<h4>1. Setup Environment<a class="headerlink" href="#setup-environment" title="Link to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>egs/detection/partialspoof/x12_ssl_res1d
+<span class="nb">source</span><span class="w"> </span>path.sh
+</pre></div>
+</div>
+</section>
+<section id="configure-paths">
+<h4>2. Configure Paths<a class="headerlink" href="#configure-paths" title="Link to this heading"></a></h4>
+<p>Edit <code class="docutils literal notranslate"><span class="pre">run.sh</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PS_dir</span><span class="o">=</span>/path/to/PartialSpoof/database
+<span class="nv">data</span><span class="o">=</span>/path/to/output/data
+<span class="nv">config</span><span class="o">=</span>conf/singlereso_utt_xlsr_53_ft_backend_Res1D.yaml
+<span class="nv">exp_dir</span><span class="o">=</span>exp/singlereso_utt_xlsr_53_ft_backend_Res1D
+<span class="nv">VAD_PATH</span><span class="o">=</span>/path/to/vad_annotations<span class="w">  </span><span class="c1"># Optional</span>
+</pre></div>
+</div>
+</section>
+<section id="run-data-preparation-stage-1-2">
+<h4>3. Run Data Preparation (Stage 1-2)<a class="headerlink" href="#run-data-preparation-stage-1-2" title="Link to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run.sh<span class="w"> </span>--stage<span class="w"> </span><span class="m">1</span><span class="w"> </span>--stop_stage<span class="w"> </span><span class="m">2</span>
+</pre></div>
+</div>
+</section>
+<section id="train-model-stage-3-4">
+<h4>4. Train Model (Stage 3-4)<a class="headerlink" href="#train-model-stage-3-4" title="Link to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run.sh<span class="w"> </span>--stage<span class="w"> </span><span class="m">3</span><span class="w"> </span>--stop_stage<span class="w"> </span><span class="m">4</span><span class="w"> </span>--gpus<span class="w"> </span><span class="s2">&quot;[0]&quot;</span>
+</pre></div>
+</div>
+<p><strong>Training time</strong>: ~24-48 hours on single GPU</p>
+</section>
+<section id="evaluate-model-stage-5-7">
+<h4>5. Evaluate Model (Stage 5-7)<a class="headerlink" href="#evaluate-model-stage-5-7" title="Link to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run.sh<span class="w"> </span>--stage<span class="w"> </span><span class="m">5</span><span class="w"> </span>--stop_stage<span class="w"> </span><span class="m">7</span>
+</pre></div>
+</div>
+<p>Check performance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">EER</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">XX</span><span class="o">%</span>
+<span class="nb">min</span> <span class="n">t</span><span class="o">-</span><span class="n">DCF</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">XXX</span>
+</pre></div>
+</div>
+</section>
+<section id="extract-xai-stage-9">
+<h4>6. Extract XAI (Stage 9)<a class="headerlink" href="#extract-xai-stage-9" title="Link to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run.sh<span class="w"> </span>--stage<span class="w"> </span><span class="m">9</span><span class="w"> </span>--stop_stage<span class="w"> </span><span class="m">9</span><span class="w"> </span>--gpus<span class="w"> </span><span class="s2">&quot;[0]&quot;</span>
+</pre></div>
+</div>
+<p><strong>Extraction time</strong>: ~1-2 hours for eval set</p>
+</section>
+<section id="analyze-xai-stage-10">
+<h4>7. Analyze XAI (Stage 10)<a class="headerlink" href="#analyze-xai-stage-10" title="Link to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run.sh<span class="w"> </span>--stage<span class="w"> </span><span class="m">10</span><span class="w"> </span>--stop_stage<span class="w"> </span><span class="m">10</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="customization-options">
+<h3>Customization Options<a class="headerlink" href="#customization-options" title="Link to this heading"></a></h3>
+<section id="change-target-layer">
+<h4>Change Target Layer<a class="headerlink" href="#change-target-layer" title="Link to this heading"></a></h4>
+<p>In <code class="docutils literal notranslate"><span class="pre">wedefense/bin/XAI_GradCam_infer.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Original: final pooling layer</span>
+<span class="n">target_layer</span> <span class="o">=</span> <span class="p">[</span><span class="n">full_model</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">stat_pooling</span><span class="p">]</span>
+
+<span class="c1"># Alternative: intermediate layer</span>
+<span class="n">target_layer</span> <span class="o">=</span> <span class="p">[</span><span class="n">full_model</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">layer4</span><span class="p">]</span>  <span class="c1"># Earlier features</span>
+</pre></div>
+</div>
+</section>
+<section id="adjust-detection-threshold">
+<h4>Adjust Detection Threshold<a class="headerlink" href="#adjust-detection-threshold" title="Link to this heading"></a></h4>
+<p>In <code class="docutils literal notranslate"><span class="pre">XAI_Score_analysis.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Default threshold</span>
+<span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.5</span>
+
+<span class="c1"># Stricter detection (fewer false positives)</span>
+<span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.7</span>
+
+<span class="c1"># More sensitive (catch subtle spoofs)</span>
+<span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.3</span>
+</pre></div>
+</div>
+</section>
+<section id="target-different-class">
+<h4>Target Different Class<a class="headerlink" href="#target-different-class" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Original: target spoof class</span>
+<span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">ClassifierOutputTarget</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+
+<span class="c1"># Alternative: target bonafide class (what makes it genuine?)</span>
+<span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">ClassifierOutputTarget</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading"></a></h2>
+<p>This tutorial covered the complete workflow for XAI-based partially spoofed audio detection:</p>
+<section id="key-takeaways">
+<h3>Key Takeaways<a class="headerlink" href="#key-takeaways" title="Link to this heading"></a></h3>
+<p>✅ <strong>Pipeline Architecture</strong></p>
+<ul class="simple">
+<li><p>10-stage pipeline from data to XAI analysis</p></li>
+<li><p>SSL-Res1D model with XLSR-53 frontend</p></li>
+<li><p>Grad-CAM for temporal activation mapping</p></li>
+</ul>
+<p>✅ <strong>XAI Extraction Process</strong></p>
+<ul class="simple">
+<li><p>Target layer selection critical for interpretability</p></li>
+<li><p>Per-utterance temporal heatmaps</p></li>
+<li><p>Batch processing for efficiency</p></li>
+</ul>
+<p>✅ <strong>Result Interpretation</strong></p>
+<ul class="simple">
+<li><p>Activation patterns indicate spoofed regions</p></li>
+<li><p>Threshold-based segment detection</p></li>
+<li><p>Statistical validation essential</p></li>
+</ul>
+<p>✅ <strong>Practical Considerations</strong></p>
+<ul class="simple">
+<li><p>Model quality affects XAI quality</p></li>
+<li><p>VAD integration improves focus</p></li>
+<li><p>Cross-validation with audio inspection</p></li>
+</ul>
+</section>
+<section id="limitations-and-future-directions">
+<h3>Limitations and Future Directions<a class="headerlink" href="#limitations-and-future-directions" title="Link to this heading"></a></h3>
+<p>⚠️ <strong>Current Limitations:</strong></p>
+<ul class="simple">
+<li><p>Grad-CAM shows correlation, not causation</p></li>
+<li><p>Requires well-trained model</p></li>
+<li><p>Threshold selection is dataset-dependent</p></li>
+<li><p>May miss subtle artifacts</p></li>
+</ul>
+<p>🔬 <strong>Future Work:</strong></p>
+<ul class="simple">
+<li><p>Multi-layer XAI fusion</p></li>
+<li><p>Attention-based explainability</p></li>
+<li><p>Frame-level ground truth comparison</p></li>
+<li><p>Real-time XAI for streaming audio</p></li>
+</ul>
+</section>
+<section id="resources">
+<h3>Resources<a class="headerlink" href="#resources" title="Link to this heading"></a></h3>
+<p>📂 <strong>Implementation</strong>: <code class="docutils literal notranslate"><span class="pre">egs/detection/partialspoof/x12_ssl_res1d/</span></code><br />
+📄 <strong>Paper</strong>: <a class="reference external" href="https://arxiv.org/abs/2406.02483">arxiv.org/abs/2406.02483</a><br />
+💻 <strong>GitHub</strong>: <a class="reference external" href="https://github.com/zlin0/wedefense">github.com/zlin0/wedefense</a><br />
+📖 <strong>Docs</strong>: <a class="reference external" href="https://wedefense.readthedocs.io">wedefense.readthedocs.io</a></p>
+</section>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>Partial Spoofing Detection</strong>: Liu et al., “How Do Neural Spoofing Countermeasures Detect Partially Spoofed Audio?”, 2024 [<a class="reference external" href="https://arxiv.org/abs/2406.02483">paper</a>]</p></li>
+<li><p><strong>Grad-CAM</strong>: Selvaraju et al., “Grad-CAM: Visual Explanations from Deep Networks via Gradient-based Localization”, ICCV 2017 [<a class="reference external" href="https://arxiv.org/abs/1610.02391">paper</a>]</p></li>
+<li><p><strong>SSL Representations</strong>: Baevski et al., “wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations”, NeurIPS 2020 [<a class="reference external" href="https://arxiv.org/abs/2006.11477">paper</a>]</p></li>
+<li><p><strong>XLSR</strong>: Conneau et al., “Unsupervised Cross-lingual Representation Learning for Speech Recognition”, Interspeech 2021 [<a class="reference external" href="https://arxiv.org/abs/2006.13979">paper</a>]</p></li>
+<li><p><strong>PartialSpoof Dataset</strong>: Guo et al., “Partially Spoofed Audio Detection”, ASVspoof 2019 [<a class="reference external" href="https://arxiv.org/abs/2105.08050">paper</a>]</p></li>
+<li><p><strong>WeDefense Framework</strong>: [<a class="reference external" href="https://github.com/zlin0/wedefense">GitHub</a>] [<a class="reference external" href="https://wedefense.readthedocs.io">Documentation</a>]</p></li>
+<li><p><strong>PyTorch Grad-CAM</strong>: [<a class="reference external" href="https://github.com/jacobgil/pytorch-grad-cam">GitHub</a>]</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="tasks/sasv.html" class="btn btn-neutral float-left" title="SASV Tutorial with WeDefense" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="deployment/export-with-torch-jit-script.html" class="btn btn-neutral float-right" title="Export model with torch.jit.script()" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, WeDefense.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

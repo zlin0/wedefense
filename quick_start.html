@@ -125,6 +125,115 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/tasks/localization.html">Spoof Localization Tutorial with WeDefense</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/tasks/sasv.html">SASV Tutorial with WeDefense</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html">Explainable AI (XAI) for Partially Spoofed Audio Detection with Grad-CAM</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#reference-implementation-path">📂 Reference Implementation Path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#key-components">Key Components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#what-this-tutorial-covers">What This Tutorial Covers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#complete-pipeline-overview">Complete Pipeline Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#grad-cam-theory-for-audio">Grad-CAM Theory for Audio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#what-is-grad-cam">What is Grad-CAM?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#mathematical-formulation">Mathematical Formulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#why-grad-cam-for-partial-spoofing">Why Grad-CAM for Partial Spoofing?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#model-architecture-ssl-res1d">Model Architecture: SSL-Res1D</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#pipeline-components">Pipeline Components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#key-configuration">Key Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#why-this-architecture">Why This Architecture?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#stage-1-data-preparation">Stage 1: Data Preparation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#script-local-prepare-data-sh">Script: <code class="docutils literal notranslate"><span class="pre">local/prepare_data.sh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#purpose">Purpose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#input">Input</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#process">Process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#output-files">Output Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#stage-3-model-training-overview">Stage 3: Model Training (Overview)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#command">Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#training-process">Training Process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#key-training-parameters">Key Training Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#output">Output</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#stage-4-model-averaging">Stage 4: Model Averaging</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#id1">Purpose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#id2">Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#id3">Process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#id4">Output</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#stage-9-xai-extraction-with-grad-cam">Stage 9: XAI Extraction with Grad-CAM</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#script-wedefense-bin-xai-gradcam-infer-py">Script: <code class="docutils literal notranslate"><span class="pre">wedefense/bin/XAI_GradCam_infer.py</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#id5">Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#step-by-step-process">Step-by-Step Process</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#model-preparation">1. Model Preparation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#target-layer-selection">2. Target Layer Selection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#grad-cam-initialization">3. Grad-CAM Initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#per-utterance-extraction">4. Per-Utterance Extraction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#save-results">5. Save Results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#output-format">Output Format</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#stage-10-xai-score-analysis">Stage 10: XAI Score Analysis</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#script-wedefense-bin-xai-score-analysis-py">Script: <code class="docutils literal notranslate"><span class="pre">wedefense/bin/XAI_Score_analysis.py</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#id6">Command</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#analysis-components">Analysis Components</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#load-xai-scores-and-vad-information">1. Load XAI Scores and VAD Information</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#compute-statistics">2. Compute Statistics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#segment-detection">3. Segment Detection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#visualization">4. Visualization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#aggregate-analysis">5. Aggregate Analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#id7">Output</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#interpreting-xai-results">Interpreting XAI Results</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#activation-patterns-and-their-meanings">Activation Patterns and Their Meanings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#decision-guidelines">Decision Guidelines</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#for-bonafide-audio">For Bonafide Audio:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#for-partially-spoofed-audio">For Partially Spoofed Audio:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#common-pitfalls">Common Pitfalls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#validation-checklist">Validation Checklist</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#practical-usage-guide">Practical Usage Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#running-the-complete-pipeline">Running the Complete Pipeline</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#setup-environment">1. Setup Environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#configure-paths">2. Configure Paths</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#run-data-preparation-stage-1-2">3. Run Data Preparation (Stage 1-2)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#train-model-stage-3-4">4. Train Model (Stage 3-4)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#evaluate-model-stage-5-7">5. Evaluate Model (Stage 5-7)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#extract-xai-stage-9">6. Extract XAI (Stage 9)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#analyze-xai-stage-10">7. Analyze XAI (Stage 10)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#customization-options">Customization Options</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#change-target-layer">Change Target Layer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#adjust-detection-threshold">Adjust Detection Threshold</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#target-different-class">Target Different Class</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#summary">Summary</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#key-takeaways">Key Takeaways</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#limitations-and-future-directions">Limitations and Future Directions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#resources">Resources</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/Explainable-AI-XAI.html#references">References</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/deployment/export-with-torch-jit-script.html">Export model with torch.jit.script()</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/deployment/export-with-torch-jit-script.html#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/deployment/export-with-torch-jit-script.html#prerequisites">Prerequisites</a></li>

@@ -74,6 +74,7 @@ TODO: check type
 | SSL_MHFA                    | 2022 | [Paper](https://ieeexplore.ieee.org/document/10022775)       |         | ✅           |
 | SSL-res1d                   | 2024 | [paper](https://www.isca-archive.org/interspeech_2024/liu24m_interspeech.pdf) |         | ✅           |
 | SSL-SLS                     | 2024 | [paper](https://openreview.net/pdf?id=acJMIXJg2u) \| [code](https://github.com/QiShanZhang/SLSforASVspoof-2021-DF) |         | ✅           |
+| SSL-Nes2Net                 | 2025 | [paper](https://arxiv.org/abs/2504.05657) \| [code](https://github.com/Liu-Tianchi/Nes2Net)                    |         | ✅           |
 |                             |      |                                                              |         |             |
 |                             |      |                                                              |         |             |
 |                             |      |                                                              |         |             |

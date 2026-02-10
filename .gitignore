@@ -240,4 +240,4 @@ cython_debug/
 *.pt
 
 # untrack files
-untrack*.*
+untrack*/

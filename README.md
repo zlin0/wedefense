@@ -1,3 +1,5 @@
+# WeDefense: WeDefense: A Toolkit to Defend Against Fake Audio
+
 <p align="center">
   <img src="./docs/source/_static/wedefense_logo_h.png" alt="WeDefense Logo"/>
 </p>
@@ -19,7 +21,8 @@
 WeDefense aims to be a relatively light-weight, modular, and extensible toolkit tailored to defend against fake audio. Currently we supported detection and uniform frame-level segmentation. If you are interested to contribute, please feel free to contact us!
 | Category | Supported ✅ | Planned ⏳ |
 | --- | --- | --- |
-| Databases | ASVspoof 5 (2024), PartialSpoof, ESDD1, | ASVspoof2019/2021, ADD22/23, ITW, ODSS, ShiftySpeech, MLAAD, SpoofCeleb, ReplayDF, DeePen, FoR, DFADD, AI4T, Deepfake-Eval-2024, SpeechFake, AV-Deepfake1M/++, HAD, Psynd, LAV-DF, LlamaPartialSpoof, PartialEdit |
+| Fully Spoof Databases | ASVspoof2019, ASVspoof 5 (2024), , ESDD2026, SpoofCeleb | ASVspoof2021, ADD22/23, ITW, ODSS, ShiftySpeech, MLAAD, ReplayDF, DeePen, FoR, DFADD, AI4T, Deepfake-Eval-2024, SpeechFake, AV-Deepfake1M/++, HAD, Psynd, LAV-DF, LlamaPartialSpoof, PartialEdit |
+| Partial Spoof Databases | PartialSpoof | AV-Deepfake1M/AV-Deepfake1M++, HAD, Psynd, LAV-DF, LlamaPartialSpoof, PartialEdit |
 | Augmentation | speed perturb, codec, raw boost, musan+rirs |  |
 | Models for Detection | LCNN-LSTM, ResNet, SSL-gmlp, SSL-AASIST, SSL_MHFA, SSL-res1d, SSL-SLS, AASIST| ALLM4ADD |
 | Models for Localization | SSL-MHFA, SSL-SLS, SSL-BAM | CFPRF, PET, AGO, GNCL, UMMAformer, W-TDL, BA-TFD(+), VIGO |

@@ -109,11 +109,6 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="#id1">What is Spoof Detection?</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#id2">Task Definition</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id3">Why use LLR instead of raw posterior from network?</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="#step-by-step-implementation-in-wedefense">Step-by-Step Implementation in WeDefense</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#initial-configuration">Initial Configuration</a></li>
@@ -253,44 +248,9 @@ x \xrightarrow{\text{Model}} \text{embedding} \xrightarrow{\text{Projection}} \t
 </section>
 </section>
 </section>
-<section class="tex2jax_ignore mathjax_ignore" id="id1">
-<h1>What is Spoof Detection?<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
-<p>Spoof detection (also known as anti-spoofing or fake audio detection) aims to detect whether an input audio sample is genuine (bonafide) or artificially generated/modified (spoofed). This is crucial for protecting automatic speaker verification systems and ensuring the authenticity of audio content.</p>
-<section id="id2">
-<h2>Task Definition<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
-<p>Given an audio input <span class="math notranslate nohighlight">\(x\)</span>, the goal is to produce a score <span class="math notranslate nohighlight">\(s\)</span> that indicates how likely the input is genuine.</p>
-<a class="reference internal image-reference" href="../../_images/detection.png"><img alt="../../_images/detection.png" src="../../_images/detection.png" style="width: 300px;" />
-</a>
-<p>In WeDefense, we model <span class="math notranslate nohighlight">\(s\)</span> to LLR for final decision as:</p>
-<div class="math notranslate nohighlight">
-\[
-x \xrightarrow{\text{Model}} \text{embedding} \xrightarrow{\text{Projection}} \text{logits} \xrightarrow{\text{Calibration}} \text{LLR score}
-\]</div>
-<p>The final LLR (Log-Likelihood Ratio) score = <span class="math notranslate nohighlight">\(\log \frac{p(x|H_a)}{p(x|H_r)}\)</span> determines the decision:</p>
-<ul class="simple">
-<li><p><strong>Positive LLR</strong> → classified as bonafide (real)</p></li>
-<li><p><strong>Negative LLR</strong> → classified as spoof (fake)</p></li>
-</ul>
-<p>Where <span class="math notranslate nohighlight">\(H_a\)</span> and <span class="math notranslate nohighlight">\(H_r\)</span> represents the accept hypothesis (the input audio is real) and reject hypothesis (the input audio is fake), respectively.</p>
-</section>
-<section id="id3">
-<h2>Why use LLR instead of raw posterior from network?<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
-<p>While spoof detection can be framed as binary classification, we recommend using calibrated LLR scores instead of raw logits or posteriors for several reasons:</p>
-<ol class="arabic simple">
-<li><p><strong>Prior-aware calibration</strong>: LLR incorporates the prior probability of spoofing attacks, making it more suitable for real-world deployment where attack frequencies vary.</p></li>
-<li><p><strong>Interpretability</strong>: LLR provides a principled decision threshold (0) with clear probabilistic meaning that <span class="math notranslate nohighlight">\(p(x|H_a) = p(x|H_r)\)</span>.</p></li>
-<li><p><strong>Robustness</strong>: Calibrated scores are less sensitive to training data imbalance and generalize better across datasets.</p></li>
-</ol>
-<p>Note,</p>
-<ul class="simple">
-<li><p>Genuine/Bona fide/Real: Speech spoken by human or authentic audio naturally captured from real sources.</p></li>
-<li><p>Spoof/Fake: Generated or modified audio (e.g., TTS, voice conversion, etc.)</p></li>
-</ul>
-</section>
-</section>
+<hr class="docutils" />
 <section class="tex2jax_ignore mathjax_ignore" id="step-by-step-implementation-in-wedefense">
 <h1>Step-by-Step Implementation in WeDefense<a class="headerlink" href="#step-by-step-implementation-in-wedefense" title="Link to this heading"></a></h1>
-<hr class="docutils" />
 <p>The implementation stages in WeDefense are:</p>
 <ul class="simple">
 <li><p><strong>Stage 1–2:</strong> Data preparation and list generation.</p></li>
@@ -388,14 +348,6 @@ x \xrightarrow{\text{Model}} \text{embedding} \xrightarrow{\text{Projection}} \t
 <span class="c1"># CON_T_0000000 /export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database/train/con_wav/CON_T_0000000.wav</span>
 <span class="c1"># CON_T_0000001 /export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database/train/con_wav/CON_T_0000001.wav</span>
 <span class="c1"># CON_T_0000002 /export/fs05/lzhan268/workspace/PUBLIC/PartialSpoof/database/train/con_wav/CON_T_0000002.wav</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span>  <span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">1</span>
-    <span class="err">$</span> <span class="n">head</span> <span class="o">-</span><span class="n">n</span> <span class="mi">3</span> <span class="o">.</span><span class="n">data</span><span class="o">/</span><span class="n">partialspoof</span><span class="o">/</span><span class="n">train</span><span class="o">/*</span>
-    <span class="o">^</span>
-<span class="ne">SyntaxError</span>: invalid syntax
 </pre></div>
 </div>
 </div>

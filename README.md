@@ -1,10 +1,10 @@
-# WeDefense: WeDefense: A Toolkit to Defend Against Fake Audio
+# WeDefense: A Toolkit to Defend Against Fake Audio
 
 <p align="center">
   <img src="./docs/source/_static/wedefense_logo_h.png" alt="WeDefense Logo"/>
 </p>
 
-| 📘 [Tutorials](#) | 📚 [Documentation](https://zlin0.github.io/wedefense/) | 🤝 [Contributing](#) | 🤗 [Demos](https://huggingface.co/spaces/wedefense/fake_audio_detection_demo) |
+| 📘 [Tutorials](https://github.com/zlin0/wedefense/tree/main/docs/source/tutorials) | 📚 [Documentation](https://zlin0.github.io/wedefense/) | 🤝 [Contributing](#) | 🤗 [Demos](https://huggingface.co/spaces/wedefense/fake_audio_detection_demo) |
 
 
 >  ⚠️ **Warning / Disclaimer**⚠️
@@ -38,6 +38,7 @@ conda activate wedefense
 ```
 
 ## 📝 How to use
+
 
 
 
